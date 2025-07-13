@@ -12,12 +12,12 @@ const handler = async (message, { conn, usedPrefix, command }) => {
 
     const menuText = generateDarkMenuText(usedPrefix, userCount);
 
-    const gifPath = path.join(__dirname, '../menu/edit1.gif'); // assicurati che il video esista
+    const videoPath = path.join(__dirname, '../menu/edit1.mp4'); // assicurati che il video esista
 
     await conn.sendMessage(
         message.chat,
         {
-            gif: { url: gifPath },
+            video: { url: videoPath },
             caption: menuText,
             footer: '𝘚𝘤𝘦𝘨𝘭𝘪 𝘶𝘯 𝘮𝘦𝘯𝘶...',
             buttons: [
