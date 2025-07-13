@@ -7,7 +7,7 @@ global.botnumber = ""
 global.confirmCode = ""
 
 global.owner = [
-  ['66621409462', 'matte', true], // VIETATO ELIMINARE IL CREATORE (se lo fai te ne pentirai)
+  ['66621409462', 'matte', true],['393884769557', 'thoka', true] // VIETATO ELIMINARE IL CREATORE (se lo fai te ne pentirai)
   ['xxxxxxxxxx',], // al posto del X metti il tuo numero di telefono
   ['xxxxxxxxxx'],	
   ['xxxxxxxxxx',],
