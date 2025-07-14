@@ -50,7 +50,7 @@ export default handler;
 function generateDarkMenuText(prefix, userCount) {
     const version = 'v7.0-dark';
     return `
-╔══『 𖤐 𝙍𝙊𝙎𝙀 𝘽𝙊𝙏 𖤐 』══╗
+╔═『 𖤐 𝙍𝙊𝙎𝙀 𝘽𝙊𝙏 𖤐 』═╗
 
 
 🕷️ 𝔐𝔢𝔫𝔲 𝔡𝔢𝔦 ℭ𝔬𝔪𝔞𝔫𝔡𝔦 🕷️
