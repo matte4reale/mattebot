@@ -529,16 +529,22 @@ export async function participantsUpdate({ id, participants, action }) {
                                 mentionedJid:[user],
                                 forwardingScore: 99,
                                 isForwarded: true, 
-                               forwardedNewsletterMessageInfo: {
-                               newsletterJid: '120363259442839354@newsletter',
-                               serverMessageId: '', newsletterName: `${nomeDelBot}` },
-                               externalAdReply: {
-                                    "title": `${msg}`, 
- "body": ``, 
-  "previewType": "PHOTO",
-  "thumbnail": fs.readFileSync('./accessdenied2.png'),
-  "mediaType": 1,
-  "renderLargerThumbnail": true}}}, {quoted: m})
+                                forwardedNewsletterMessageInfo: {
+                                    newsletterJid: '120363259442839354@newsletter',
+                                    serverMessageId: '', 
+                                    newsletterName: `${nomeDelBot}` 
+                                },
+                                externalAdReply: {
+                                    title: action === 'add' ? 'Messaggio di benvenuto' : 'Messaggio di addio',
+                                    body: '',
+                                    previewType: "PHOTO",
+                                    thumbnailUrl: '',
+                                    thumbnail: apii.data,
+                                    mediaType: 1,
+                                    renderLargerThumbnail: true
+                                }
+                            }
+                        }, {quoted: m})
                     } 
                 } 
             }
