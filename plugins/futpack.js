@@ -1,67 +1,75 @@
-import fetch from 'node-fetch'
+import fetch from 'node-fetch';
 
-let players = []
+async function getFifaPlayers() {
+  const url = 'https://www.easports.com/fifa/ultimate-team/api/fc-players?json=true&page=1';
+  const res = await fetch(url);
 
-async function loadPlayers() {
-  try {
-    const res = await fetch('https://raw.githubusercontent.com/prashantghimire/sofifa-web-scraper/main/output/player-data-full.csv')
-    const text = await res.text()
-    players = text.split('\n').slice(1)
-      .map(line => line.split(','))
-      .filter(cols => cols[2] && parseInt(cols[2]) >= 80) // colonna rating ≥ 80
-      .map(cols => ({
-        name: cols[1],
-        rating: parseInt(cols[2]),
-        position: cols[3],
-        nation: cols[4],
-        club: cols[5],
-        img: `https://cdn.sofifa.org/players/${parseInt(cols[0]) % 1000}/${cols[0]}.png`
-      }))
-    console.log(`Loaded ${players.length} players from SOFIFA dataset`)
-  } catch (e) {
-    console.error('Errore caricamento dataset:', e)
+  if (!res.ok) {
+    console.error('Errore API EA:', res.statusText);
+    return [];
   }
-}
 
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[array[i], array[j]] = [array[j], array[i]]
-  }
-  return array
-}
+  const json = await res.json();
+  const players = json.items || [];
 
-function generatePack() {
-  if (players.length === 0) return null
-  const selection = shuffle(players).slice(0, 3)
-  const main = selection[0]
-  let text = `🎉 Hai spacchettato un *pack Oro Raro*! \n`
-  text += `🔹 ${main.position} – ${main.nation} – ${main.club}\n`
-  text += `🟥 ${main.name} – ${main.rating}\n`
-  text += `📦 Altri: ` + selection.slice(1).map(p => `${p.name} (${p.rating})`).join(', ')
-  return { text, pack: selection }
+  // Filtro base (puoi personalizzare i valori)
+  return players
+    .filter(p => p.rating >= 80)
+    .map(p => ({
+      name: `${p.firstName} ${p.lastName}`,
+      rating: p.rating,
+      nation: p.nationName,
+      club: p.club.name,
+      position: p.position,
+      image: `https://futhead.cursecdn.com/static/img/14/players/${p.id}.png`
+    }));
 }
 
 let handler = async (m, { conn }) => {
-  if (players.length === 0) await loadPlayers()
+  const user = m.sender;
+  global.db.data.users[user] = global.db.data.users[user] || {};
+  const data = global.db.data.users[user];
 
-  const data = generatePack()
-  if (!data) return m.reply('❌ Errore caricamento giocatori, riprova.')
-
-  const { text, pack } = data
-  await conn.sendMessage(m.chat, {
-    image: { url: pack[0].img },
-    caption: text,
-    mentions: [m.sender]
-  }, { quoted: m })
-
-  for (let i = 1; i < pack.length; i++) {
-    await conn.sendMessage(m.chat, {
-      image: { url: pack[i].img },
-      caption: `Carta #${i + 1}: ${pack[i].name} – ${pack[i].rating}`
-    }, { quoted: m })
+  data.fifaInventory = data.fifaInventory || { base: 1 };
+  if (data.fifaInventory.base <= 0) {
+    return m.reply(`❌ Non hai pacchetti *FUT Base* disponibili.`);
   }
-}
 
-handler.command = /^futpack$/i
-export default handler
+  data.fifaInventory.base--;
+
+  await conn.sendMessage(m.chat, { text: '⚽ Aprendo pacchetto FUT...' }, { quoted: m });
+
+  const allPlayers = await getFifaPlayers();
+  if (allPlayers.length === 0) return m.reply(`😢 Nessun giocatore trovato.`);
+
+  const cards = [];
+  for (let i = 0; i < 3; i++) {
+    const p = allPlayers[Math.floor(Math.random() * allPlayers.length)];
+    cards.push(p);
+  }
+
+  const best = [...cards].sort((a, b) => b.rating - a.rating)[0];
+
+  await conn.sendMessage(m.chat, {
+    image: { url: best.image },
+    caption:
+      `🎉 *${best.name}* (${best.rating}⭐)\n` +
+      `📍 ${best.position} | ${best.club} | ${best.nation}\n\n` +
+      `📦 Pacchetti rimasti: ${data.fifaInventory.base}`
+  }, { quoted: m });
+
+  for (let i = 1; i < cards.length; i++) {
+    await conn.sendMessage(m.chat, {
+      text: `➕ ${cards[i].name} (${cards[i].rating}⭐)`
+    }, { quoted: m });
+  }
+
+  data.fifaPlayers = data.fifaPlayers || [];
+  data.fifaPlayers.push(...cards);
+};
+
+handler.command = /^futpack$/i;
+handler.tags = ['fifa'];
+handler.help = ['futpack'];
+
+export default handler;
