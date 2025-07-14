@@ -175,7 +175,17 @@ export async function handler(chatUpdate) {
 
         const isROwner = [
             conn.decodeJid(global.conn.user.id),
-            ...(Array.isArray(global.owner) ? global.owner : []).map(([number]) => number)
+            ...(Array.isArray(global.owner) ? global.owner : []).map(ownerEntry => {
+                // Ensure ownerEntry is an array and has at least one element
+                if (Array.isArray(ownerEntry) && ownerEntry.length > 0) {
+                    return ownerEntry[0]
+                }
+                // If ownerEntry is a string (single owner), use it directly
+                if (typeof ownerEntry === 'string') {
+                    return ownerEntry
+                }
+                return ''
+            })
         ].map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender)
         const isOwner = isROwner || m.fromMe
         const isMods = isOwner || (Array.isArray(global.mods) ? global.mods : []).map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender)
