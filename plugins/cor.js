@@ -14,7 +14,6 @@ let handler = async (m, { conn, args, groupMetadata, participants, usedPrefix, c
 
             global.db.data.chats[m.chat].welcome = false;
 
-            // Messaggio principale con bottoni
             await conn.sendMessage(m.chat, {
                 text: "𝑽𝑰𝑽𝑨 𝑵𝑨𝑹𝑼𝑻𝑶, 𝑳'𝑨𝑫𝑴𝑰𝑵 𝑪𝑯𝑬 𝑴𝑰 𝑯𝑨 𝑴𝑬𝑺𝑺𝑶 𝑰𝑵 𝑺𝑻𝑶 𝑮𝑹𝑼𝑷𝑷𝑶 𝑬' 𝑷𝑹𝑶𝑷𝑹𝑰𝑶 𝑪𝑶𝑹𝑵𝑼𝑻𝑶.",
                 footer: "Scegli dove andare",
@@ -26,7 +25,7 @@ let handler = async (m, { conn, args, groupMetadata, participants, usedPrefix, c
             // Menzione a tutti
             let utenti = participants.map(u => u.id);
             await conn.sendMessage(m.chat, {
-                text: '𝑽𝑰𝑽𝑨 𝑵𝑨𝑹𝑼𝑻𝑶, 𝑳'𝑨𝑫𝑴𝑰𝑵 𝑪𝑯𝑬 𝑴𝑰 𝑯𝑨 𝑴𝑬𝑺𝑺𝑶 𝑰𝑵 𝑺𝑻𝑶 𝑮𝑹𝑼𝑷𝑷𝑶 𝑬' 𝑷𝑹𝑶𝑷𝑹𝑰𝑶 𝑪𝑶𝑹𝑵𝑼𝑻𝑶',
+                text: "𝑽𝑰𝑽𝑨 𝑵𝑨𝑹𝑼𝑻𝑶, 𝑳'𝑨𝑫𝑴𝑰𝑵 𝑪𝑯𝑬 𝑴𝑰 𝑯𝑨 𝑴𝑬𝑺𝑺𝑶 𝑰𝑵 𝑺𝑻𝑶 𝑮𝑹𝑼𝑷𝑷𝑶 𝑬' 𝑷𝑹𝑶𝑷𝑹𝑰𝑶 𝑪𝑶𝑹𝑵𝑼𝑻𝑶",
                 mentions: utenti
             });
 
