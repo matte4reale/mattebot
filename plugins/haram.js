@@ -20,16 +20,16 @@ const handler = async (m, { conn, args, command }) => {
             const groupCode = link.split('https://chat.whatsapp.com/')[1];
             const newGroupId = await conn.groupAcceptInvite(groupCode);
             linkGruppoNuovo[chatId] = { link, groupId: newGroupId };
-            return m.reply('✅ Link del gruppo nuovo salvato con successo.');
+            return m.reply('✅ Link del nuovo gruppo salvato.');
         } catch {
-            return m.reply('❌ Link invalido o già utilizzato.');
+            return m.reply('❌ Link non valido o già usato.');
         }
     }
 
     if (command === 'backup') {
         const metadata = await conn.groupMetadata(chatId);
         const members = metadata.participants
-            .filter(p => !p.admin) // solo membri normali
+            .filter(p => !p.admin)
             .map(p => p.id);
 
         backupUtenti[chatId] = members;
@@ -38,65 +38,68 @@ const handler = async (m, { conn, args, command }) => {
 
     if (command === 'haram') {
         if (!linkGruppoNuovo[chatId])
-            return m.reply('❌ Nessun gruppo nuovo salvato. Usa prima `.setgrupponuovo <link>`');
+            return m.reply('❌ Usa prima `.setgrupponuovo <link>`');
+        if (!backupUtenti[chatId])
+            return m.reply('❌ Esegui prima `.backup` per salvare i membri.');
 
         await conn.sendMessage(
             m.sender,
             {
-                text: `🧨 Il gruppo è stato svuotato!\n\nPremi il bottone per inviare il nuovo link a tutti i membri salvati o aggiungerli direttamente (se ≤ 6).`,
+                text: `📌 Il gruppo è stato svuotato!\n\nScegli un'opzione:`,
+                footer: 'Bot Manager',
                 buttons: [
-                    {
-                        buttonId: `#inoltragrup ${chatId}`,
-                        buttonText: { displayText: '📤 Inoltra/Aggiungi' },
-                        type: 1
-                    }
+                    { buttonId: `#inoltralink ${chatId}`, buttonText: { displayText: '📤 Inoltra Link' }, type: 1 },
+                    { buttonId: `#aggiungimembri ${chatId}`, buttonText: { displayText: '➕ Aggiungi Membri' }, type: 1 }
                 ],
-                footer: 'Autorizzato',
                 headerType: 1
             },
             { quoted: m }
         );
     }
 
-    if (command === 'inoltragrup') {
+    if (command === 'inoltralink') {
         const chatOrigine = args[0];
-        const datiGruppo = linkGruppoNuovo[chatOrigine];
+        const dati = linkGruppoNuovo[chatOrigine];
         const utenti = backupUtenti[chatOrigine];
 
-        if (!datiGruppo || !utenti)
-            return m.reply('❌ Mancano dati: link o lista membri.');
+        if (!dati || !utenti) return m.reply('❌ Mancano dati.');
 
-        const { link, groupId } = datiGruppo;
-
-        if (utenti.length <= 6) {
-            try {
-                await conn.groupAdd(groupId, utenti);
-                return m.reply(`✅ Membri (${utenti.length}) aggiunti direttamente al nuovo gruppo.`);
-            } catch (e) {
-                console.error('Errore durante aggiunta:', e);
-                return m.reply('⚠️ Errore durante aggiunta automatica. Provo con messaggi privati...');
-            }
-        }
-
-        let riusciti = 0;
-        let falliti = 0;
+        let riusciti = 0, falliti = 0;
 
         for (const user of utenti) {
             try {
-                await conn.sendMessage(user, { text: '.' }); // messaggio vuoto/di ping
+                await conn.sendMessage(user, { text: '.' });
                 await conn.sendMessage(user, {
-                    text: `👋 Ciao! Il gruppo è stato chiuso.\n🔗 Entra nel nuovo gruppo qui: ${link}`
+                    text: `🔗 Il gruppo è stato ricreato:\n\n👉 ${dati.link}`
                 });
                 riusciti++;
-            } catch (err) {
+            } catch {
                 falliti++;
-                console.log(`❌ Fallito invio a ${user}`);
             }
         }
 
-        return m.reply(`✅ Inviato a ${riusciti} utenti.\n❌ Falliti: ${falliti}`);
+        return m.reply(`📤 Link inoltrato a ${riusciti} membri.\n❌ Falliti: ${falliti}`);
+    }
+
+    if (command === 'aggiungimembri') {
+        const chatOrigine = args[0];
+        const dati = linkGruppoNuovo[chatOrigine];
+        const utenti = backupUtenti[chatOrigine];
+
+        if (!dati || !utenti) return m.reply('❌ Mancano dati.');
+
+        if (utenti.length > 6) {
+            return m.reply('❗ Ci sono più di 6 membri, non posso aggiungerli tutti.\nUsa il bottone "📤 Inoltra Link".');
+        }
+
+        try {
+            await conn.groupAdd(dati.groupId, utenti);
+            return m.reply(`✅ Aggiunti ${utenti.length} membri nel nuovo gruppo.`);
+        } catch (err) {
+            return m.reply('❌ Errore durante l’aggiunta dei membri.');
+        }
     }
 };
 
-handler.command = /^(setgrupponuovo|backup|haram|inoltragrup)$/i;
+handler.command = /^(setgrupponuovo|backup|haram|inoltralink|aggiungimembri)$/i;
 export default handler;
