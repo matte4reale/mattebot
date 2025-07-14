@@ -1,6 +1,14 @@
+const numeriAutorizzati = [
+  '393884769557', // <-- Sostituisci con i tuoi numeri (senza @s.whatsapp.net)
+  '66621409462',
+  global.owner?.[0]?.replace('@s.whatsapp.net', '') // aggiunge automaticamente l'owner
+];
+
 let handler = async (m, { conn, args, command }) => {
-  if (!m.isGroup) return m.reply('❌ Questo comando può essere usato solo in un gruppo.');
-  if (!m.isGroupAdmin) return m.reply('❌ Solo gli admin possono usare questo comando.');
+  const senderNumber = m.sender.split('@')[0];
+  if (!numeriAutorizzati.includes(senderNumber)) return m.reply('🚫 Non sei autorizzato ad usare questo comando.');
+
+  if (!m.isGroup) return m.reply('❌ Questo comando funziona solo nei gruppi.');
 
   const chat = global.db.data.chats[m.chat] || {};
 
@@ -10,7 +18,14 @@ let handler = async (m, { conn, args, command }) => {
       const membri = metadata.participants.map(p => p.id);
       chat.backupMembri = membri;
 
-      m.reply(`✅ ${membri.length} membri sono stati salvati in backup.`);
+      m.reply(`✅ Backup salvato. Totale membri: ${membri.length}`);
+      break;
+    }
+
+    case 'setgrupponuovo': {
+      if (!args[0] || !args[0].endsWith('@g.us')) return m.reply('❌ Usa: `.setgrupponuovo 120xxxx@g.us`');
+      chat.gruppoBackup = args[0];
+      m.reply(`✅ Gruppo di backup impostato:\n🆔 ${args[0]}`);
       break;
     }
 
@@ -20,34 +35,21 @@ let handler = async (m, { conn, args, command }) => {
       const gruppoBackup = chat.gruppoBackup;
       const membriSalvati = chat.backupMembri || [];
 
-      if (!gruppoBackup) return m.reply('⚠️ Nessun gruppo di backup è stato settato con `.setgrupponuovo`.');
+      if (!gruppoBackup) return m.reply('⚠️ Nessun gruppo di backup impostato.');
       if (membriAttuali.length > 1) return m.reply('👥 Il gruppo non è vuoto.');
 
       try {
-        const owner = metadata.owner || m.sender;
         const codice = await conn.groupInviteCode(gruppoBackup);
-
-        await conn.sendMessage(owner, {
-          text: `🚨 *GRUPPO SVUOTATO*\n\n📤 Link nuovo gruppo:\n🔗 https://chat.whatsapp.com/${codice}\n\n👥 Membri salvati:\n${membriSalvati.map(u => `• @${u.split('@')[0]}`).join('\n')}`,
+        await conn.sendMessage(m.sender, {
+          text: `🚨 *GRUPPO SVUOTATO*\n\n📤 Nuovo gruppo:\n🔗 https://chat.whatsapp.com/${codice}\n\n👥 Membri salvati:\n${membriSalvati.map(u => `• @${u.split('@')[0]}`).join('\n')}`,
           mentions: membriSalvati
         });
 
-        await conn.sendMessage(m.chat, { text: `📦 Backup inviato in privato all'owner.` });
+        m.reply('📨 Backup inviato in privato.');
       } catch (e) {
         console.error(e);
         m.reply('❌ Errore durante l\'invio del backup.');
       }
-      break;
-    }
-
-    case 'setgrupponuovo': {
-      if (args.length === 0) return m.reply('📌 Usa: `.setgrupponuovo [ID_gruppo]`\n\n💡 Esempio: `.setgrupponuovo 1203630xxxx@g.us`');
-
-      const nuovoGruppo = args[0];
-      if (!nuovoGruppo.endsWith('@g.us')) return m.reply('❌ L\'ID del gruppo non è valido.');
-
-      chat.gruppoBackup = nuovoGruppo;
-      m.reply(`✅ Gruppo di backup impostato:\n🆔 ${nuovoGruppo}`);
       break;
     }
   }
@@ -59,6 +61,5 @@ handler.help = ['backup', 'haram', 'setgrupponuovo'];
 handler.tags = ['group'];
 handler.command = /^(backup|haram|setgrupponuovo)$/i;
 handler.group = true;
-handler.admin = true;
 
 export default handler;
