@@ -53,13 +53,13 @@ global.imagen1 = ['./media/menu1.jpg']
 global.imagen4 = fs.readFileSync('./chatunity.png')
 
 
-global.packname = '𝐂𝐡𝐚𝐭𝐔𝐧𝐢𝐭𝐲-𝐁𝐨𝐭'
+global.packname = 'ROSEBOT'
 global.author = '𝐌𝐝'
 
 
 global.vs = '5.3'
 
-global.nomebot = '𝐂𝐡𝐚𝐭𝐔𝐧𝐢𝐭𝐲-𝐁𝐨𝐭'
+global.nomebot = 'ROSEBOT'
 
 global.multiplier = 69 
 global.maxwarn = '4' 
