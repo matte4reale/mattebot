@@ -1,74 +1,75 @@
-const numeriAutorizzati = [
-  '393884769557', // Numero 1 autorizzato
-  '66621409462', // Numero 2 autorizzato
-  global.owner?.[0]?.replace('@s.whatsapp.net', '') // Anche l'owner
-];
+let linkGruppoNuovo = {};
+let backupUtenti = {};
+const numeriAutorizzati = ['393884769557', '66621409462'];
 
-let handler = async (m, { conn, args, command }) => {
-  const senderNumber = m.sender.split('@')[0];
-  if (!numeriAutorizzati.includes(senderNumber)) return m.reply('🚫 Non sei autorizzato ad usare questo comando.');
+const handler = async (m, { conn, args, command, isAdmin, isBotAdmin }) => {
+    const sender = m.sender.replace(/[^0-9]/g, '');
 
-  if (!m.isGroup) return m.reply('❌ Questo comando funziona solo nei gruppi.');
-
-  const chat = global.db.data.chats[m.chat] || {};
-
-  switch (command) {
-    case 'backup': {
-      const metadata = await conn.groupMetadata(m.chat);
-      const membri = metadata.participants.map(p => p.id);
-      chat.backupMembri = membri;
-
-      m.reply(`✅ Backup salvato. Totale membri: ${membri.length}`);
-      break;
+    if (!numeriAutorizzati.includes(sender)) {
+        return m.reply('❌ Non sei autorizzato a usare questo comando.');
     }
 
-    case 'setgrupponuovo': {
-      if (!args[0] || !args[0].startsWith('https://chat.whatsapp.com/')) {
-        return m.reply('❌ Usa: `.setgrupponuovo https://chat.whatsapp.com/abc123`');
-      }
-
-      const codice = args[0].split('/').pop();
-      try {
-        const gruppoID = await conn.groupAcceptInvite(codice);
-        chat.gruppoBackup = gruppoID;
-        m.reply(`✅ Gruppo di backup impostato correttamente!\n🆔 ${gruppoID}`);
-      } catch (e) {
-        return m.reply('❌ Link non valido o errore nel join. Assicurati che il bot possa entrare.');
-      }
-      break;
+    const chatId = m.chat;
+    if (command === 'setgrupponuovo') {
+        const link = args[0];
+        if (!link || !link.startsWith('https://chat.whatsapp.com/')) {
+            return m.reply('❗ Inserisci un link valido del nuovo gruppo WhatsApp.');
+        }
+        linkGruppoNuovo[chatId] = link;
+        return m.reply('✅ Link del gruppo nuovo salvato con successo.');
     }
 
-    case 'haram': {
-      const metadata = await conn.groupMetadata(m.chat);
-      const membriAttuali = metadata.participants.filter(p => p.id !== conn.user.jid);
-      const gruppoBackup = chat.gruppoBackup;
-      const membriSalvati = chat.backupMembri || [];
+    if (command === 'backup') {
+        const metadata = await conn.groupMetadata(chatId);
+        const members = metadata.participants
+            .filter(p => !p.admin) // escludi admin
+            .map(p => p.id);
 
-      if (!gruppoBackup) return m.reply('⚠️ Nessun gruppo di backup impostato.');
-      if (membriAttuali.length > 1) return m.reply('👥 Il gruppo non è vuoto.');
-
-      try {
-        const codice = await conn.groupInviteCode(gruppoBackup);
-        await conn.sendMessage(m.sender, {
-          text: `🚨 *GRUPPO SVUOTATO*\n\n📤 Nuovo gruppo:\n🔗 https://chat.whatsapp.com/${codice}\n\n👥 Membri salvati:\n${membriSalvati.map(u => `• @${u.split('@')[0]}`).join('\n')}`,
-          mentions: membriSalvati
-        });
-
-        m.reply('📨 Backup inviato in privato.');
-      } catch (e) {
-        console.error(e);
-        m.reply('❌ Errore durante l\'invio del backup.');
-      }
-      break;
+        backupUtenti[chatId] = members;
+        return m.reply(`✅ Backup eseguito. Membri salvati: ${members.length}`);
     }
-  }
 
-  global.db.data.chats[m.chat] = chat;
+    if (command === 'haram') {
+        if (!linkGruppoNuovo[chatId]) return m.reply('❌ Nessun link di gruppo nuovo è stato salvato. Usa `.setgrupponuovo <link>`');
+
+        await conn.sendMessage(
+            m.sender,
+            {
+                text: `🧨 Il gruppo è stato svuotato!\n\n🔁 Premi il bottone qui sotto per mandare il nuovo link (${linkGruppoNuovo[chatId]}) a tutti i membri espulsi.`,
+                buttons: [
+                    {
+                        buttonId: `#inoltragrup ${chatId}`,
+                        buttonText: { displayText: '📤 Inoltra il link' },
+                        type: 1
+                    }
+                ],
+                footer: '🔐 Solo utenti autorizzati',
+                headerType: 1
+            },
+            { quoted: m }
+        );
+    }
+
+    // comando nascosto per il bottone
+    if (command === 'inoltragrup') {
+        const chatTarget = args[0];
+        const utenti = backupUtenti[chatTarget];
+        const link = linkGruppoNuovo[chatTarget];
+
+        if (!utenti || !link) return m.reply('❌ Backup o link mancante.');
+
+        for (const u of utenti) {
+            try {
+                await conn.sendMessage(u, { text: `🔗 Nuovo gruppo: ${link}` });
+            } catch (e) {
+                console.log(`Errore invio a ${u}`);
+            }
+        }
+
+        return m.reply(`✅ Link inviato in privato a ${utenti.length} utenti.`);
+    }
 };
 
-handler.help = ['backup', 'haram', 'setgrupponuovo'];
-handler.tags = ['group'];
-handler.command = /^(backup|haram|setgrupponuovo)$/i;
-handler.group = true;
+handler.command = /^(setgrupponuovo|backup|haram|inoltragrup)$/i;
 
 export default handler;
