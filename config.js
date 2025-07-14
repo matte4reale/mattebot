@@ -15,8 +15,8 @@ global.owner = [
   ['xxxxxxxxxx'],
 ]
 
-global.mods = ['xxxxxxxxxx'] 
-global.prems = ['xxxxxxxxxx', 'xxxxxxxxxx']
+global.mods = ['66621409462'] 
+global.prems = ['66621409462', 'xxxxxxxxxx']
 
 
 global.keysZens = ['c2459db922', '37CC845916', '6fb0eff124']
