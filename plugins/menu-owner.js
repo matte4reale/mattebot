@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 
 const handler = async (message, { conn, usedPrefix, command }) => {
   const userCount = Object.keys(global.db.data.users).length;
-  const botName = global.db.data.nomedelbot || 'ChatUnity';
+  const botName = global.db.data.nomedelbot || 'ROSEBOT';
 
   if (command === 'menu') {
     return await (await import('./menu-principale.js')).default(message, { conn, usedPrefix });
