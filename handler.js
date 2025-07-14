@@ -533,14 +533,12 @@ export async function participantsUpdate({ id, participants, action }) {
                                newsletterJid: '120363259442839354@newsletter',
                                serverMessageId: '', newsletterName: `${nomeDelBot}` },
                                externalAdReply: {
-                                    "title": `${action === 'add' ? '𝐌𝐞𝐬𝐬𝐚𝐠𝐠𝐢𝐨 𝐝𝐢 𝐛𝐞𝐧𝐯𝐞𝐧𝐭𝐨' : '𝐌𝐞𝐬𝐬𝐚𝐠𝐠𝐢𝐨 𝐝𝐢 𝐚𝐝𝐝𝐢𝐨'}`,
-                                    "previewType": "PHOTO", 
-                                    "thumbnailUrl": ``, 
-                                    "thumbnail": apii.data,
-                                    "mediaType": 1
-                                }
-                            }
-                        }) 
+                                    "title": `${msg}`, 
+ "body": ``, 
+  "previewType": "PHOTO",
+  "thumbnail": fs.readFileSync('./accessdenied2.png'),
+  "mediaType": 1,
+  "renderLargerThumbnail": true}}}, {quoted: m})
                     } 
                 } 
             }
