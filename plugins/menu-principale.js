@@ -16,7 +16,7 @@ const handler = async (message, { conn, usedPrefix, command }) => {
     const menuText = generateDarkMenuText(usedPrefix, userCount);
 
 
-    const videoPath = path.join(__dirname, '../menu/edit1.mp4'); // assicurati che il video esista
+    const videoPath = path.join(__dirname, '../menu/edit1.mp4'); 
 
 
     await conn.sendMessage(
