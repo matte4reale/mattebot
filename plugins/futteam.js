@@ -1,45 +1,73 @@
-import fs from 'fs';
-import path from 'path';
-import Canvas from 'canvas';
-const playersPath = path.join(process.cwd(), './plugins/rosa_players.json');
-const pitchImgUrl = 'https://url.to/football_pitch.png'; // Sostituisci con URL reale da scaricare
 let handler = async (m, { conn }) => {
   const user = m.sender;
-  global.db.data.users[user] = global.db.data.users[user] || {};
-  const data = global.db.data.users[user];
-  const squad = data.fifaSquad || [];
+  const data = global.db.data.users[user] || {};
+  const players = data.fifaPlayers || [];
 
-  if (squad.length < 11) {
-    return m.reply('❌ Devi prima salvare una rosa completa con /futteam e poi fare Save.');
+  if (!players || players.length < 11) {
+    return m.reply('❌ Ti servono almeno 11 giocatori per formare una squadra.');
   }
 
-  const fullList = JSON.parse(fs.readFileSync(playersPath, 'utf8'));
+  const formation = {
+    GK: [],
+    DEF: [],
+    MID: [],
+    ATT: []
+  };
 
-  const canvas = Canvas.createCanvas(900, 600);
-  const ctx = canvas.getContext('2d');
+  for (const p of players) {
+    const pos = p.position.toUpperCase();
+    if (pos === 'GK') formation.GK.push(p);
+    else if (['CB', 'LB', 'RB'].includes(pos)) formation.DEF.push(p);
+    else if (['CDM', 'CM', 'CAM', 'LM', 'RM'].includes(pos)) formation.MID.push(p);
+    else if (['ST', 'CF', 'LW', 'RW'].includes(pos)) formation.ATT.push(p);
+  }
 
-  const pitchImg = await Canvas.loadImage(pitchImgUrl);
-  ctx.drawImage(pitchImg, 0, 0, 900, 600);
-
-  const positions = [
-    { x: 400, y: 20 },
-    { x: 200, y: 150 }, { x: 400, y: 150 }, { x: 600, y: 150 },
-    { x: 150, y: 300 }, { x: 350, y: 300 }, { x: 550, y: 300 }, { x: 750, y: 300 },
-    { x: 200, y: 450 }, { x: 400, y: 450 }, { x: 600, y: 450 }
+  const team = [
+    ...(formation.GK.sort((a, b) => b.rating - a.rating).slice(0, 1)),
+    ...(formation.DEF.sort((a, b) => b.rating - a.rating).slice(0, 3)),
+    ...(formation.MID.sort((a, b) => b.rating - a.rating).slice(0, 3)),
+    ...(formation.ATT.sort((a, b) => b.rating - a.rating).slice(0, 2)),
   ];
 
-  for (let i = 0; i < 11; i++) {
-    const p = squad[i];
-    const img = await Canvas.loadImage(p.image);
-    const pos = positions[i];
-    ctx.drawImage(img, pos.x - 50, pos.y - 50, 100, 100);
-  }
+  if (team.length < 9) return m.reply('❌ Non hai abbastanza giocatori nei ruoli giusti.');
 
-  const buffer = canvas.toBuffer();
-  await conn.sendMessage(m.chat, { image: { buffer } }, { quoted: m });
+  const renderLine = (label, players) =>
+    players.map(p => `${label} *${p.name}* (${p.rating}⭐)`).join('\n');
+
+  const gk = renderLine('🧤', team.filter(p => p.position.toUpperCase() === 'GK'));
+  const def = renderLine('🛡️', team.filter(p => ['CB', 'LB', 'RB'].includes(p.position.toUpperCase())));
+  const mid = renderLine('⚙️', team.filter(p => ['CDM', 'CM', 'CAM', 'LM', 'RM'].includes(p.position.toUpperCase())));
+  const att = renderLine('🎯', team.filter(p => ['ST', 'CF', 'LW', 'RW'].includes(p.position.toUpperCase())));
+
+  const message = `
+⚽ *La tua squadra provvisoria* ⚽
+
+${gk}
+
+${def}
+
+${mid}
+
+${att}
+
+💾 Premi il bottone per *salvare la rosa*
+  `;
+
+  await conn.sendMessage(m.chat, {
+    text: message,
+    buttons: [
+      { buttonId: '.salvarosa', buttonText: { displayText: '💾 Salva Rosa' }, type: 1 }
+    ],
+    headerType: 1
+  }, { quoted: m });
+
+  // Salvataggio via bottone
+  conn.saveRosa = conn.saveRosa || {};
+  conn.saveRosa[user] = team;
 };
 
-handler.command = /^futteamsquad$/i;
+handler.command = /^futformation$/i;
 handler.tags = ['fifa'];
-handler.help = ['futteamsquad'];
+handler.help = ['futformation'];
+
 export default handler;
