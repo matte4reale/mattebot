@@ -1,6 +1,7 @@
 import fs from 'fs';
+import Canvas from 'canvas';
 
-const players = JSON.parse(fs.readFileSync('./plugins/fifaPlayers_packs.json', 'utf-8'));
+const players = JSON.parse(fs.readFileSync('./plugins/fifaPlayers_packs.json', 'utf8'));
 
 let handler = async (m, { conn, command, args }) => {
   const user = m.sender;
@@ -12,102 +13,122 @@ let handler = async (m, { conn, command, args }) => {
 
   const prices = { bronze: 100, silver: 300, gold: 800 };
 
+  // --- FUT INVENTORY & OPEN BUTTONS ---
   if (command === 'fut') {
     const txt =
-      `💼 *Inventario FUT:*\n\n` +
-      `🥉 Bronze: ${data.fifaInventory.bronze}\n` +
-      `🥈 Silver: ${data.fifaInventory.silver}\n` +
-      `🥇 Gold: ${data.fifaInventory.gold}\n\n` +
+      `💼 *Inventario FUT:*\n` +
+      `🥉 Bronze: ${data.fifaInventory.bronze} • 🥈 Silver: ${data.fifaInventory.silver} • 🥇 Gold: ${data.fifaInventory.gold}\n\n` +
       `💸 Holly Cash: ${data.hollycash}\n\n` +
-      `🎁 Scegli un pacchetto da aprire 👇`;
+      `🎁 Scegli pacchetto da aprire 👇`;
+
+    const buttons = [];
+    for (let type of ['bronze','silver','gold']) {
+      if (data.fifaInventory[type] > 0) {
+        const emoji = type==='bronze'?'🥉': type==='silver'?'🥈':'🥇';
+        buttons.push({
+          buttonId: `.open ${type}`,
+          buttonText: { displayText: `${emoji} Apri ${type.charAt(0).toUpperCase()+type.slice(1)}` },
+          type: 1
+        });
+      }
+    }
+    if (buttons.length === 0) {
+      buttons.push({
+        buttonId: '.futstore',
+        buttonText: { displayText: '🛒 Compra pacchetti' },
+        type: 1
+      });
+    }
 
     return conn.sendMessage(m.chat, {
       text: txt,
       footer: 'Holly FUT Bot ⚽',
-      buttons: [
-        { buttonId: '.open bronze', buttonText: { displayText: '🥉 Apri Bronze' }, type: 1 },
-        { buttonId: '.open silver', buttonText: { displayText: '🥈 Apri Silver' }, type: 1 },
-        { buttonId: '.open gold', buttonText: { displayText: '🥇 Apri Gold' }, type: 1 }
-      ],
+      buttons,
       headerType: 1
     }, { quoted: m });
   }
 
+  // --- STORE & BUY BUTTONS ---
   if (command === 'futstore') {
     const txt =
-      `🛒 *FUT Store*\n\n` +
-      `🥉 Bronze - ${prices.bronze} 💸\n` +
-      `🥈 Silver - ${prices.silver} 💸\n` +
-      `🥇 Gold - ${prices.gold} 💸\n\n` +
-      `💸 Saldo: ${data.hollycash} Holly Cash\n\n` +
-      `📦 Scegli un pacchetto da acquistare 👇`;
+      `🛒 *FUT Store*\n` +
+      `🥉 Bronze: ${prices.bronze} 💸\n` +
+      `🥈 Silver: ${prices.silver} 💸\n` +
+      `🥇 Gold: ${prices.gold} 💸\n\n` +
+      `💸 Saldo attuale: ${data.hollycash}`;
 
     return conn.sendMessage(m.chat, {
       text: txt,
-      footer: 'Compra con Holly Cash ⚽',
-      buttons: [
-        { buttonId: '.futbuy bronze', buttonText: { displayText: '🥉 Compra Bronze' }, type: 1 },
-        { buttonId: '.futbuy silver', buttonText: { displayText: '🥈 Compra Silver' }, type: 1 },
-        { buttonId: '.futbuy gold', buttonText: { displayText: '🥇 Compra Gold' }, type: 1 }
-      ],
+      footer: 'Compra pacchetti con Holly Cash',
+      buttons: ['bronze','silver','gold'].map(type=>({
+        buttonId: `.futbuy ${type}`,
+        buttonText: { displayText: `${type.charAt(0).toUpperCase()+type.slice(1)}` },
+        type: 1
+      })),
       headerType: 1
     }, { quoted: m });
   }
 
+  // --- PURCHASE ---
   if (command === 'futbuy') {
     const type = args[0]?.toLowerCase();
-    if (!['bronze', 'silver', 'gold'].includes(type)) {
-      return m.reply('❌ Usa: .futbuy bronze/silver/gold');
-    }
+    if (!prices[type]) return m.reply('❌ Usa: .futbuy bronze/silver/gold');
 
-    const price = prices[type];
-    if (data.hollycash < price) {
-      return m.reply(`❌ Ti servono ${price} Holly Cash 💸 per comprare un pacchetto *${type.toUpperCase()}*`);
+    if (data.hollycash < prices[type]) {
+      return m.reply(`❌ Ti servono ${prices[type]} Holly Cash 💸 per un pacchetto ${type}`);
     }
-
-    data.hollycash -= price;
+    data.hollycash -= prices[type];
     data.fifaInventory[type]++;
-
-    return m.reply(`✅ Hai comprato un pacchetto *${type.toUpperCase()}*!\n📦 Ora ne hai: ${data.fifaInventory[type]}`);
+    return m.reply(`✅ Acquistato un pacchetto *${type}*! Ne hai ora: ${data.fifaInventory[type]}`);
   }
 
+  // --- OPEN PACK ---
   if (command === 'open') {
     const type = args[0]?.toLowerCase();
-    if (!['bronze', 'silver', 'gold'].includes(type)) {
-      return m.reply('❌ Specifica un tipo: .open bronze / silver / gold');
-    }
-
-    if (data.fifaInventory[type] <= 0) {
-      return m.reply(`❌ Non hai pacchetti *${type.toUpperCase()}* da aprire.`);
-    }
+    if (!['bronze','silver','gold'].includes(type)) return m.reply('❌ Specifica il pacchetto da aprire.');
+    if (data.fifaInventory[type] <= 0) return m.reply(`❌ Nessun pacchetto ${type} da aprire.`);
 
     data.fifaInventory[type]--;
+    await conn.sendMessage(m.chat, { text: `🎉 Aprendo pacchetto *${type}*...` }, { quoted: m });
 
-    await conn.sendMessage(m.chat, {
-      text: `🎉 Aprendo pacchetto *${type.toUpperCase()}*...`
-    }, { quoted: m });
+    const pool = players.filter(p=>p.pack===type);
+    const cards = Array.from({length:3},()=> pool[Math.floor(Math.random()*pool.length)]);
+    const best=cards.sort((a,b)=>b.rating-a.rating)[0];
+    for (let [i,p] of cards.entries()) {
+      if (i===0) {
+        await conn.sendMessage(m.chat, {
+          image:{url:p.image},
+          caption:`🌟 *${p.name}* (${p.rating}⭐)\n📍 ${p.position} | ${p.club} | ${p.nation}`
+        },{quoted:m});
+      } else {
+        await conn.sendMessage(m.chat,{text:`➕ ${p.name} (${p.rating}⭐)`},{quoted:m});
+      }
+    }
+    data.fifaPlayers.push(...cards);
+  }
 
-    const filtered = players.filter(p => p.pack === type);
-    const cards = Array.from({ length: 3 }, () => filtered[Math.floor(Math.random() * filtered.length)]);
-    const best = [...cards].sort((a, b) => b.rating - a.rating)[0];
+  // --- FUTROSA: grafica collaglio ---
+  if (command === 'futrosa') {
+    if (!data.fifaPlayers.length) return m.reply('📭 Nessun giocatore in rosa.');
 
-    await conn.sendMessage(m.chat, {
-      image: { url: best.image },
-      caption: `🌟 *${best.name}* (${best.rating}⭐)\n📍 ${best.position} | ${best.club} | ${best.nation}`
-    }, { quoted: m });
+    const top = data.fifaPlayers.sort((a,b)=>b.rating-a.rating).slice(0,6); // max 6
 
-    for (let i = 1; i < cards.length; i++) {
-      await conn.sendMessage(m.chat, {
-        text: `➕ ${cards[i].name} (${cards[i].rating}⭐)`
-      }, { quoted: m });
+    const canvas = Canvas.createCanvas(900, 600);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle='#222'; ctx.fillRect(0,0,900,600);
+
+    for (let i=0;i<top.length;i++){
+      const img = await Canvas.loadImage(top[i].image);
+      const x = (i%3)*300, y = Math.floor(i/3)*300;
+      ctx.drawImage(img,x,y,300,300);
     }
 
-    data.fifaPlayers.push(...cards);
+    const buffer = canvas.toBuffer();
+    await conn.sendMessage(m.chat,{image:{buffer}}, {quoted:m});
   }
 };
 
-handler.command = /^(fut|open|futbuy|futstore)$/i;
-handler.tags = ['fifa'];
-handler.help = ['fut', 'open <bronze|silver|gold>', 'futbuy <bronze|silver|gold>', 'futstore'];
-
+handler.command=/^(fut|futstore|futbuy|open|futrosa)$/i;
+handler.tags=['fifa'];
+handler.help=['fut','futstore','open <type>','futrosa'];
 export default handler;
