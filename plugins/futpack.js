@@ -5,30 +5,43 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ✅ Carica i giocatori da file JSON
-const playersFile = path.join(__dirname, 'fifaPlayers_FULL.json');
-const fifaPlayers = JSON.parse(fs.readFileSync(playersFile, 'utf-8'));
+const playersFile = path.join(__dirname, 'fifaPlayers_packs.json');
+const allPlayers = JSON.parse(fs.readFileSync(playersFile, 'utf-8'));
 
-let handler = async (m, { conn }) => {
+const PACK_CONFIG = {
+  bronze: { cost: 100, name: 'Bronze', color: '🟫' },
+  silver: { cost: 300, name: 'Silver', color: '⚪' },
+  gold: { cost: 800, name: 'Gold', color: '🟡' }
+};
+
+async function openPack(m, conn, type) {
   const user = m.sender;
   global.db.data.users[user] = global.db.data.users[user] || {};
   const data = global.db.data.users[user];
 
-  data.fifaInventory = data.fifaInventory || { base: 1 };
-  if (data.fifaInventory.base <= 0) {
-    return m.reply(`❌ Non hai pacchetti *FUT Base* disponibili.`);
+  data.hollycash = data.hollycash || 0;
+  data.fifaPlayers = data.fifaPlayers || [];
+
+  const pack = PACK_CONFIG[type];
+  if (!pack) return m.reply('❌ Tipo di pacchetto non valido.');
+
+  if (data.hollycash < pack.cost) {
+    return m.reply(`💸 Ti servono *${pack.cost} Holly Cash* per aprire un pacchetto ${pack.name}.`);
   }
 
-  data.fifaInventory.base--;
+  data.hollycash -= pack.cost;
 
-  await conn.sendMessage(m.chat, { text: '⚽ Aprendo pacchetto FUT...' }, { quoted: m });
+  await conn.sendMessage(m.chat, {
+    text: `${pack.color} Aprendo pacchetto *${pack.name}*...\n💸 Holly Cash rimasti: ${data.hollycash}`,
+  }, { quoted: m });
 
-  const allPlayers = fifaPlayers.filter(p => p.rating >= 80 && p.image);
-  if (allPlayers.length === 0) return m.reply(`😢 Nessun giocatore trovato.`);
+  const players = allPlayers.filter(p => p.pack === type);
+  if (players.length === 0) return m.reply(`😢 Nessun giocatore trovato.`);
 
+  // Estrae 3 giocatori casuali
   const cards = [];
   for (let i = 0; i < 3; i++) {
-    const p = allPlayers[Math.floor(Math.random() * allPlayers.length)];
+    const p = players[Math.floor(Math.random() * players.length)];
     cards.push(p);
   }
 
@@ -39,7 +52,7 @@ let handler = async (m, { conn }) => {
     caption:
       `🎉 *${best.name}* (${best.rating}⭐)\n` +
       `📍 ${best.position} | ${best.club} | ${best.nation}\n\n` +
-      `📦 Pacchetti rimasti: ${data.fifaInventory.base}`
+      `💸 Holly Cash rimasti: ${data.hollycash}`
   }, { quoted: m });
 
   for (let i = 1; i < cards.length; i++) {
@@ -48,12 +61,18 @@ let handler = async (m, { conn }) => {
     }, { quoted: m });
   }
 
-  data.fifaPlayers = data.fifaPlayers || [];
   data.fifaPlayers.push(...cards);
-};
+}
 
-handler.command = /^futpack$/i;
-handler.tags = ['fifa'];
-handler.help = ['futpack'];
+// Handler multipli per i tre comandi
+const handler = {};
+['bronze', 'silver', 'gold'].forEach(type => {
+  const cmd = `fut${type}`;
+  handler[cmd] = async (m, { conn }) => openPack(m, conn, type);
+  handler[cmd].command = new RegExp(`^fut${type}$`, 'i');
+  handler[cmd].help = [`fut${type}`];
+  handler[cmd].tags = ['fifa'];
+  handler[cmd].disabled = false;
+});
 
-export default handler;
+export default Object.values(handler);
