@@ -12,76 +12,80 @@ let handler = async (m, { conn }) => {
 
   await conn.sendMessage(m.chat, { text: '⚽ Aprendo pacchetto FUT...' }, { quoted: m });
 
-  const allPlayers = [
+  // Lista di giocatori base per test – puoi ampliarla
+  const players = [
     {
-      id: '239/085',
-      name: 'Erling Haaland',
+      name: "Lionel Messi",
       rating: 91,
-      nation: 'Norvegia',
-      club: 'Man City',
-      position: 'ST'
+      position: "RW",
+      nation: "Argentina",
+      club: "Inter Miami",
+      pace: 85,
+      shooting: 89,
+      passing: 91,
+      dribbling: 94,
+      defending: 34,
+      physical: 65,
+      cardType: "gold"
     },
     {
-      id: '231/747',
-      name: 'Kylian Mbappé',
+      name: "Kylian Mbappe",
       rating: 91,
-      nation: 'Francia',
-      club: 'Paris SG',
-      position: 'ST'
+      position: "ST",
+      nation: "France",
+      club: "Paris SG",
+      pace: 97,
+      shooting: 88,
+      passing: 80,
+      dribbling: 92,
+      defending: 36,
+      physical: 76,
+      cardType: "gold"
     },
     {
-      id: '158/023',
-      name: 'Lionel Messi',
-      rating: 90,
-      nation: 'Argentina',
-      club: 'Inter Miami',
-      position: 'RW'
-    },
-    {
-      id: '192/985',
-      name: 'Kevin De Bruyne',
+      name: "Erling Haaland",
       rating: 91,
-      nation: 'Belgio',
-      club: 'Man City',
-      position: 'CAM'
-    },
-    {
-      id: '203/376',
-      name: 'Virgil van Dijk',
-      rating: 89,
-      nation: 'Olanda',
-      club: 'Liverpool',
-      position: 'CB'
-    },
-    {
-      id: '209/331',
-      name: 'Jan Oblak',
-      rating: 89,
-      nation: 'Slovenia',
-      club: 'Atlético Madrid',
-      position: 'GK'
-    },
-    {
-      id: '190/871',
-      name: 'Robert Lewandowski',
-      rating: 91,
-      nation: 'Polonia',
-      club: 'Barcelona',
-      position: 'ST'
+      position: "ST",
+      nation: "Norway",
+      club: "Man City",
+      pace: 89,
+      shooting: 93,
+      passing: 65,
+      dribbling: 80,
+      defending: 45,
+      physical: 88,
+      cardType: "gold"
     }
-    // Puoi aggiungere altri giocatori con id Sofifa validi
+    // Aggiungi altri come preferisci
   ];
 
   const cards = [];
   for (let i = 0; i < 3; i++) {
-    const p = allPlayers[Math.floor(Math.random() * allPlayers.length)];
+    const p = players[Math.floor(Math.random() * players.length)];
     cards.push(p);
   }
 
   const best = [...cards].sort((a, b) => b.rating - a.rating)[0];
 
-  const imageUrl = `https://cdn.sofifa.net/players/${best.id}/24_120.png`;
+  // Genera l’URL dell’immagine della carta
+  const query = new URLSearchParams({
+    name: best.name,
+    rating: best.rating,
+    position: best.position,
+    nation: best.nation,
+    club: best.club,
+    pace: best.pace,
+    shooting: best.shooting,
+    passing: best.passing,
+    dribbling: best.dribbling,
+    defending: best.defending,
+    physical: best.physical,
+    cardType: best.cardType
+  });
 
+  const imageUrl = `https://futcards.com/custom-card.png?${query.toString()}`;
+
+  // Invia la carta principale con immagine
   await conn.sendMessage(m.chat, {
     image: { url: imageUrl },
     caption:
