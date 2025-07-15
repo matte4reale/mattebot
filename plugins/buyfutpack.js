@@ -9,8 +9,8 @@ let handler = async (m, { conn, args }) => {
   const type = args[0]?.toLowerCase();
 
   const packPrices = {
-    base: 200,
-    rare: 500
+    base: 0,
+    rare: 0
   };
 
   if (!['base', 'rare'].includes(type)) {
