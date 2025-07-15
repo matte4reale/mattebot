@@ -1,55 +1,40 @@
 import fetch from 'node-fetch';
 
-// 🔐 Inserisci qui la tua chiave API FutDatabase
 const FUTDB_API_KEY = process.env.FUTDB_API_KEY || 'cb8ba931-bbc7-8413-5a51-fb3c0c382c22';
 
-async function getFifaPlayers() {
-  const url = 'https://www.easports.com/fifa/ultimate-team/api/fc-players?json=true&page=1';
-  const res = await fetch(url);
-
-  if (!res.ok) {
-    console.error('Errore API EA:', res.statusText);
-    return [];
-  }
-
-  const json = await res.json();
-  const players = json.items || [];
-
-  return players
-    .filter(p => p.rating >= 80)
-    .map(p => ({
-      id: p.id,
-      name: `${p.firstName} ${p.lastName}`,
-      rating: p.rating,
-      nation: p.nationName,
-      club: p.club.name,
-      position: p.position,
-      image: `https://futhead.cursecdn.com/static/img/14/players/${p.id}.png`
-    }));
-}
-
-async function getPlayerStatsFromFutDB(playerId) {
+// ✅ Ottiene giocatori casuali da FutDatabase
+async function getPlayersFromFutDB(count = 50) {
   try {
-    const res = await fetch(`https://api.futdatabase.com/api/players/${playerId}`, {
-      headers: {
-        'X-AUTH-TOKEN': FUTDB_API_KEY
-      }
+    const res = await fetch(`https://api.futdatabase.com/api/players?page=1&limit=${count}`, {
+      headers: { 'X-AUTH-TOKEN': FUTDB_API_KEY }
     });
 
-    if (!res.ok) throw new Error(`FutDB errore ${res.status}`);
-    const data = await res.json();
+    if (!res.ok) {
+      console.error('❌ Errore FutDB:', res.statusText);
+      return [];
+    }
 
-    return {
-      pace: data.pace,
-      shooting: data.shooting,
-      passing: data.passing,
-      dribbling: data.dribbling,
-      defending: data.defending,
-      physicality: data.physicality
-    };
+    const json = await res.json();
+    return json.items.map(p => ({
+      id: p.id,
+      name: p.name,
+      rating: p.rating,
+      nation: p.nation?.name || 'Sconosciuta',
+      club: p.club?.name || 'Sconosciuto',
+      position: p.position,
+      image: p.image || `https://futhead.cursecdn.com/static/img/14/players/${p.id}.png`,
+      stats: {
+        pace: p.pace,
+        shooting: p.shooting,
+        passing: p.passing,
+        dribbling: p.dribbling,
+        defending: p.defending,
+        physicality: p.physicality
+      }
+    }));
   } catch (err) {
-    console.warn(`⚠️ Errore stats per ID ${playerId}:`, err.message);
-    return null;
+    console.error('❌ Errore durante getPlayersFromFutDB:', err.message);
+    return [];
   }
 }
 
@@ -67,14 +52,13 @@ let handler = async (m, { conn }) => {
 
   await conn.sendMessage(m.chat, { text: '⚽ Aprendo pacchetto FUT...' }, { quoted: m });
 
-  const allPlayers = await getFifaPlayers();
+  const allPlayers = await getPlayersFromFutDB(100);
   if (allPlayers.length === 0) return m.reply(`😢 Nessun giocatore trovato.`);
 
   const cards = [];
   for (let i = 0; i < 3; i++) {
     const p = allPlayers[Math.floor(Math.random() * allPlayers.length)];
-    const stats = await getPlayerStatsFromFutDB(p.id);
-    cards.push({ ...p, stats });
+    cards.push(p);
   }
 
   const best = [...cards].sort((a, b) => b.rating - a.rating)[0];
@@ -95,15 +79,14 @@ let handler = async (m, { conn }) => {
     image: { url: best.image },
     caption:
       `🎉 *${best.name}* (${best.rating}⭐)\n` +
-      `📍 ${best.position} | ${best.club} | ${best.nation}\n` +
+      `📍 ${best.position} | ${best.club} | ${best.nation}` +
       statText +
       `\n\n📦 Pacchetti rimasti: ${data.fifaInventory.base}`
   }, { quoted: m });
 
   for (let i = 1; i < cards.length; i++) {
-    const card = cards[i];
     await conn.sendMessage(m.chat, {
-      text: `➕ ${card.name} (${card.rating}⭐)`
+      text: `➕ ${cards[i].name} (${cards[i].rating}⭐)`
     }, { quoted: m });
   }
 
