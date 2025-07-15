@@ -12,53 +12,67 @@ let handler = async (m, { conn }) => {
 
   await conn.sendMessage(m.chat, { text: '⚽ Aprendo pacchetto FUT...' }, { quoted: m });
 
-  // Lista di giocatori base per test – puoi ampliarla
+  // Giocatori predefiniti con ID Sofifa valido
   const players = [
     {
-      name: "Lionel Messi",
+      id: '239/085', // Haaland
+      name: 'Erling Haaland',
       rating: 91,
-      position: "RW",
-      nation: "Argentina",
-      club: "Inter Miami",
-      pace: 85,
-      shooting: 89,
-      passing: 91,
-      dribbling: 94,
-      defending: 34,
-      physical: 65,
-      cardType: "gold"
+      position: 'ST',
+      nation: 'Norvegia',
+      club: 'Man City'
     },
     {
-      name: "Kylian Mbappe",
+      id: '231/747', // Mbappé
+      name: 'Kylian Mbappé',
       rating: 91,
-      position: "ST",
-      nation: "France",
-      club: "Paris SG",
-      pace: 97,
-      shooting: 88,
-      passing: 80,
-      dribbling: 92,
-      defending: 36,
-      physical: 76,
-      cardType: "gold"
+      position: 'ST',
+      nation: 'Francia',
+      club: 'Paris SG'
     },
     {
-      name: "Erling Haaland",
+      id: '158/023', // Messi
+      name: 'Lionel Messi',
+      rating: 90,
+      position: 'RW',
+      nation: 'Argentina',
+      club: 'Inter Miami'
+    },
+    {
+      id: '192/985', // De Bruyne
+      name: 'Kevin De Bruyne',
       rating: 91,
-      position: "ST",
-      nation: "Norway",
-      club: "Man City",
-      pace: 89,
-      shooting: 93,
-      passing: 65,
-      dribbling: 80,
-      defending: 45,
-      physical: 88,
-      cardType: "gold"
+      position: 'CAM',
+      nation: 'Belgio',
+      club: 'Man City'
+    },
+    {
+      id: '190/871', // Lewandowski
+      name: 'Robert Lewandowski',
+      rating: 91,
+      position: 'ST',
+      nation: 'Polonia',
+      club: 'Barcelona'
+    },
+    {
+      id: '203/376', // Van Dijk
+      name: 'Virgil van Dijk',
+      rating: 89,
+      position: 'CB',
+      nation: 'Olanda',
+      club: 'Liverpool'
+    },
+    {
+      id: '209/331', // Oblak
+      name: 'Jan Oblak',
+      rating: 89,
+      position: 'GK',
+      nation: 'Slovenia',
+      club: 'Atlético Madrid'
     }
-    // Aggiungi altri come preferisci
   ];
 
+  // Pesca 3 giocatori casuali
   const cards = [];
   for (let i = 0; i < 3; i++) {
     const p = players[Math.floor(Math.random() * players.length)];
@@ -66,26 +80,9 @@ let handler = async (m, { conn }) => {
   }
 
   const best = [...cards].sort((a, b) => b.rating - a.rating)[0];
+  const imageUrl = `https://cdn.sofifa.net/players/${best.id}/24_120.png`;
 
-  // Genera l’URL dell’immagine della carta
-  const query = new URLSearchParams({
-    name: best.name,
-    rating: best.rating,
-    position: best.position,
-    nation: best.nation,
-    club: best.club,
-    pace: best.pace,
-    shooting: best.shooting,
-    passing: best.passing,
-    dribbling: best.dribbling,
-    defending: best.defending,
-    physical: best.physical,
-    cardType: best.cardType
-  });
-
-  const imageUrl = `https://futcards.com/custom-card.png?${query.toString()}`;
-
-  // Invia la carta principale con immagine
+  // Invia la carta più forte
   await conn.sendMessage(m.chat, {
     image: { url: imageUrl },
     caption:
@@ -94,12 +91,14 @@ let handler = async (m, { conn }) => {
       `📦 Pacchetti rimasti: ${data.fifaInventory.base}`
   }, { quoted: m });
 
+  // Invia anche gli altri due
   for (let i = 1; i < cards.length; i++) {
     await conn.sendMessage(m.chat, {
       text: `➕ ${cards[i].name} (${cards[i].rating}⭐)`
     }, { quoted: m });
   }
 
+  // Salva i giocatori trovati
   data.fifaPlayers = data.fifaPlayers || [];
   data.fifaPlayers.push(...cards);
 };
