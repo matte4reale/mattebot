@@ -2,14 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Ricava il percorso corrente (necessario in ESM)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Legge il file JSON localmente
-const fifaPlayers = JSON.parse(
-  fs.readFileSync(path.join(__dirname, 'fifaPlayers.json'), 'utf8')
-);
+// ✅ Carica i giocatori da file JSON
+const playersFile = path.join(__dirname, 'fifaPlayers_FULL.json');
+const fifaPlayers = JSON.parse(fs.readFileSync(playersFile, 'utf-8'));
 
 let handler = async (m, { conn }) => {
   const user = m.sender;
@@ -25,7 +23,7 @@ let handler = async (m, { conn }) => {
 
   await conn.sendMessage(m.chat, { text: '⚽ Aprendo pacchetto FUT...' }, { quoted: m });
 
-  const allPlayers = fifaPlayers.filter(p => p.rating >= 80);
+  const allPlayers = fifaPlayers.filter(p => p.rating >= 80 && p.image);
   if (allPlayers.length === 0) return m.reply(`😢 Nessun giocatore trovato.`);
 
   const cards = [];
@@ -35,10 +33,9 @@ let handler = async (m, { conn }) => {
   }
 
   const best = [...cards].sort((a, b) => b.rating - a.rating)[0];
-  const imageUrl = `https://cdn.sofifa.net/players/${best.id}/24_120.png`;
 
   await conn.sendMessage(m.chat, {
-    image: { url: imageUrl },
+    image: { url: best.image },
     caption:
       `🎉 *${best.name}* (${best.rating}⭐)\n` +
       `📍 ${best.position} | ${best.club} | ${best.nation}\n\n` +
