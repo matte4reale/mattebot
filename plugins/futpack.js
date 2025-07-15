@@ -1,3 +1,16 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Ricava il percorso corrente (necessario in ESM)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Legge il file JSON localmente
+const fifaPlayers = JSON.parse(
+  fs.readFileSync(path.join(__dirname, 'fifaPlayers.json'), 'utf8')
+);
+
 let handler = async (m, { conn }) => {
   const user = m.sender;
   global.db.data.users[user] = global.db.data.users[user] || {};
@@ -12,77 +25,18 @@ let handler = async (m, { conn }) => {
 
   await conn.sendMessage(m.chat, { text: '⚽ Aprendo pacchetto FUT...' }, { quoted: m });
 
-  // Giocatori predefiniti con ID Sofifa valido
-  const players = [
-    {
-      id: '239/085', // Haaland
-      name: 'Erling Haaland',
-      rating: 91,
-      position: 'ST',
-      nation: 'Norvegia',
-      club: 'Man City'
-    },
-    {
-      id: '231/747', // Mbappé
-      name: 'Kylian Mbappé',
-      rating: 91,
-      position: 'ST',
-      nation: 'Francia',
-      club: 'Paris SG'
-    },
-    {
-      id: '158/023', // Messi
-      name: 'Lionel Messi',
-      rating: 90,
-      position: 'RW',
-      nation: 'Argentina',
-      club: 'Inter Miami'
-    },
-    {
-      id: '192/985', // De Bruyne
-      name: 'Kevin De Bruyne',
-      rating: 91,
-      position: 'CAM',
-      nation: 'Belgio',
-      club: 'Man City'
-    },
-    {
-      id: '190/871', // Lewandowski
-      name: 'Robert Lewandowski',
-      rating: 91,
-      position: 'ST',
-      nation: 'Polonia',
-      club: 'Barcelona'
-    },
-    {
-      id: '203/376', // Van Dijk
-      name: 'Virgil van Dijk',
-      rating: 89,
-      position: 'CB',
-      nation: 'Olanda',
-      club: 'Liverpool'
-    },
-    {
-      id: '209/331', // Oblak
-      name: 'Jan Oblak',
-      rating: 89,
-      position: 'GK',
-      nation: 'Slovenia',
-      club: 'Atlético Madrid'
-    }
-  ];
+  const allPlayers = fifaPlayers.filter(p => p.rating >= 80);
+  if (allPlayers.length === 0) return m.reply(`😢 Nessun giocatore trovato.`);
 
-  // Pesca 3 giocatori casuali
   const cards = [];
   for (let i = 0; i < 3; i++) {
-    const p = players[Math.floor(Math.random() * players.length)];
+    const p = allPlayers[Math.floor(Math.random() * allPlayers.length)];
     cards.push(p);
   }
 
   const best = [...cards].sort((a, b) => b.rating - a.rating)[0];
   const imageUrl = `https://cdn.sofifa.net/players/${best.id}/24_120.png`;
 
-  // Invia la carta più forte
   await conn.sendMessage(m.chat, {
     image: { url: imageUrl },
     caption:
@@ -91,14 +45,12 @@ let handler = async (m, { conn }) => {
       `📦 Pacchetti rimasti: ${data.fifaInventory.base}`
   }, { quoted: m });
 
-  // Invia anche gli altri due
   for (let i = 1; i < cards.length; i++) {
     await conn.sendMessage(m.chat, {
       text: `➕ ${cards[i].name} (${cards[i].rating}⭐)`
     }, { quoted: m });
   }
 
-  // Salva i giocatori trovati
   data.fifaPlayers = data.fifaPlayers || [];
   data.fifaPlayers.push(...cards);
 };
