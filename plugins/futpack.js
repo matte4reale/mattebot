@@ -1,7 +1,7 @@
 import fs from 'fs';
 import Canvas from 'canvas';
 
-const players = JSON.parse(fs.readFileSync('./plugins/fifaPlayers_packs.json', 'utf8'));
+const players = JSON.parse(fs.readFileSync('./plugins/fut/fifaPlayers_packs.json', 'utf8'));
 
 let handler = async (m, { conn, command, args }) => {
   const user = m.sender;
