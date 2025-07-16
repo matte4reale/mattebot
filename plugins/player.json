@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Lionel Messi",
+    "rating": 93,
+    "position": "RW",
+    "image": "https://cdn.futbin.com/content/fifa23/img/players/158023.png"
+  },
+  {
+    "name": "Cristiano Ronaldo",
+    "rating": 91,
+    "position": "ST",
+    "image": "https://cdn.futbin.com/content/fifa23/img/players/20801.png"
+  },
+  {
+    "name": "Kylian Mbappé",
+    "rating": 91,
+    "position": "ST",
+    "image": "https://cdn.futbin.com/content/fifa23/img/players/231747.png"
+  },
+  {
+    "name": "Erling Haaland",
+    "rating": 88,
+    "position": "ST",
+    "image": "https://cdn.futbin.com/content/fifa23/img/players/239085.png"
+  },
+  {
+    "name": "Kevin De Bruyne",
+    "rating": 91,
+    "position": "CM",
+    "image": "https://cdn.futbin.com/content/fifa23/img/players/192985.png"
+  },
+  {
+    "name": "Neymar Jr",
+    "rating": 89,
+    "position": "LW",
+    "image": "https://cdn.futbin.com/content/fifa23/img/players/190871.png"
+  }
+]
