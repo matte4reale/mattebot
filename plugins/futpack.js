@@ -1,6 +1,6 @@
 import fs from 'fs';
 import Canvas from 'canvas';
-fifaPla
+
 const players = JSON.parse(fs.readFileSync('./plugins/players.package.json', 'utf8'));
 
 let handler = async (m, { conn, command, args }) => {
@@ -13,7 +13,7 @@ let handler = async (m, { conn, command, args }) => {
 
   const prices = { bronze: 100, silver: 300, gold: 800 };
 
-  // --- FUT INVENTORY & OPEN BUTTONS ---
+  // --- INVENTARIO ---
   if (command === 'fut') {
     const txt =
       `💼 *Inventario FUT:*\n` +
@@ -22,16 +22,17 @@ let handler = async (m, { conn, command, args }) => {
       `🎁 Scegli pacchetto da aprire 👇`;
 
     const buttons = [];
-    for (let type of ['bronze','silver','gold']) {
+    for (let type of ['bronze', 'silver', 'gold']) {
       if (data.fifaInventory[type] > 0) {
-        const emoji = type==='bronze'?'🥉': type==='silver'?'🥈':'🥇';
+        const emoji = type === 'bronze' ? '🥉' : type === 'silver' ? '🥈' : '🥇';
         buttons.push({
           buttonId: `.open ${type}`,
-          buttonText: { displayText: `${emoji} Apri ${type.charAt(0).toUpperCase()+type.slice(1)}` },
+          buttonText: { displayText: `${emoji} Apri ${type.charAt(0).toUpperCase() + type.slice(1)}` },
           type: 1
         });
       }
     }
+
     if (buttons.length === 0) {
       buttons.push({
         buttonId: '.futstore',
@@ -48,7 +49,7 @@ let handler = async (m, { conn, command, args }) => {
     }, { quoted: m });
   }
 
-  // --- STORE & BUY BUTTONS ---
+  // --- STORE ---
   if (command === 'futstore') {
     const txt =
       `🛒 *FUT Store*\n` +
@@ -60,16 +61,16 @@ let handler = async (m, { conn, command, args }) => {
     return conn.sendMessage(m.chat, {
       text: txt,
       footer: 'Compra pacchetti con Holly Cash',
-      buttons: ['bronze','silver','gold'].map(type=>({
+      buttons: ['bronze', 'silver', 'gold'].map(type => ({
         buttonId: `.futbuy ${type}`,
-        buttonText: { displayText: `${type.charAt(0).toUpperCase()+type.slice(1)}` },
+        buttonText: { displayText: `${type.charAt(0).toUpperCase() + type.slice(1)}` },
         type: 1
       })),
       headerType: 1
     }, { quoted: m });
   }
 
-  // --- PURCHASE ---
+  // --- ACQUISTO ---
   if (command === 'futbuy') {
     const type = args[0]?.toLowerCase();
     if (!prices[type]) return m.reply('❌ Usa: .futbuy bronze/silver/gold');
@@ -77,58 +78,65 @@ let handler = async (m, { conn, command, args }) => {
     if (data.hollycash < prices[type]) {
       return m.reply(`❌ Ti servono ${prices[type]} Holly Cash 💸 per un pacchetto ${type}`);
     }
+
     data.hollycash -= prices[type];
     data.fifaInventory[type]++;
     return m.reply(`✅ Acquistato un pacchetto *${type}*! Ne hai ora: ${data.fifaInventory[type]}`);
   }
 
-  // --- OPEN PACK ---
+  // --- APRI PACCHETTO ---
   if (command === 'open') {
     const type = args[0]?.toLowerCase();
-    if (!['bronze','silver','gold'].includes(type)) return m.reply('❌ Specifica il pacchetto da aprire.');
+    if (!['bronze', 'silver', 'gold'].includes(type)) return m.reply('❌ Specifica il pacchetto da aprire.');
     if (data.fifaInventory[type] <= 0) return m.reply(`❌ Nessun pacchetto ${type} da aprire.`);
 
     data.fifaInventory[type]--;
     await conn.sendMessage(m.chat, { text: `🎉 Aprendo pacchetto *${type}*...` }, { quoted: m });
 
-    const pool = players.filter(p=>p.pack===type);
-    const cards = Array.from({length:3},()=> pool[Math.floor(Math.random()*pool.length)]);
-    const best=cards.sort((a,b)=>b.rating-a.rating)[0];
-    for (let [i,p] of cards.entries()) {
-      if (i===0) {
+    const pool = players.filter(p => p.pack === type);
+    const cards = Array.from({ length: 3 }, () => pool[Math.floor(Math.random() * pool.length)]);
+    const best = cards.sort((a, b) => b.rating - a.rating)[0];
+
+    for (let [i, p] of cards.entries()) {
+      if (i === 0) {
         await conn.sendMessage(m.chat, {
-          image:{url:p.image},
-          caption:`🌟 *${p.name}* (${p.rating}⭐)\n📍 ${p.position} | ${p.club} | ${p.nation}`
-        },{quoted:m});
+          image: { url: p.image },
+          caption: `🌟 *${p.name}* (${p.rating}⭐)\n📍 ${p.position} | ${p.club} | ${p.nation}`
+        }, { quoted: m });
       } else {
-        await conn.sendMessage(m.chat,{text:`➕ ${p.name} (${p.rating}⭐)`},{quoted:m});
+        await conn.sendMessage(m.chat, {
+          text: `➕ ${p.name} (${p.rating}⭐)`
+        }, { quoted: m });
       }
     }
+
     data.fifaPlayers.push(...cards);
   }
 
-  // --- FUTROSA: grafica collaglio ---
+  // --- ROSA / COLLAGE ---
   if (command === 'futrosa') {
     if (!data.fifaPlayers.length) return m.reply('📭 Nessun giocatore in rosa.');
 
-    const top = data.fifaPlayers.sort((a,b)=>b.rating-a.rating).slice(0,6); // max 6
+    const top = data.fifaPlayers.sort((a, b) => b.rating - a.rating).slice(0, 6);
 
     const canvas = Canvas.createCanvas(900, 600);
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle='#222'; ctx.fillRect(0,0,900,600);
+    ctx.fillStyle = '#222';
+    ctx.fillRect(0, 0, 900, 600);
 
-    for (let i=0;i<top.length;i++){
+    for (let i = 0; i < top.length; i++) {
       const img = await Canvas.loadImage(top[i].image);
-      const x = (i%3)*300, y = Math.floor(i/3)*300;
-      ctx.drawImage(img,x,y,300,300);
+      const x = (i % 3) * 300;
+      const y = Math.floor(i / 3) * 300;
+      ctx.drawImage(img, x, y, 300, 300);
     }
 
     const buffer = canvas.toBuffer();
-    await conn.sendMessage(m.chat,{image:{buffer}}, {quoted:m});
+    await conn.sendMessage(m.chat, { image: { buffer } }, { quoted: m });
   }
 };
 
-handler.command=/^(fut|futstore|futbuy|open|futrosa)$/i;
-handler.tags=['fifa'];
-handler.help=['fut','futstore','open <type>','futrosa'];
+handler.command = /^(fut|futstore|futbuy|open|futrosa)$/i;
+handler.tags = ['fifa'];
+handler.help = ['fut', 'futstore', 'open <type>', 'futrosa'];
 export default handler;
