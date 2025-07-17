@@ -4,6 +4,9 @@ import Canvas from 'canvas';
 const players = JSON.parse(fs.readFileSync('./plugins/fifaPlayers_packs.json', 'utf8'));
 
 let handler = async (m, { conn, command, args }) => {
+  // Normalizza il comando rimuovendo eventuale punto iniziale
+  command = command.replace(/^\./, '').toLowerCase();
+
   const user = m.sender;
   global.db.data.users[user] = global.db.data.users[user] || {};
   const data = global.db.data.users[user];
@@ -130,7 +133,7 @@ let handler = async (m, { conn, command, args }) => {
   }
 };
 
-handler.command = /^(fut|futstore|futbuy|open|futrosa)$/i;
+handler.command = /^\.?(fut|futstore|futbuy|open|futrosa)$/i;
 handler.tags = ['fifa'];
 handler.help = ['fut', 'futstore', 'futbuy <tipo>', 'open <tipo>', 'futrosa'];
 export default handler;
