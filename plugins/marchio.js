@@ -12,13 +12,13 @@ if (text === '.brum') {
   global.cooldowns[key] = now;
 
   const loghi = [
-    { url: 'https://i.ibb.co/7JznGDd/bmw.png', marca: 'bmw' },
-    { url: 'https://i.ibb.co/9tcwQZj/toyota.png', marca: 'toyota' },
-    { url: 'https://i.ibb.co/pK0vPjw/ford.png', marca: 'ford' },
-    { url: 'https://i.ibb.co/3sQjyBr/audi.png', marca: 'audi' },
-    { url: 'https://i.ibb.co/YZ2Ffp6/mercedes.png', marca: 'mercedes' }
-  ];
-
+  { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW.svg/1200px-BMW.svg.png', marca: 'bmw' },
+  { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Toyota_logo.png/800px-Toyota_logo.png', marca: 'toyota' },
+  { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Ford_logo_flat.svg/1024px-Ford_logo_flat.svg.png', marca: 'ford' },
+  { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Audi_logo_2020.png/800px-Audi_logo_2020.png', marca: 'audi' },
+  { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Benz_Logo_2010.svg/1024px-Mercedes-Benz_Logo_2010.svg.png', marca: 'mercedes' }
+];
+    
   const scelta = loghi[Math.floor(Math.random() * loghi.length)];
   const frasi = [
     '🚘 *INDOVINA LA MARCA DAL LOGO!*',
