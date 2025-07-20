@@ -1,202 +1,52 @@
 [
-  {
-    "nome": "Ferrari",
-    "url": "https://upload.wikimedia.org/wikipedia/en/thumb/d/d4/Ferrari-Logo.svg/1200px-Ferrari-Logo.svg.png"
-  },
-  {
-    "nome": "Audi",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Audi_Logo.svg/1200px-Audi_Logo.svg.png"
-  },
-  {
-    "nome": "BMW",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/BMW_logo_%282020%29.svg/1200px-BMW_logo_%282020%29.svg.png"
-  },
-  {
-    "nome": "Mercedes",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Mercedes-Logo.svg/1200px-Mercedes-Logo.svg.png"
-  },
-  {
-    "nome": "Lamborghini",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Lamborghini_Logo.svg/1200px-Lamborghini_Logo.svg.png"
-  },
-  {
-    "nome": "Toyota",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Toyota_logo.svg/1200px-Toyota_logo.svg.png"
-  },
-  {
-    "nome": "Honda",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Honda.svg/1200px-Honda.svg.png"
-  },
-  {
-    "nome": "Volkswagen",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Volkswagen_logo_2019.svg/1200px-Volkswagen_logo_2019.svg.png"
-  },
-  {
-    "nome": "Ford",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Ford_Motor_Company_Logo.svg/1200px-Ford_Motor_Company_Logo.svg.png"
-  },
-  {
-    "nome": "Porsche",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Porsche_logo.svg/1200px-Porsche_logo.svg.png"
-  },
-  {
-    "nome": "Chevrolet",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Chevrolet-logo.png"
-  },
-  {
-    "nome": "Nissan",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Nissan_logo.svg/1200px-Nissan_logo.svg.png"
-  },
-  {
-    "nome": "Hyundai",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Hyundai_Motor_Company_logo.svg/1200px-Hyundai_Motor_Company_logo.svg.png"
-  },
-  {
-    "nome": "Kia",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Kia_logo_2021.svg/1200px-Kia_logo_2021.svg.png"
-  },
-  {
-    "nome": "Tesla",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Tesla_Motors.svg/1200px-Tesla_Motors.svg.png"
-  },
-  {
-    "nome": "Mazda",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Mazda_logo.svg/1200px-Mazda_logo.svg.png"
-  },
-  {
-    "nome": "Peugeot",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Peugeot_Logo_2021.svg/1200px-Peugeot_Logo_2021.svg.png"
-  },
-  {
-    "nome": "Renault",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Renault_2021_text_logo.svg/1200px-Renault_2021_text_logo.svg.png"
-  },
-  {
-    "nome": "Citroën",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Citroen_2022_logo.svg/1200px-Citroen_2022_logo.svg.png"
-  },
-  {
-    "nome": "Subaru",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Subaru_logo.svg/1200px-Subaru_logo.svg.png"
-  },
-  {
-    "nome": "Mitsubishi",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Mitsubishi-logo.svg/1200px-Mitsubishi-logo.svg.png"
-  },
-  {
-    "nome": "Volvo",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Volvo-Iron-Mark-Black.svg/1200px-Volvo-Iron-Mark-Black.svg.png"
-  },
-  {
-    "nome": "Suzuki",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Suzuki_logo_2.svg/1200px-Suzuki_logo_2.svg.png"
-  },
-  {
-    "nome": "Škoda",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Skoda_Auto_logo.svg/1200px-Skoda_Auto_logo.svg.png"
-  },
-  {
-    "nome": "Fiat",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Fiat_Automobiles_logo.svg/1200px-Fiat_Automobiles_logo.svg.png"
-  },
-  {
-    "nome": "Alfa Romeo",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Alfa_Romeo_Logo_2015.svg/1200px-Alfa_Romeo_Logo_2015.svg.png"
-  },
-  {
-    "nome": "Lancia",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Lancia_Logo.svg/1200px-Lancia_Logo.svg.png"
-  },
-  {
-    "nome": "Bugatti",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Bugatti_logo.svg/1200px-Bugatti_logo.svg.png"
-  },
-  {
-    "nome": "Maserati",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Maserati_logo.svg/1200px-Maserati_logo.svg.png"
-  },
-  {
-    "nome": "Bentley",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Bentley_logo.svg/1200px-Bentley_logo.svg.png"
-  },
-  {
-    "nome": "Rolls-Royce",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Rolls-Royce_logo.svg/1200px-Rolls-Royce_logo.svg.png"
-  },
-  {
-    "nome": "Lotus",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Lotus_logo.svg/1200px-Lotus_logo.svg.png"
-  },
-  {
-    "nome": "Lexus",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Lexus_division_emblem.svg/1200px-Lexus_division_emblem.svg.png"
-  },
-  {
-    "nome": "Infiniti",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Infiniti_logo.svg/1200px-Infiniti_logo.svg.png"
-  },
-  {
-    "nome": "Acura",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Acura_logo.svg/1200px-Acura_logo.svg.png"
-  },
-  {
-    "nome": "Genesis",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Genesis_logo.svg/1200px-Genesis_logo.svg.png"
-  },
-  {
-    "nome": "Chery",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Chery_logo.svg/1200px-Chery_logo.svg.png"
-  },
-  {
-    "nome": "Geely",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Geely_logo.svg/1200px-Geely_logo.svg.png"
-  },
-  {
-    "nome": "Jaguar",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Jaguar_Cars_logo.svg/1200px-Jaguar_Cars_logo.svg.png"
-  },
-  {
-    "nome": "Land Rover",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Land_Rover_logo.svg/1200px-Land_Rover_logo.svg.png"
-  },
-  {
-    "nome": "DS Automobiles",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/DS_Automobiles_logo.svg/1200px-DS_Automobiles_logo.svg.png"
-  },
-  {
-    "nome": "Dacia",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Dacia_logo.svg/1200px-Dacia_logo.svg.png"
-  },
-  {
-    "nome": "Opel",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Opel_logo_2021.svg/1200px-Opel_logo_2021.svg.png"
-  },
-  {
-    "nome": "SEAT",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/SEAT_logo_2012.svg/1200px-SEAT_logo_2012.svg.png"
-  },
-  {
-    "nome": "Saab",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Saab_logo.svg/1200px-Saab_logo.svg.png"
-  },
-  {
-    "nome": "Tata",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Tata_Motors_logo.svg/1200px-Tata_Motors_logo.svg.png"
-  },
-  {
-    "nome": "Perodua",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Perodua_logo.svg/1200px-Perodua_logo.svg.png"
-  },
-  {
-    "nome": "BAIC",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/BAIC_Group_logo.svg/1200px-BAIC_Group_logo.svg.png"
-  },
-  {
-    "nome": "Zotye",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Zotye_logo.svg/1200px-Zotye_logo.svg.png"
-  },
-  {
-    "nome": "Proton",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Proton_logo.svg/1200px-Proton_logo.svg.png"
-  }
+  { "nome": "Ferrari", "url": "https://upload.wikimedia.org/wikipedia/en/0/03/Ferrari-Logo.svg" },
+  { "nome": "Audi", "url": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Audi_logo_2016.svg" },
+  { "nome": "BMW", "url": "https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg" },
+  { "nome": "Mercedes", "url": "https://upload.wikimedia.org/wikipedia/commons/9/90/Mercedes-Logo.svg" },
+  { "nome": "Lamborghini", "url": "https://upload.wikimedia.org/wikipedia/en/6/6d/Lamborghini_logo.svg" },
+  { "nome": "Toyota", "url": "https://upload.wikimedia.org/wikipedia/commons/9/9d/Toyota_logo.svg" },
+  { "nome": "Honda", "url": "https://upload.wikimedia.org/wikipedia/commons/7/7a/Honda_logo.svg" },
+  { "nome": "Volkswagen", "url": "https://upload.wikimedia.org/wikipedia/commons/2/28/Volkswagen_logo_2019.svg" },
+  { "nome": "Ford", "url": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Ford_logo_flat.svg" },
+  { "nome": "Porsche", "url": "https://upload.wikimedia.org/wikipedia/en/2/2e/Porsche_logo.svg" },
+  { "nome": "Chevrolet", "url": "https://upload.wikimedia.org/wikipedia/commons/4/4a/Chevrolet_logo.svg" },
+  { "nome": "Nissan", "url": "https://upload.wikimedia.org/wikipedia/commons/8/86/Nissan_logo.svg" },
+  { "nome": "Hyundai", "url": "https://upload.wikimedia.org/wikipedia/commons/3/32/Hyundai_logo.svg" },
+  { "nome": "Kia", "url": "https://upload.wikimedia.org/wikipedia/commons/5/58/Kia_logo.svg" },
+  { "nome": "Tesla", "url": "https://upload.wikimedia.org/wikipedia/commons/b/bb/Tesla_T_symbol.svg" },
+  { "nome": "Mazda", "url": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Mazda_logo.svg" },
+  { "nome": "Peugeot", "url": "https://upload.wikimedia.org/wikipedia/commons/1/14/Peugeot_Logo_2010.svg" },
+  { "nome": "Renault", "url": "https://upload.wikimedia.org/wikipedia/commons/6/60/Renault_logo.svg" },
+  { "nome": "Citroën", "url": "https://upload.wikimedia.org/wikipedia/commons/9/98/Citroen_logo.svg" },
+  { "nome": "Subaru", "url": "https://upload.wikimedia.org/wikipedia/commons/1/12/Subaru_logo.svg" },
+  { "nome": "Mitsubishi", "url": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Mitsubishi_logo.svg" },
+  { "nome": "Volvo", "url": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Volvo_Iron_Mark.svg" },
+  { "nome": "Suzuki", "url": "https://upload.wikimedia.org/wikipedia/commons/2/29/Suzuki_logo.svg" },
+  { "nome": "Skoda", "url": "https://upload.wikimedia.org/wikipedia/commons/9/99/Škoda_Auto_logo.svg" },
+  { "nome": "Fiat", "url": "https://upload.wikimedia.org/wikipedia/commons/a/ae/Fiat_logo.svg" },
+  { "nome": "Alfa Romeo", "url": "https://upload.wikimedia.org/wikipedia/en/d/d0/Alfa-Romeo-Logo.svg" },
+  { "nome": "Lancia", "url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/Lancia_Logo.svg" },
+  { "nome": "Bugatti", "url": "https://upload.wikimedia.org/wikipedia/commons/1/10/Bugatti_logo.svg" },
+  { "nome": "Maserati", "url": "https://upload.wikimedia.org/wikipedia/commons/3/38/Maserati_logo.svg" },
+  { "nome": "Bentley", "url": "https://upload.wikimedia.org/wikipedia/commons/5/53/Bentley_logo.svg" },
+  { "nome": "Rolls-Royce", "url": "https://upload.wikimedia.org/wikipedia/commons/f/fd/Rolls-Royce_Logo.svg" },
+  { "nome": "Lotus", "url": "https://upload.wikimedia.org/wikipedia/en/6/60/Lotus_logo.svg" },
+  { "nome": "Lexus", "url": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Lexus_logo.svg" },
+  { "nome": "Infiniti", "url": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Infiniti_logo.svg" },
+  { "nome": "Acura", "url": "https://upload.wikimedia.org/wikipedia/commons/1/1a/Acura_logo.svg" },
+  { "nome": "Genesis", "url": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Genesis_Motor_logo.svg" },
+  { "nome": "Chery", "url": "https://upload.wikimedia.org/wikipedia/commons/3/31/Chery_logo.svg" },
+  { "nome": "Geely", "url": "https://upload.wikimedia.org/wikipedia/commons/7/7c/Geely_logo.svg" },
+  { "nome": "Jaguar", "url": "https://upload.wikimedia.org/wikipedia/en/6/6f/Jaguar_logo.svg" },
+  { "nome": "Land Rover", "url": "https://upload.wikimedia.org/wikipedia/en/4/42/Land_Rover_logo.svg" },
+  { "nome": "DS Automobiles", "url": "https://upload.wikimedia.org/wikipedia/commons/f/fb/DS_Automobiles_logo.svg" },
+  { "nome": "Dacia", "url": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Dacia_logo.svg" },
+  { "nome": "Opel", "url": "https://upload.wikimedia.org/wikipedia/commons/7/70/Opel_logo_2017.svg" },
+  { "nome": "SEAT", "url": "https://upload.wikimedia.org/wikipedia/commons/4/4d/SEAT_logo_2017.svg" },
+  { "nome": "Saab", "url": "https://upload.wikimedia.org/wikipedia/commons/e/e1/Saab_logo.svg" },
+  { "nome": "Tata", "url": "https://upload.wikimedia.org/wikipedia/commons/0/03/Tata_Motors_logo.svg" },
+  { "nome": "Perodua", "url": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Perodua_logo.svg" },
+  { "nome": "BAIC", "url": "https://upload.wikimedia.org/wikipedia/commons/e/e5/BAIC_Group_logo.svg" },
+  { "nome": "Zotye", "url": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Zotye_logo.svg" },
+  { "nome": "Proton", "url": "https://upload.wikimedia.org/wikipedia/commons/f/f4/Proton_logo.svg" }
 ]
