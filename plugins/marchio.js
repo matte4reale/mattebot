@@ -61,7 +61,7 @@ let handler = async (m, { conn, args, isAdmin }) => {
   await conn.sendMessage(m.chat, { image: { url: scelta.url }, caption: `${frase}\n\nHai 60 secondi per rispondere!` }, { quoted: m })
 }
 
-handler.help = ['logo', 'skiplogo']
+handler.help = ['auto', 'skiplogo']
 handler.tags = ['game']
 handler.command = ['logo', 'skiplogo']
 
