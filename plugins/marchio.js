@@ -26,14 +26,14 @@ let handler = async (m, { conn, isAdmin }) => {
     }
     global.cooldowns[key] = now;
 
-    // Lista di loghi reali hostati (controllati)
+    // Lista di loghi reali hostati
     const loghi = [
       { url: 'https://i.ibb.co/7JznGDd/bmw.png', marca: 'bmw' },
       { url: 'https://i.ibb.co/9tcwQZj/toyota.png', marca: 'toyota' },
       { url: 'https://i.ibb.co/pK0vPjw/ford.png', marca: 'ford' },
       { url: 'https://i.ibb.co/3sQjyBr/audi.png', marca: 'audi' },
       { url: 'https://i.ibb.co/YZ2Ffp6/mercedes.png', marca: 'mercedes' }
-      // Altri da aggiungere qui...
+      // Puoi aggiungere altri qui...
     ];
 
     const scelta = loghi[Math.floor(Math.random() * loghi.length)];
@@ -66,12 +66,12 @@ let handler = async (m, { conn, isAdmin }) => {
   }
 };
 
-// Logica per controllare la risposta
+// Controlla la risposta prima che venga processata come comando
 handler.before = async (m, { conn }) => {
   const chat = m.chat;
   const game = global.logoGame?.[chat];
   if (!game) return;
-  if (m.key.fromMe) return; // Ignora bot
+  if (m.key.fromMe) return; // Ignora messaggi del bot stesso
 
   const text = m.text?.toLowerCase().trim();
   if (!text) return;
