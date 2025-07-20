@@ -10,7 +10,7 @@ let handler = async (m, { conn, args, participants, isAdmin, isBotAdmin }) => {
     }
 
     clearTimeout(global.marchioGame[m.chat].timeout)
-    await conn.reply(m.chat, `🛑 *Gioco dei marchi interrotto dall'admin*\n✨ La risposta era: *${global.marchioGame[m.chat].risposta}*`, m)
+    await conn.reply(m.chat, `🛑 *Gioco dei marchi interrotto dall'admin*\n✨ La risposta era: *${global.marchioGame[m.chat].rispostaOriginale}*`, m)
     delete global.marchioGame[m.chat]
     return
   }
@@ -19,25 +19,29 @@ let handler = async (m, { conn, args, participants, isAdmin, isBotAdmin }) => {
     return m.reply('⚠️ C\'è già una partita attiva in questo gruppo!')
   }
 
+  global.cooldowns = global.cooldowns || {}
   const cooldownKey = `marchio_${m.chat}`
-  const lastGame = global.cooldowns?.[cooldownKey] || 0
+  const lastGame = global.cooldowns[cooldownKey] || 0
   const now = Date.now()
-  const cooldownTime = 10000
+  const cooldownTime = 10000 // 10 secondi cooldown
 
   if (now - lastGame < cooldownTime) {
     const remainingTime = Math.ceil((cooldownTime - (now - lastGame)) / 1000)
     return m.reply(`⏳ *Aspetta ancora ${remainingTime} secondi prima di avviare un nuovo gioco!*`)
   }
 
-  global.cooldowns = global.cooldowns || {}
   global.cooldowns[cooldownKey] = now
 
-let marchi = []
+  let marchi = []
   try {
-    const marchi = JSON.parse(fs.readFileSync('./plugins/marchi.json'))
+    marchi = JSON.parse(fs.readFileSync('./plugins/marchi.json'))
   } catch (e) {
     console.error('Errore nel leggere il file JSON marchi:', e)
     return m.reply('❌ *Errore nel caricamento dei marchi da JSON.*')
+  }
+
+  if (!marchi.length) {
+    return m.reply('❌ *Il file marchi.json è vuoto o non contiene dati validi.*')
   }
 
   let scelta = marchi[Math.floor(Math.random() * marchi.length)]
@@ -45,7 +49,7 @@ let marchi = []
   try {
     let msg = await conn.sendMessage(m.chat, {
       image: { url: scelta.url },
-      caption: `🚘 *INDOVINA IL MARCHIO!* 🚘\n\n ㌌ *Rispondi con il nome della casa automobilistica!*\n⏱️ *Tempo disponibile:* 30 secondi\n\n> \`vare ✧ bot\``,
+      caption: `🚘 *INDOVINA IL MARCHIO!* 🚘\n\n㌌ *Rispondi con il nome della casa automobilistica!*\n⏱️ *Tempo disponibile:* 30 secondi\n\n> \`vare ✧ bot\``,
       quoted: m
     })
 
@@ -76,12 +80,17 @@ handler.before = async (m, { conn }) => {
 
   if (!game || !m.quoted || m.quoted.id !== game.id || m.key.fromMe) return
 
-  const normalize = str => str.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^\w\s]/gi, '').trim()
+  const normalize = str => str.toLowerCase()
+    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    .replace(/[^\w\s]/gi, '')
+    .trim()
+
   const userAnswer = normalize(m.text || '')
   const correctAnswer = normalize(game.risposta)
 
   if (!userAnswer || userAnswer.length < 2) return
 
+  // Controllo risposta (esatta o inclusa)
   const isCorrect = userAnswer === correctAnswer || correctAnswer.includes(userAnswer) || userAnswer.includes(correctAnswer)
 
   if (isCorrect) {
