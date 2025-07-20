@@ -1,141 +1,68 @@
-import fs from 'fs'
+let handler = async (m, { conn, args, isAdmin }) => {
+  if (m.text?.toLowerCase() === '.skiplogo') {
+    if (!m.isGroup) return m.reply('⚠️ Questo comando funziona solo nei gruppi!')
+    if (!global.logoGame?.[m.chat]) return m.reply('⚠️ Nessuna partita attiva in questo gruppo!')
 
-let handler = async (m, { conn, isAdmin }) => {
-  try {
-    // Comando per saltare il gioco (solo admin)
-    if (m.text?.toLowerCase() === '.skipmarchio') {
-      if (!m.isGroup) return m.reply('⚠️ Questo comando funziona solo nei gruppi!')
-      if (!global.marchioGame?.[m.chat]) return m.reply('⚠️ Non c\'è nessuna partita attiva in questo gruppo!')
-      if (!isAdmin && !m.fromMe) return m.reply('❌ *Questo comando può essere usato solo dagli admin!*')
-
-      clearTimeout(global.marchioGame[m.chat].timeout)
-      await conn.reply(m.chat, `🛑 *Gioco dei marchi interrotto dall'admin*\n✨ La risposta era: *${global.marchioGame[m.chat].rispostaOriginale}*`, m)
-      delete global.marchioGame[m.chat]
-      return
+    if (!isAdmin && !m.fromMe) {
+      return m.reply('❌ Solo admin possono usare questo comando!')
     }
 
-    // Se gioco già attivo
-    if (global.marchioGame?.[m.chat]) {
-      return m.reply('⚠️ C\'è già una partita attiva in questo gruppo!')
-    }
-
-    // Cooldown
-    global.cooldowns = global.cooldowns || {}
-    const cooldownKey = `marchio_${m.chat}`
-    const lastGame = global.cooldowns[cooldownKey] || 0
-    const now = Date.now()
-    const cooldownTime = 10000
-
-    if (now - lastGame < cooldownTime) {
-      const remaining = Math.ceil((cooldownTime - (now - lastGame)) / 1000)
-      return m.reply(`⏳ *Aspetta ancora ${remaining} secondi prima di avviare un nuovo gioco!*`)
-    }
-    global.cooldowns[cooldownKey] = now
-
-    // Leggi file marchi
-    let marchi
-    try {
-      const data = fs.readFileSync('./plugins/marchi.json', 'utf-8')
-      marchi = JSON.parse(data)
-    } catch (e) {
-      console.error('Errore nel leggere o parsare marchi.json:', e)
-      return m.reply('❌ *Errore nel caricamento dei marchi da JSON.*')
-    }
-
-    if (!Array.isArray(marchi) || marchi.length === 0) {
-      return m.reply('❌ *Il file marchi.json è vuoto o non è un array valido.*')
-    }
-
-    // Scegli marchio random
-    const scelta = marchi[Math.floor(Math.random() * marchi.length)]
-    if (!scelta?.nome || !scelta?.url) {
-      return m.reply('❌ *Formato marchio JSON non valido.*')
-    }
-
-    // Manda immagine e setup gioco
-    const msg = await conn.sendMessage(m.chat, {
-      image: { url: scelta.url },
-      caption: `🚘 *INDOVINA IL MARCHIO!* 🚘\n\n㌌ *Rispondi con il nome della casa automobilistica!*\n⏱️ *Tempo disponibile:* 30 secondi\n\n> \`vare ✧ bot\``,
-      quoted: m
-    })
-
-    global.marchioGame = global.marchioGame || {}
-    global.marchioGame[m.chat] = {
-      id: msg.key.id,
-      risposta: scelta.nome.toLowerCase(),
-      rispostaOriginale: scelta.nome,
-      tentativi: {},
-      startTime: Date.now(),
-      timeout: setTimeout(() => {
-        if (global.marchioGame?.[m.chat]) {
-          conn.reply(m.chat, `⏳ *Tempo scaduto!*\n\n🚘 *La risposta era:* *${scelta.nome}*\n\n> \`vare ✧ bot\``, msg)
-          delete global.marchioGame[m.chat]
-        }
-      }, 30000)
-    }
-
-  } catch (err) {
-    console.error('Errore nel comando marchio:', err)
-    m.reply('❌ *Si è verificato un errore. Riprova più tardi.*')
+    clearTimeout(global.logoGame[m.chat].timeout)
+    await conn.reply(m.chat, `🛑 Gioco interrotto dall'admin.\nLa risposta era: *${global.logoGame[m.chat].risposta}*`, m)
+    delete global.logoGame[m.chat]
+    return
   }
-}
 
-handler.before = async (m, { conn }) => {
-  try {
-    const chat = m.chat
-    const game = global.marchioGame?.[chat]
-    if (!game) return
-    if (!m.quoted || m.quoted.id !== game.id) return
-    if (m.key.fromMe) return
+  if (global.logoGame?.[m.chat]) {
+    return m.reply('⚠️ C\'è già una partita attiva in questo gruppo!')
+  }
 
-    const normalize = str => str.toLowerCase()
-      .normalize('NFD').replace(/\p{Diacritic}/gu, '')
-      .replace(/[^\w\s]/gi, '')
-      .trim()
+  // Lista di loghi auto (immagini di logo + marca corretta)
+  let loghi = [
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Toyota_logo.svg/512px-Toyota_logo.svg.png', marca: 'toyota' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Ford_logo_flat.svg/512px-Ford_logo_flat.svg.png', marca: 'ford' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Mercedes-Benz_logo_2010.svg/512px-Mercedes-Benz_logo_2010.svg.png', marca: 'mercedes' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/BMW_logo_%282021%29.svg/512px-BMW_logo_%282021%29.svg.png', marca: 'bmw' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Audi_logo.svg/512px-Audi_logo.svg.png', marca: 'audi' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Volkswagen_logo_2019.svg/512px-Volkswagen_logo_2019.svg.png', marca: 'volkswagen' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Lexus_logo.svg/512px-Lexus_logo.svg.png', marca: 'lexus' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Nissan_logo.svg/512px-Nissan_logo.svg.png', marca: 'nissan' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Hyundai_logo.svg/512px-Hyundai_logo.svg.png', marca: 'hyundai' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Kia_logo.svg/512px-Kia_logo.svg.png', marca: 'kia' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Chevrolet_logo.svg/512px-Chevrolet_logo.svg.png', marca: 'chevrolet' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Fiat_logo.svg/512px-Fiat_logo.svg.png', marca: 'fiat' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Jeep_logo.svg/512px-Jeep_logo.svg.png', marca: 'jeep' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Lamborghini_logo.svg/512px-Lamborghini_logo.svg.png', marca: 'lamborghini' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Ferrari_logo.svg/512px-Ferrari_logo.svg.png', marca: 'ferrari' },
+  ]
 
-    const userAnswer = normalize(m.text || '')
-    const correctAnswer = normalize(game.risposta)
+  let frasi = [
+    `🔷 *INDOVINA LA MARCA DAL LOGO!* 🔷`,
+    `🚗 *Che marca è questo logo?*`,
+    `🏁 *Sfida: riconosci il marchio dell'auto!*`,
+    `🔍 *Osserva il logo e scrivi la marca!*`,
+    `🎯 *Indovina il marchio del logo mostrato!*`,
+  ]
 
-    if (!userAnswer || userAnswer.length < 2) return
+  let scelta = loghi[Math.floor(Math.random() * loghi.length)]
+  let frase = frasi[Math.floor(Math.random() * frasi.length)]
 
-    const isCorrect = userAnswer === correctAnswer || correctAnswer.includes(userAnswer) || userAnswer.includes(correctAnswer)
-
-    if (isCorrect) {
-      clearTimeout(game.timeout)
-      const timeTaken = Math.round((Date.now() - game.startTime) / 1000)
-      const reward = 20 + Math.floor(Math.random() * 20)
-      const exp = 500
-
-      if (!global.db) global.db = { data: { users: {} } }
-      if (!global.db.data.users[m.sender]) global.db.data.users[m.sender] = {}
-
-      global.db.data.users[m.sender].euro = (global.db.data.users[m.sender].euro || 0) + reward
-      global.db.data.users[m.sender].exp = (global.db.data.users[m.sender].exp || 0) + exp
-
-      await conn.reply(chat, `✅ *RISPOSTA CORRETTA!*\n\n🏁 *Marchio:* ${game.rispostaOriginale}\n⏱️ *Tempo:* ${timeTaken}s\n🎁 *${reward}€*, *${exp}XP*\n\n> \`vare ✧ bot\``, m)
-      delete global.marchioGame[chat]
-
-    } else {
-      game.tentativi[m.sender] = (game.tentativi[m.sender] || 0) + 1
-      const tentativiRimasti = 3 - game.tentativi[m.sender]
-
-      if (tentativiRimasti <= 0) {
-        return conn.reply(chat, '❌ *Hai esaurito i tuoi 3 tentativi!*', m)
-      } else if (tentativiRimasti === 1) {
-        await conn.reply(chat, `❌ *Sbagliato!*\n💡 *Inizia con:* ${game.rispostaOriginale[0].toUpperCase()}\n🔤 *Lettere:* ${game.rispostaOriginale.length}`, m)
-      } else {
-        await conn.reply(chat, `❌ *Sbagliato!*\n📝 *Tentativi rimasti:* ${tentativiRimasti}`, m)
+  global.logoGame = global.logoGame || {}
+  global.logoGame[m.chat] = {
+    risposta: scelta.marca.toLowerCase(),
+    timeout: setTimeout(() => {
+      if (global.logoGame?.[m.chat]) {
+        conn.reply(m.chat, `⏰ Tempo scaduto!\nLa risposta corretta era: *${scelta.marca}*`, m)
+        delete global.logoGame[m.chat]
       }
-    }
-  } catch (e) {
-    console.error('Errore nel controllo risposta marchio:', e)
+    }, 60000) // 60 secondi per rispondere
   }
+
+  await conn.sendMessage(m.chat, { image: { url: scelta.url }, caption: `${frase}\n\nHai 60 secondi per rispondere!` }, { quoted: m })
 }
 
-handler.command = /^(marchio|skipmarchio)$/i
-handler.help = ['marchio']
-handler.tags = ['giochi']
-handler.group = true
-handler.register = true
+handler.help = ['logo', 'skiplogo']
+handler.tags = ['game']
+handler.command = ['logo', 'skiplogo']
 
 export default handler
