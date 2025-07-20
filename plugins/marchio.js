@@ -55,5 +55,5 @@ let handler = async (m, { conn, isAdmin }) => {
   );
 };
 
-handler.command = ['auto', 'skiplogo'];
+handler.command = ['brum', 'skiplogo'];
 export default handler;
