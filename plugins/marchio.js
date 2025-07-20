@@ -1,4 +1,5 @@
-let handler = async (m, { conn, args, participants, isAdmin, isBotAdmin }) => { if (m.text?.toLowerCase() === '.skipmarchio') { if (!m.isGroup) return m.reply('⚠️ Questo comando funziona solo nei gruppi!') if (!global.marchioGame?.[m.chat]) return m.reply('⚠️ Non c'è nessuna partita attiva in questo gruppo!')
+let handler = async (m, { conn, args, 
+participants, isAdmin, isBotAdmin }) => { if (m.text?.toLowerCase() === '.skipmarchio') { if (!m.isGroup) return m.reply('⚠️ Questo comando funziona solo nei gruppi!') if (!global.marchioGame?.[m.chat]) return m.reply('⚠️ Non c'è nessuna partita attiva in questo gruppo!')
 
 if (!isAdmin && !m.fromMe) {
   return m.reply('❌ *Questo comando può essere usato solo dagli admin!*')
