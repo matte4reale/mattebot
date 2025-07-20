@@ -25,11 +25,11 @@ let handler = async (m, { conn, isAdmin }) => {
     global.cooldowns[key] = now;
 
     const loghi = [
-      { url: 'https://logo.wine/logo/BMW/BMW-Logo.wine.png', marca: 'bmw' },
-      { url: 'https://logo.wine/logo/Toyota/Toyota-Logo.wine.png', marca: 'toyota' },
-      { url: 'https://logo.wine/logo/Ford/Ford-Logo.wine.png', marca: 'ford' },
-      { url: 'https://logo.wine/logo/Audi/Audi-Logo.wine.png', marca: 'audi' },
-      { url: 'https://logo.wine/logo/Mercedes-Benz/Mercedes-Benz-Logo.wine.png', marca: 'mercedes' }
+      { url: 'https://ibb.co/RTVHR6hB', marca: 'bmw' },
+      { url: 'https://ibb.co/HDx2NrM8', marca: 'toyota' },
+      { url: 'https://ibb.co/kbCvMft', marca: 'ford' },
+      { url: 'https://ibb.co/5hmmbW5B', marca: 'audi' },
+      { url: 'https://ibb.co/j9nGrP57', marca: 'mercedes' }
     ];
 
     const scelta = loghi[Math.floor(Math.random() * loghi.length)];
