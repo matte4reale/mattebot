@@ -34,7 +34,7 @@ let handler = async (m, { conn, args, participants, isAdmin, isBotAdmin }) => {
 
 let marchi = []
   try {
-    marchi = JSON.parse(fs.readFileSync('./lib/marchi.json'))
+    marchi = JSON.parse(fs.readFileSync('./plugins/marchi.json'))
   } catch (e) {
     console.error('Errore nel leggere il file JSON marchi:', e)
     return m.reply('❌ *Errore nel caricamento dei marchi da JSON.*')
