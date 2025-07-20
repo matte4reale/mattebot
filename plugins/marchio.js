@@ -1,4 +1,4 @@
- import fs from 'fs'
+import fs from 'fs'
 
 let handler = async (m, { conn, args, participants, isAdmin, isBotAdmin }) => { if (m.text?.toLowerCase() === '.skipmarchio') { if (!m.isGroup) return m.reply('⚠️ Questo comando funziona solo nei gruppi!') if (!global.marchioGame?.[m.chat]) return m.reply('⚠️ Non c'è nessuna partita attiva in questo gruppo!')
 
@@ -21,7 +21,7 @@ if (now - lastGame < cooldownTime) { const remainingTime = Math.ceil((cooldownTi
 
 global.cooldowns = global.cooldowns || {} global.cooldowns[cooldownKey] = now
 
-// Caricamento marchi da JSON let marchi = [] try { marchi = JSON.parse(fs.readFileSync('./plugin/marchi.json')) } catch (e) { console.error('Errore nel leggere il file JSON marchi:', e) return m.reply('❌ Errore nel caricamento dei marchi da JSON.') }
+let marchi = [] try { marchi = JSON.parse(fs.readFileSync('./plugin/marchi.json')) } catch (e) { console.error('Errore nel leggere il file JSON marchi:', e) return m.reply('❌ Errore nel caricamento dei marchi da JSON.') }
 
 let scelta = marchi[Math.floor(Math.random() * marchi.length)]
 
