@@ -1,5 +1,6 @@
-let handler = async (m, { conn, args, 
-participants, isAdmin, isBotAdmin }) => { if (m.text?.toLowerCase() === '.skipmarchio') { if (!m.isGroup) return m.reply('⚠️ Questo comando funziona solo nei gruppi!') if (!global.marchioGame?.[m.chat]) return m.reply('⚠️ Non c'è nessuna partita attiva in questo gruppo!')
+ import fs from 'fs'
+
+let handler = async (m, { conn, args, participants, isAdmin, isBotAdmin }) => { if (m.text?.toLowerCase() === '.skipmarchio') { if (!m.isGroup) return m.reply('⚠️ Questo comando funziona solo nei gruppi!') if (!global.marchioGame?.[m.chat]) return m.reply('⚠️ Non c'è nessuna partita attiva in questo gruppo!')
 
 if (!isAdmin && !m.fromMe) {
   return m.reply('❌ *Questo comando può essere usato solo dagli admin!*')
@@ -20,7 +21,60 @@ if (now - lastGame < cooldownTime) { const remainingTime = Math.ceil((cooldownTi
 
 global.cooldowns = global.cooldowns || {} global.cooldowns[cooldownKey] = now
 
-let marchi = [ { url: 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Ferrari-Logo.svg', nome: 'Ferrari' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Audi_Logo.svg', nome: 'Audi' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/BMW_logo_%282020%29.svg', nome: 'BMW' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/0/0c/Mercedes-Logo.svg', nome: 'Mercedes' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Lamborghini_Logo.svg', nome: 'Lamborghini' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/f/fd/Toyota_logo.svg', nome: 'Toyota' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Honda.svg', nome: 'Honda' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/f/f4/Volkswagen_logo_2019.svg', nome: 'Volkswagen' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/e/e3/Ford_Motor_Company_Logo.svg', nome: 'Ford' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/f/f5/Porsche_logo.svg', nome: 'Porsche' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/e/e8/Chevrolet-logo.png', nome: 'Chevrolet' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/d/db/Nissan_logo.svg', nome: 'Nissan' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/9/99/Hyundai_Motor_Company_logo.svg', nome: 'Hyundai' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/e/e0/Kia_logo_2021.svg', nome: 'Kia' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/c/c5/Tesla_Motors.svg', nome: 'Tesla' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/6/66/Mazda_logo.svg', nome: 'Mazda' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/3/3b/Peugeot_Logo_2021.svg', nome: 'Peugeot' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/7/7f/Renault_2021_text_logo.svg', nome: 'Renault' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/5/58/Citroen_2022_logo.svg', nome: 'Citroën' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/5/57/Subaru_logo.svg', nome: 'Subaru' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/0/0a/Mitsubishi-logo.svg', nome: 'Mitsubishi' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/8/8e/Volvo-Iron-Mark-Black.svg', nome: 'Volvo' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/e/e6/Suzuki_logo_2.svg', nome: 'Suzuki' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/e/e1/Skoda_Auto_logo.svg', nome: 'Škoda' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/4/4f/Fiat_Automobiles_logo.svg', nome: 'Fiat' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/3/3c/Alfa_Romeo_Logo_2015.svg', nome: 'Alfa Romeo' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/e/e2/Lancia_Logo.svg', nome: 'Lancia' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/5/57/Bugatti_logo.svg', nome: 'Bugatti' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/2/29/Maserati_logo.svg', nome: 'Maserati' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/5/54/Bentley_logo.svg', nome: 'Bentley' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/5/55/Rolls-Royce_logo.svg', nome: 'Rolls-Royce' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/f/f9/Lotus_logo.svg', nome: 'Lotus' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/d/d7/Lexus_division_emblem.svg', nome: 'Lexus' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/5/5f/Infiniti_logo.svg', nome: 'Infiniti' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Acura_logo.svg', nome: 'Acura' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/f/f3/Genesis_logo.svg', nome: 'Genesis' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Chery_logo.svg', nome: 'Chery' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/a/a1/Geely_logo.svg', nome: 'Geely' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/2/24/Jaguar_Cars_logo.svg', nome: 'Jaguar' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Land_Rover_logo.svg', nome: 'Land Rover' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/1/13/DS_Automobiles_logo.svg', nome: 'DS Automobiles' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/5/55/Dacia_logo.svg', nome: 'Dacia' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/7/7c/Opel_logo_2021.svg', nome: 'Opel' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/4/42/SEAT_logo_2012.svg', nome: 'SEAT' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Saab_logo.svg', nome: 'Saab' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/8/8a/Zotye_logo.svg', nome: 'Zotye' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/3/30/Proton_logo.svg', nome: 'Proton' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/5/56/Tata_Motors_logo.svg', nome: 'Tata' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/4/41/Perodua_logo.svg', nome: 'Perodua' }, { url: 'https://upload.wikimedia.org/wikipedia/commons/e/e5/BAIC_Group_logo.svg', nome: 'BAIC' } ]
+// Caricamento marchi da JSON let marchi = [] try { marchi = JSON.parse(fs.readFileSync('./plugin/marchi.json')) } catch (e) { console.error('Errore nel leggere il file JSON marchi:', e) return m.reply('❌ Errore nel caricamento dei marchi da JSON.') }
+
+let scelta = marchi[Math.floor(Math.random() * marchi.length)]
+
+try { let msg = await conn.sendMessage(m.chat, { image: { url: scelta.url }, caption: 🚘 *INDOVINA IL MARCHIO!* 🚘\n\n ㌌ *Rispondi con il nome della casa automobilistica!*\n⏱️ *Tempo disponibile:* 30 secondi\n\n> \vare ✧ bot``, quoted: m })
+
+global.marchioGame = global.marchioGame || {}
+global.marchioGame[m.chat] = {
+  id: msg.key.id,
+  risposta: scelta.nome.toLowerCase(),
+  rispostaOriginale: scelta.nome,
+  tentativi: {},
+  suggerito: false,
+  startTime: Date.now(),
+  timeout: setTimeout(() => {
+    if (global.marchioGame?.[m.chat]) {
+      conn.reply(m.chat, `⏳ *Tempo scaduto!*\n\n🚘 *La risposta era:* *${scelta.nome}*\n\n> \`vare ✧ bot\``, msg)
+      delete global.marchioGame[m.chat]
+    }
+  }, 30000)
+}
+
+} catch (e) { console.error(e) m.reply('❌ Errore durante l'avvio del gioco. Riprova.') } }
+
+handler.before = async (m, { conn }) => { const chat = m.chat const game = global.marchioGame?.[chat]
+
+if (!game || !m.quoted || m.quoted.id !== game.id || m.key.fromMe) return
+
+const normalize = str => str.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^\w\s]/gi, '').trim() const userAnswer = normalize(m.text || '') const correctAnswer = normalize(game.risposta)
+
+if (!userAnswer || userAnswer.length < 2) return
+
+const isCorrect = userAnswer === correctAnswer || correctAnswer.includes(userAnswer) || userAnswer.includes(correctAnswer)
+
+if (isCorrect) { clearTimeout(game.timeout) const timeTaken = Math.round((Date.now() - game.startTime) / 1000) let reward = 20 + Math.floor(Math.random() * 20) let exp = 500
+
+if (!global.db.data.users[m.sender]) global.db.data.users[m.sender] = {}
+global.db.data.users[m.sender].euro = (global.db.data.users[m.sender].euro || 0) + reward
+global.db.data.users[m.sender].exp = (global.db.data.users[m.sender].exp || 0) + exp
+
+await conn.reply(chat, `✅ *RISPOSTA CORRETTA!*\n\n🏁 *Marchio:* ${game.rispostaOriginale}\n⏱️ *Tempo:* ${timeTaken}s\n🎁 *${reward}€*, *${exp}XP*\n\n> \`vare ✧ bot\``, m)
+delete global.marchioGame[chat]
+
+} else { game.tentativi[m.sender] = (game.tentativi[m.sender] || 0) + 1 const tentativiRimasti = 3 - game.tentativi[m.sender]
+
+if (tentativiRimasti <= 0) {
+  return conn.reply(chat, '❌ *Hai esaurito i tuoi 3 tentativi!*', m)
+} else if (tentativiRimasti === 1) {
+  await conn.reply(chat, `❌ *Sbagliato!*\n💡 *Inizia con:* ${game.rispostaOriginale[0].toUpperCase()}\n🔤 *Lettere:* ${game.rispostaOriginale.length}`, m)
+} else {
+  await conn.reply(chat, `❌ *Sbagliato!*\n📝 *Tentativi rimasti:* ${tentativiRimasti}`, m)
+}
+
+} }
 
 handler.command = /^(marchio|skipmarchio)$/i handler.help = ['marchio'] handler.tags = ['giochi'] handler.group = true handler.register = true
 
