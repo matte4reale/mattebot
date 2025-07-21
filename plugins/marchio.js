@@ -1,85 +1,83 @@
+import fetch from 'node-fetch'
+
 let handler = async (m, { conn, isAdmin }) => {
-  const text = m.text?.toLowerCase();
+  if (m.text?.toLowerCase() === '.skipmarchio') {
+    if (!m.isGroup) return m.reply('⚠️ Questo comando funziona solo nei gruppi!')
+    if (!global.marchioGame?.[m.chat]) return m.reply('⚠️ Non c\'è nessuna partita attiva in questo gruppo!')
+    if (!isAdmin && !m.fromMe) return m.reply('❌ Solo gli admin possono usare questo comando.')
 
-  if (text === '.skiplogo') {
-    if (!m.isGroup) return m.reply('⚠️ Questo comando funziona solo nei gruppi!');
-    if (!global.logoGame?.[m.chat]) return m.reply('⚠️ Nessuna partita attiva!');
-    if (!isAdmin && !m.fromMe) return m.reply('❌ Solo admin possono interrompere!');
-
-    clearTimeout(global.logoGame[m.chat].timeout);
-    await conn.reply(m.chat, `🛑 Gioco interrotto. La risposta era: *${global.logoGame[m.chat].risposta}*`, m);
-    delete global.logoGame[m.chat];
-    return;
-  }
-
-  if (text === '.brum') {
-    if (global.logoGame?.[m.chat]) return m.reply('⚠️ Partita già in corso!');
-    global.cooldowns = global.cooldowns || {};
-    const now = Date.now();
-    const key = `logo_${m.chat}`;
-
-    if (now - (global.cooldowns[key] || 0) < 10000) {
-      const rem = Math.ceil((10000 - (now - global.cooldowns[key])) / 1000);
-      return m.reply(`⏳ Aspetta ancora ${rem}s prima di giocare di nuovo.`);
-    }
-    global.cooldowns[key] = now;
-
-    const loghi = [
-      { url: 'https://ibb.co/RTVHR6hB', marca: 'bmw' },
-      { url: 'https://ibb.co/HDx2NrM8', marca: 'toyota' },
-      { url: 'https://ibb.co/kbCvMft', marca: 'ford' },
-      { url: 'https://ibb.co/5hmmbW5B', marca: 'audi' },
-      { url: 'https://ibb.co/j9nGrP57', marca: 'mercedes' }
-    ];
-
-    const scelta = loghi[Math.floor(Math.random() * loghi.length)];
-    const frasi = [
-      '🚘 *INDOVINA LA MARCA DAL LOGO!*',
-      '🏁 *Che marca è questa?*',
-      '🔍 *Riconosci questo logo?*'
-    ];
-    const frase = frasi[Math.floor(Math.random() * frasi.length)];
-
-    global.logoGame = global.logoGame || {};
-    global.logoGame[m.chat] = {
-      risposta: scelta.marca,
-      timeout: setTimeout(() => {
-        if (global.logoGame?.[m.chat]) {
-          conn.reply(m.chat, `⏰ Tempo scaduto! Risposta: *${scelta.marca}*`, m);
-          delete global.logoGame[m.chat];
-        }
-      }, 60000)
-    };
-
-    await conn.sendMessage(
+    clearTimeout(global.marchioGame[m.chat].timeout)
+    await conn.reply(
       m.chat,
-      {
-        image: { url: scelta.url },
-        caption: `${frase}\n⌛ Hai 60 secondi per rispondere!`
-      },
-      { quoted: m }
-    );
+      `🛑 *Gioco interrotto dall'admin*\n✨ La risposta era: *${global.marchioGame[m.chat].risposta}*`,
+      m
+    )
+    delete global.marchioGame[m.chat]
+    return
   }
-};
 
-handler.before = async (m, { conn }) => {
-  const chat = m.chat;
-  const game = global.logoGame?.[chat];
-  if (!game) return;
-  if (m.key.fromMe) return;
-
-  const text = m.text?.toLowerCase().trim();
-  if (!text) return;
-
-  if (text === game.risposta) {
-    clearTimeout(game.timeout);
-    conn.reply(chat, `✅ *RISPOSTA CORRETTA!* 🎉\nLa marca era: *${game.risposta}*`, m);
-    delete global.logoGame[chat];
+  if (global.marchioGame?.[m.chat]) {
+    return m.reply('⚠️ C\'è già una partita attiva in questo gruppo!')
   }
-};
 
-handler.help = ['brum', 'skiplogo'];
-handler.tags = ['game'];
-handler.command = ['brum', 'skiplogo'];
+  const cooldownKey = `marchio_${m.chat}`
+  const now = Date.now()
+  const cooldownTime = 10000
 
-export default handler;
+  global.cooldowns = global.cooldowns || {}
+  const lastGame = global.cooldowns[cooldownKey] || 0
+  if (now - lastGame < cooldownTime) {
+    const remaining = Math.ceil((cooldownTime - (now - lastGame)) / 1000)
+    return m.reply(`⏳ Aspetta ${remaining} secondi prima di avviare un nuovo gioco.`)
+  }
+  global.cooldowns[cooldownKey] = now
+
+  const marchi = [
+    { url: 'https://i.imgur.com/GW7ZmUT.png', nome: 'Ferrari' },
+    { url: 'https://i.imgur.com/nPgyRsF.png', nome: 'BMW' },
+    { url: 'https://i.imgur.com/L8DbWJc.png', nome: 'Audi' },
+    { url: 'https://i.imgur.com/kGbpvMU.png', nome: 'Mercedes' },
+    { url: 'https://i.imgur.com/RD9kUrB.png', nome: 'Lamborghini' },
+    { url: 'https://i.imgur.com/D5FM7vK.png', nome: 'Toyota' },
+    { url: 'https://i.imgur.com/3Vkx8ql.png', nome: 'Honda' },
+    { url: 'https://i.imgur.com/fcNoIcd.png', nome: 'Volkswagen' },
+    { url: 'https://i.imgur.com/TrBgDiX.png', nome: 'Ford' },
+    { url: 'https://i.imgur.com/Y0iVkgy.png', nome: 'Porsche' },
+    { url: 'https://i.imgur.com/X09NNFF.png', nome: 'Chevrolet' },
+    { url: 'https://i.imgur.com/O1mcAMd.png', nome: 'Nissan' },
+    { url: 'https://i.imgur.com/MPs4CQ9.png', nome: 'Hyundai' },
+    { url: 'https://i.imgur.com/0RjCTDx.png', nome: 'Kia' },
+    { url: 'https://i.imgur.com/1dUfjGH.png', nome: 'Tesla' },
+    { url: 'https://i.imgur.com/YHUmBD0.png', nome: 'Mazda' },
+    { url: 'https://i.imgur.com/B1LgIVq.png', nome: 'Peugeot' },
+    { url: 'https://i.imgur.com/oMQWg5F.png', nome: 'Renault' },
+    { url: 'https://i.imgur.com/ZVrAznN.png', nome: 'Citroën' },
+    { url: 'https://i.imgur.com/K2WExMY.png', nome: 'Subaru' }
+  ]
+
+  let brand = marchi[Math.floor(Math.random() * marchi.length)]
+  let res = await fetch(brand.url)
+  let buffer = await res.buffer()
+
+  await conn.sendMessage(m.chat, {
+    image: buffer,
+    caption: '🚗 *Indovina il marchio!*'
+  }, { quoted: m })
+
+  global.marchioGame = global.marchioGame || {}
+  global.marchioGame[m.chat] = {
+    risposta: brand.nome.toLowerCase(),
+    timeout: setTimeout(() => {
+      conn.reply(m.chat, `⏱️ Tempo scaduto! La risposta era: *${brand.nome}*`, m)
+      delete global.marchioGame[m.chat]
+    }, 30000)
+  }
+}
+
+handler.command = /^(marchio|skipmarchio)$/i
+handler.help = ['marchio']
+handler.tags = ['giochi']
+handler.group = true
+handler.register = true
+
+export default handler
