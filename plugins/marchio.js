@@ -2,35 +2,35 @@ let handler = async (m, { conn, isAdmin, isROwner }) => {
   global.marchioGame = global.marchioGame || {}
 
   if (m.text.toLowerCase() === '.skipmarchio') {
-    if (!m.isGroup) return m.reply('⚠️ Questo comando funziona solo nei gruppi.')
-    if (!global.marchioGame[m.chat]) return m.reply('❌ Nessun gioco in corso.')
-    if (!isAdmin && !isROwner) return m.reply('🔒 Solo gli admin possono saltare.')
+    if (!m.isGroup) return m.reply('⚠️ Solo nei gruppi.')
+    if (!global.marchioGame[m.chat]) return m.reply('❌ Nessun gioco attivo.')
+    if (!isAdmin && !isROwner) return m.reply('🔒 Solo admin o owner possono farlo.')
 
     clearTimeout(global.marchioGame[m.chat].timeout)
-    await conn.sendMessage(m.chat, { text: `🛑 Gioco saltato!\n✅ La risposta era: *${global.marchioGame[m.chat].answer}*` }, { quoted: m })
+    await conn.sendMessage(m.chat, { text: `🛑 Gioco saltato!\n✅ Era: *${global.marchioGame[m.chat].answer}*` }, { quoted: m })
     delete global.marchioGame[m.chat]
     return
   }
 
-  if (global.marchioGame[m.chat]) return m.reply('⚠️ Un gioco è già in corso! Usa `.skipmarchio` per annullare.')
+  if (global.marchioGame[m.chat]) return m.reply('⚠️ C\'è già un gioco attivo! Usa `.skipmarchio` per annullare.')
 
   const marchi = [
-    { url: 'https://i.imgur.com/GW7ZmUT.png', name: 'Ferrari' },
     { url: 'https://i.imgur.com/nPgyRsF.png', name: 'BMW' },
+    { url: 'https://i.imgur.com/GW7ZmUT.png', name: 'Ferrari' },
     { url: 'https://i.imgur.com/L8DbWJc.png', name: 'Audi' },
     { url: 'https://i.imgur.com/kGbpvMU.png', name: 'Mercedes' },
     { url: 'https://i.imgur.com/RD9kUrB.png', name: 'Lamborghini' },
-    { url: 'https://i.imgur.com/N8l5IX2.png', name: 'Nissan' } // aggiunta
+    { url: 'https://i.imgur.com/N8l5IX2.png', name: 'Nissan' }
   ]
 
-  const chosen = marchi[Math.floor(Math.random() * marchi.length)]
+  const scelto = marchi[Math.floor(Math.random() * marchi.length)]
 
-  await conn.sendFile(m.chat, chosen.url, 'marchio.jpg', '🚗 *Indovina il marchio!*', m)
+  await conn.sendFile(m.chat, scelto.url, 'marchio.jpg', '🚗 *Indovina il marchio!*', m)
 
   global.marchioGame[m.chat] = {
-    answer: chosen.name.toLowerCase(),
+    answer: scelto.name.toLowerCase(),
     timeout: setTimeout(() => {
-      conn.sendMessage(m.chat, { text: `⏱️ Tempo scaduto!\nLa risposta era: *${chosen.name}*` }, { quoted: m })
+      conn.sendMessage(m.chat, { text: `⏱️ Tempo scaduto!\nLa risposta era: *${scelto.name}*` }, { quoted: m })
       delete global.marchioGame[m.chat]
     }, 30000)
   }
