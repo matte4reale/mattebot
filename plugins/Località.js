@@ -1,47 +1,80 @@
-let handler = async (m, { conn, isAdmin }) => {
+import fs from 'fs';
+import path from 'path';
+
+let localitaDataset = [];
+
+// Carica il dataset una volta sola all'avvio
+try {
+  const dataPath = path.resolve('./plugins/localita_dataset.json'); // cambia il path se serve
+  const rawData = fs.readFileSync(dataPath);
+  localitaDataset = JSON.parse(rawData);
+} catch (e) {
+  console.error('Errore caricamento localita_dataset.json:', e);
+}
+
+let currentGame = {};
+
+const handler = async (m, { conn, isAdmin }) => {
   const text = m.text?.toLowerCase();
 
   if (text === '.skipmap') {
     if (!m.isGroup) return m.reply('⚠️ Questo comando funziona solo nei gruppi!');
-    if (!global.mapGame?.[m.chat]) return m.reply('⚠️ Nessuna partita attiva!');
+    if (!currentGame[m.chat]) return m.reply('⚠️ Nessuna partita attiva!');
     if (!isAdmin && !m.fromMe) return m.reply('❌ Solo admin possono interrompere!');
-    clearTimeout(global.mapGame[m.chat].timeout);
-    await conn.reply(m.chat, `🛑 Gioco interrotto. La risposta era: *${global.mapGame[m.chat].risposta}*`, m);
-    delete global.mapGame[m.chat];
+    clearTimeout(currentGame[m.chat].timeout);
+    await conn.reply(m.chat, `🛑 Gioco interrotto. La risposta era: *${currentGame[m.chat].risposta}*`, m);
+    delete currentGame[m.chat];
     return;
   }
 
   if (text === '.mappa') {
-    if (global.mapGame?.[m.chat]) return m.reply('⚠️ C\'è già una partita in corso!');
+    if (currentGame[m.chat]) return m.reply('⚠️ Partita già in corso!');
+    if (localitaDataset.length === 0) return m.reply('⚠️ Dataset non disponibile.');
 
-    const nazioni = ['italia', 'francia', 'germania', 'brasile', 'usa', 'giappone', 'egitto', 'spagna', 'canada', 'russia'];
-    const scelta = nazioni[Math.floor(Math.random() * nazioni.length)];
+    global.cooldowns = global.cooldowns || {};
+    const now = Date.now(), key = `geo_${m.chat}`;
+    if (now - (global.cooldowns[key] || 0) < 15000) {
+      return m.reply(`⏳ Attendi ${Math.ceil((15000 - (now - global.cooldowns[key]))/1000)}s prima di riprovare.`);
+    }
+    global.cooldowns[key] = now;
 
-    global.mapGame = global.mapGame || {};
-    global.mapGame[m.chat] = {
-      risposta: scelta,
-      startTime: Date.now(),
+    // Scegli una località a caso dal dataset
+    const scelta = localitaDataset[Math.floor(Math.random() * localitaDataset.length)];
+
+    // Imposta il gioco
+    currentGame[m.chat] = {
+      risposta: scelta.city.toLowerCase(),
       timeout: setTimeout(() => {
-        if (global.mapGame?.[m.chat]) {
-          conn.reply(m.chat, `⏰ Tempo scaduto! La risposta era: *${scelta}*`, m);
-          delete global.mapGame[m.chat];
+        if (currentGame[m.chat]) {
+          conn.reply(m.chat, `⏰ Tempo scaduto! Risposta: *${scelta.city}*`, m);
+          delete currentGame[m.chat];
         }
-      }, 60000)
+      }, 60000),
+      startTime: Date.now()
     };
 
+    // Invia immagine della mappa (puoi sostituire il link con un file locale con conn.sendMessage e {image: fs.readFileSync(path)})
+    const mapImageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/BlankMap-World.svg/1200px-BlankMap-World.svg.png';
+
     await conn.sendMessage(m.chat, {
-      image: {
-        url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/World_map_-_low_resolution.svg/1024px-World_map_-_low_resolution.svg.png'
-      },
-      caption: '🗺️ *Indovina lo stato dalla mappa!*\nRispondi con il nome dello stato corretto.\n⌛ Hai 60 secondi.'
+      image: { url: mapImageUrl },
+      caption: `🌍 *Indovina la città dalla foto che ti invierò dopo!*\n\nRispondi scrivendo il nome della città entro 60 secondi!`
     }, { quoted: m });
+
+    // Dopo un secondo circa, manda l'immagine della città (puoi anche mandare direttamente nel messaggio sopra se vuoi)
+    setTimeout(() => {
+      conn.sendMessage(m.chat, {
+        image: { url: scelta.url },
+        caption: `📸 Ecco la foto della città! Indovina!`
+      }, { quoted: m });
+    }, 1500);
+
   }
 };
 
 handler.before = async (m, { conn }) => {
-  const game = global.mapGame?.[m.chat];
+  const game = currentGame[m.chat];
   if (!game || m.key.fromMe) return;
-
   const text = m.text?.toLowerCase().trim();
   if (!text) return;
 
@@ -54,7 +87,7 @@ handler.before = async (m, { conn }) => {
     let congratsMessage = `
 ╭━『 🎉 *RISPOSTA CORRETTA!* 』━╮
 ┃
-┃ 🗺️ *Stato:* ${game.risposta}
+┃ 🗺️ *Città:* ${game.risposta}
 ┃ ⏱️ *Tempo impiegato:* ${timeTaken}s
 ┃
 ┃ 🎁 *Ricompense:*
@@ -66,7 +99,7 @@ handler.before = async (m, { conn }) => {
 > \`vare ✧ bot\``;
 
     await conn.reply(m.chat, congratsMessage, m);
-    delete global.mapGame[m.chat];
+    delete currentGame[m.chat];
   }
 };
 
