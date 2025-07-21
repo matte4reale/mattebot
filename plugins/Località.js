@@ -1,4 +1,6 @@
 import fs from 'fs';
+import path from 'path';
+import localita_dataset from './localita_dataset(1).json' assert { type: 'json' };
 
 let handler = async (m, { conn, isAdmin }) => {
   const text = m.text?.toLowerCase();
@@ -13,7 +15,7 @@ let handler = async (m, { conn, isAdmin }) => {
     return;
   }
 
-  if (text === '.indovinalocalità') {
+  if (text === '.mappa') {
     if (global.geoGame?.[m.chat]) return m.reply('⚠️ Partita già in corso!');
     global.cooldowns = global.cooldowns || {};
     const now = Date.now(), key = `geo_${m.chat}`;
@@ -22,29 +24,32 @@ let handler = async (m, { conn, isAdmin }) => {
     }
     global.cooldowns[key] = now;
 
-    let localita = [];
-    try {
-      localita = JSON.parse(fs.readFileSync('./localita_dataset(1).json'));
-    } catch (e) {
-      return m.reply('⚠️ Errore durante il caricamento delle località.');
-    }
-
-    const scelta = localita[Math.floor(Math.random() * localita.length)];
-    const intro = '🌍 *Indovina la città da questa immagine!*';
+    const scelta = localita_dataset[Math.floor(Math.random() * localita_dataset.length)];
+    const rispostaCorretta = scelta.city.toLowerCase();
 
     global.geoGame = global.geoGame || {};
     global.geoGame[m.chat] = {
-      risposta: scelta.città.toLowerCase(),
+      risposta: rispostaCorretta,
       startTime: Date.now(),
       timeout: setTimeout(() => {
         if (global.geoGame?.[m.chat]) {
-          conn.reply(m.chat, `⏰ Tempo scaduto! Risposta: *${scelta.città}*`, m);
+          conn.reply(m.chat, `⏰ Tempo scaduto! Risposta: *${scelta.city}*`, m);
           delete global.geoGame[m.chat];
         }
       }, 60000)
     };
 
-    await conn.sendMessage(m.chat, { image: { url: scelta.url }, caption: `${intro}\n⌛ Hai 60 secondi.` }, { quoted: m });
+    const mappaPath = path.resolve('./plugins/mappa/mappa.png'); // ← percorso locale dell’immagine
+
+    // Invia immagine mappa
+    if (fs.existsSync(mappaPath)) {
+      await conn.sendMessage(m.chat, { image: fs.readFileSync(mappaPath), caption: '🗺️ Mappa vuota, ora indovina la città!' }, { quoted: m });
+    } else {
+      await conn.reply(m.chat, '⚠️ Errore: immagine della mappa non trovata!', m);
+    }
+
+    // Invia immagine città da indovinare
+    await conn.sendMessage(m.chat, { image: { url: scelta.url }, caption: '🔍 Indovina questa città! Hai 60 secondi.' }, { quoted: m });
   }
 };
 
@@ -71,14 +76,14 @@ handler.before = async (m, { conn }) => {
 ┃
 ╰━━━━━━━━━━━━━━━━╯
 
-> \`by chatunity\``;
+> \`vare ✧ bot\``;
 
     await conn.reply(m.chat, congratsMessage, m);
     delete global.geoGame[m.chat];
   }
 };
 
-handler.help = ['indovinalocalità','skipmap'];
+handler.help = ['mappa','skipmap'];
 handler.tags = ['game'];
-handler.command = ['indovinalocalità','skipmap'];
+handler.command = ['mappa','skipmap'];
 export default handler;
