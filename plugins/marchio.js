@@ -1,56 +1,44 @@
-import fetch from 'node-fetch'
-
-let handler = async (m, { conn, isAdmin }) => {
+let handler = async (m, { conn, isAdmin, isROwner }) => {
   global.marchioGame = global.marchioGame || {}
 
-  if (m.text?.toLowerCase() === '.skipmarchio') {
-    if (!m.isGroup) return m.reply('⚠️ Solo nei gruppi!')
-    if (!global.marchioGame[m.chat]) return m.reply('⚠️ Nessuna partita in corso.')
-    if (!isAdmin && !m.fromMe) return m.reply('❌ Solo admin.')
+  if (m.text.toLowerCase() === '.skipmarchio') {
+    if (!m.isGroup) return m.reply('⚠️ Questo comando funziona solo nei gruppi.')
+    if (!global.marchioGame[m.chat]) return m.reply('❌ Nessun gioco in corso.')
+    if (!isAdmin && !isROwner) return m.reply('🔒 Solo gli admin possono saltare.')
 
     clearTimeout(global.marchioGame[m.chat].timeout)
-    await conn.reply(m.chat, `🛑 *Gioco interrotto*\n💡 La risposta era: *${global.marchioGame[m.chat].risposta}*`, m)
+    await conn.sendMessage(m.chat, { text: `🛑 Gioco saltato!\n✅ La risposta era: *${global.marchioGame[m.chat].answer}*` }, { quoted: m })
     delete global.marchioGame[m.chat]
     return
   }
 
-  if (global.marchioGame[m.chat]) return m.reply('⚠️ Una partita è già in corso!')
+  if (global.marchioGame[m.chat]) return m.reply('⚠️ Un gioco è già in corso! Usa `.skipmarchio` per annullare.')
 
   const marchi = [
-    { url: 'https://i.imgur.com/GW7ZmUT.png', nome: 'Ferrari' },
-    { url: 'https://i.imgur.com/nPgyRsF.png', nome: 'BMW' },
-    { url: 'https://i.imgur.com/L8DbWJc.png', nome: 'Audi' },
-    { url: 'https://i.imgur.com/kGbpvMU.png', nome: 'Mercedes' },
-    { url: 'https://i.imgur.com/RD9kUrB.png', nome: 'Lamborghini' }
+    { url: 'https://i.imgur.com/GW7ZmUT.png', name: 'Ferrari' },
+    { url: 'https://i.imgur.com/nPgyRsF.png', name: 'BMW' },
+    { url: 'https://i.imgur.com/L8DbWJc.png', name: 'Audi' },
+    { url: 'https://i.imgur.com/kGbpvMU.png', name: 'Mercedes' },
+    { url: 'https://i.imgur.com/RD9kUrB.png', name: 'Lamborghini' },
+    { url: 'https://i.imgur.com/N8l5IX2.png', name: 'Nissan' } // aggiunta
   ]
 
-  let brand = marchi[Math.floor(Math.random() * marchi.length)]
+  const chosen = marchi[Math.floor(Math.random() * marchi.length)]
 
-  try {
-    let res = await fetch(brand.url)
-    let buffer = await res.buffer()
+  await conn.sendFile(m.chat, chosen.url, 'marchio.jpg', '🚗 *Indovina il marchio!*', m)
 
-    await conn.sendMessage(m.chat, {
-      image: buffer,
-      caption: `🚗 *Indovina il marchio!*`
-    }, { quoted: m })
-
-    global.marchioGame[m.chat] = {
-      risposta: brand.nome.toLowerCase(),
-      timeout: setTimeout(() => {
-        conn.reply(m.chat, `⏱️ Tempo scaduto! La risposta era: *${brand.nome}*`, m)
-        delete global.marchioGame[m.chat]
-      }, 30000)
-    }
-  } catch (e) {
-    console.error(e)
-    m.reply('❌ Errore nell\'invio dell\'immagine.')
+  global.marchioGame[m.chat] = {
+    answer: chosen.name.toLowerCase(),
+    timeout: setTimeout(() => {
+      conn.sendMessage(m.chat, { text: `⏱️ Tempo scaduto!\nLa risposta era: *${chosen.name}*` }, { quoted: m })
+      delete global.marchioGame[m.chat]
+    }, 30000)
   }
 }
 
-handler.command = /^(marchio|skipmarchio)$/i
-handler.help = ['marchio']
+handler.command = /^marchio|skipmarchio$/i
 handler.tags = ['giochi']
+handler.help = ['marchio']
 handler.group = true
 handler.register = true
 
