@@ -1,4 +1,4 @@
-let handler = async (m, { conn, isAdmin }) => {
+llet handler = async (m, { conn, isAdmin }) => {
   const text = m.text?.toLowerCase();
 
   if (text === '.skiplogo') {
@@ -35,6 +35,8 @@ let handler = async (m, { conn, isAdmin }) => {
     global.logoGame = global.logoGame || {};
     global.logoGame[m.chat] = {
       risposta: scelta.marca,
+      rispostaOriginale: scelta.marca.charAt(0).toUpperCase() + scelta.marca.slice(1),
+      startTime: Date.now(),
       timeout: setTimeout(() => {
         if (global.logoGame?.[m.chat]) {
           conn.reply(m.chat, `⏰ Tempo scaduto! Risposta: *${scelta.marca}*`, m);
@@ -54,7 +56,45 @@ handler.before = async (m, { conn }) => {
   if (!text) return;
   if (text === game.risposta) {
     clearTimeout(game.timeout);
-    conn.reply(m.chat, `✅ *CORRETTO!* Era: *${game.risposta}*`, m);
+
+    const userId = m.sender;
+    global.userStats = global.userStats || {};
+    if (!global.userStats[userId]) global.userStats[userId] = { coin: 0, xp: 0 };
+
+    // Calcola tempo impiegato in secondi
+    const timeTaken = Math.floor((Date.now() - game.startTime) / 1000);
+
+    // Ricompense base
+    const rewardBase = 10;
+    const expBase = 5;
+
+    // Bonus velocità: +5 coin se risposta entro 30 secondi
+    const timeBonus = timeTaken <= 30 ? 5 : 0;
+
+    const reward = rewardBase + timeBonus;
+    const exp = expBase;
+
+    // Aggiorna stats
+    global.userStats[userId].coin += reward;
+    global.userStats[userId].xp += exp;
+
+    // Messaggio congratulazioni formattato
+    let congratsMessage = `
+╭━『 🎉 *RISPOSTA CORRETTA!* 』━╮
+┃
+┃ 🌍 *Nazione:* ${game.rispostaOriginale}
+┃ ⏱️ *Tempo impiegato:* ${timeTaken}s
+┃
+┃ 🎁 *Ricompense:*
+┃ • ${reward} 💰 euro ${timeBonus > 0 ? `(+${timeBonus} bonus velocità)` : ''}
+┃ • ${exp} 🆙 EXP
+┃
+╰━━━━━━━━━━━━━━━━╯
+
+> \`vare ✧ bot\`
+`;
+
+    await conn.reply(m.chat, congratsMessage, m);
     delete global.logoGame[m.chat];
   }
 };
