@@ -1,16 +1,16 @@
-import fs from 'fs';
-import path from 'path';
-
-let localitaDataset = [];
-
-// Carica il dataset una volta sola all'avvio
-try {
-  const dataPath = path.resolve('./plugins/localita_dataset.json'); // cambia il path se serve
-  const rawData = fs.readFileSync(dataPath);
-  localitaDataset = JSON.parse(rawData);
-} catch (e) {
-  console.error('Errore caricamento localita_dataset.json:', e);
-}
+let localitaDataset = [
+  { city: "Paris", country: "France", url: "https://cdn.pixabay.com/photo/2015/04/23/22/00/eiffel-tower-736529_1280.jpg" },
+  { city: "Rome", country: "Italy", url: "https://cdn.pixabay.com/photo/2016/11/29/03/55/colosseum-1868867_1280.jpg" },
+  { city: "New York", country: "USA", url: "https://cdn.pixabay.com/photo/2016/03/27/19/34/new-york-1284917_1280.jpg" },
+  { city: "London", country: "UK", url: "https://cdn.pixabay.com/photo/2015/06/08/15/11/london-802605_1280.jpg" },
+  { city: "Sydney", country: "Australia", url: "https://cdn.pixabay.com/photo/2016/11/29/09/08/sydney-opera-house-1868454_1280.jpg" },
+  { city: "Tokyo", country: "Japan", url: "https://cdn.pixabay.com/photo/2016/10/02/22/17/tokyo-1712459_1280.jpg" },
+  { city: "Berlin", country: "Germany", url: "https://cdn.pixabay.com/photo/2017/02/15/10/56/berlin-2064114_1280.jpg" },
+  { city: "Moscow", country: "Russia", url: "https://cdn.pixabay.com/photo/2017/06/05/22/03/moscow-2378771_1280.jpg" },
+  { city: "Dubai", country: "UAE", url: "https://cdn.pixabay.com/photo/2016/01/19/17/45/dubai-1149376_1280.jpg" },
+  { city: "Rio de Janeiro", country: "Brazil", url: "https://cdn.pixabay.com/photo/2016/11/06/05/14/rio-de-janeiro-1807533_1280.jpg" }
+  // Aggiungi altre località se vuoi...
+];
 
 let currentGame = {};
 
@@ -29,7 +29,6 @@ const handler = async (m, { conn, isAdmin }) => {
 
   if (text === '.mappa') {
     if (currentGame[m.chat]) return m.reply('⚠️ Partita già in corso!');
-    if (localitaDataset.length === 0) return m.reply('⚠️ Dataset non disponibile.');
 
     global.cooldowns = global.cooldowns || {};
     const now = Date.now(), key = `geo_${m.chat}`;
@@ -38,22 +37,19 @@ const handler = async (m, { conn, isAdmin }) => {
     }
     global.cooldowns[key] = now;
 
-    // Scegli una località a caso dal dataset
     const scelta = localitaDataset[Math.floor(Math.random() * localitaDataset.length)];
 
-    // Imposta il gioco
     currentGame[m.chat] = {
       risposta: scelta.city.toLowerCase(),
       timeout: setTimeout(() => {
         if (currentGame[m.chat]) {
-          conn.reply(m.chat, `⏰ Tempo scaduto! Risposta: *${scelta.city}*`, m);
+          conn.reply(m.chat, `⏰ Tempo scaduto! La risposta corretta era: *${scelta.city}*`, m);
           delete currentGame[m.chat];
         }
       }, 60000),
       startTime: Date.now()
     };
 
-    // Invia immagine della mappa (puoi sostituire il link con un file locale con conn.sendMessage e {image: fs.readFileSync(path)})
     const mapImageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/BlankMap-World.svg/1200px-BlankMap-World.svg.png';
 
     await conn.sendMessage(m.chat, {
@@ -61,14 +57,12 @@ const handler = async (m, { conn, isAdmin }) => {
       caption: `🌍 *Indovina la città dalla foto che ti invierò dopo!*\n\nRispondi scrivendo il nome della città entro 60 secondi!`
     }, { quoted: m });
 
-    // Dopo un secondo circa, manda l'immagine della città (puoi anche mandare direttamente nel messaggio sopra se vuoi)
     setTimeout(() => {
       conn.sendMessage(m.chat, {
         image: { url: scelta.url },
         caption: `📸 Ecco la foto della città! Indovina!`
       }, { quoted: m });
     }, 1500);
-
   }
 };
 
@@ -103,8 +97,8 @@ handler.before = async (m, { conn }) => {
   }
 };
 
-handler.help = ['mappa','skipmap'];
+handler.help = ['mappa', 'skipmap'];
 handler.tags = ['game'];
-handler.command = ['mappa','skipmap'];
+handler.command = ['mappa', 'skipmap'];
 
 export default handler;
