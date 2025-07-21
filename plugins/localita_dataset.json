@@ -1,0 +1,77 @@
+[
+  {
+    "city": "Parigi",
+    "country": "Francia",
+    "url": "https://images.unsplash.com/photo-1543340713-8ec9f9ba6d67"
+  },
+  {
+    "city": "Roma",
+    "country": "Italia",
+    "url": "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9"
+  },
+  {
+    "city": "New York",
+    "country": "Stati Uniti",
+    "url": "https://images.unsplash.com/photo-1549924231-f129b911e442"
+  },
+  {
+    "city": "Tokyo",
+    "country": "Giappone",
+    "url": "https://images.unsplash.com/photo-1559181567-c3190ca9959b"
+  },
+  {
+    "city": "Rio de Janeiro",
+    "country": "Brasile",
+    "url": "https://images.unsplash.com/photo-1563132334-27e5ec5d3d4f"
+  },
+  {
+    "city": "Sydney",
+    "country": "Australia",
+    "url": "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d3"
+  },
+  {
+    "city": "Londra",
+    "country": "Regno Unito",
+    "url": "https://images.unsplash.com/photo-1505765050516-f72dcac9c60b"
+  },
+  {
+    "city": "Mosca",
+    "country": "Russia",
+    "url": "https://images.unsplash.com/photo-1522441815192-73b4b1816a76"
+  },
+  {
+    "city": "Citt\u00e0 del Messico",
+    "country": "Messico",
+    "url": "https://images.unsplash.com/photo-1585268796687-9047fd574718"
+  },
+  {
+    "city": "Citt\u00e0 del Capo",
+    "country": "Sudafrica",
+    "url": "https://images.unsplash.com/photo-1570288685280-fb3f11f303a6"
+  },
+  {
+    "city": "Bangkok",
+    "country": "Thailandia",
+    "url": "https://images.unsplash.com/photo-1594390966829-f9f6db3c23e4"
+  },
+  {
+    "city": "Toronto",
+    "country": "Canada",
+    "url": "https://images.unsplash.com/photo-1582407947304-fd86f9ef47f7"
+  },
+  {
+    "city": "Pechino",
+    "country": "Cina",
+    "url": "https://images.unsplash.com/photo-1603937521744-1a0f4a61fbc7"
+  },
+  {
+    "city": "Istanbul",
+    "country": "Turchia",
+    "url": "https://images.unsplash.com/photo-1542452255191-c85cddf94de1"
+  },
+  {
+    "city": "Dubai",
+    "country": "Emirati Arabi Uniti",
+    "url": "https://images.unsplash.com/photo-1505312926838-645f295a20a4"
+  }
+]
