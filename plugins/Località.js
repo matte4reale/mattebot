@@ -39,7 +39,7 @@ let handler = async (m, { conn, isAdmin }) => {
       }, 60000)
     };
 
-    const mappaPath = path.resolve('./plugins/mappa/mappa.png'); // ← percorso locale dell’immagine
+    const mappaPath = path.resolve('./plugins/mappa.png'); // ← percorso locale dell’immagine
 
     // Invia immagine mappa
     if (fs.existsSync(mappaPath)) {
