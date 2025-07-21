@@ -1,65 +1,140 @@
-let handler = async (m, { conn, isAdmin }) => {
-  const text = m.text?.toLowerCase();
+import { googleImage } from '@bochilteam/scraper'
 
-  if (text === '.skiplogo') {
-    if (!m.isGroup) return m.reply('⚠️ Questo comando funziona solo nei gruppi!');
-    if (!global.logoGame?.[m.chat]) return m.reply('⚠️ Nessuna partita attiva!');
-    if (!isAdmin && !m.fromMe) return m.reply('❌ Solo admin possono interrompere!');
-    clearTimeout(global.logoGame[m.chat].timeout);
-    await conn.reply(m.chat, `🛑 Gioco interrotto. La risposta era: *${global.logoGame[m.chat].risposta}*`, m);
-    delete global.logoGame[m.chat];
-    return;
+const sourcesBySport = {
+  calcio: [
+    { name: 'Gazzetta', url: 'https://www.gazzetta.it/rss/Calcio.xml' },
+    { name: 'Tuttosport', url: 'https://www.tuttosport.com/rss/calcio.xml' },
+    { name: 'Corriere dello Sport', url: 'https://www.corrieredellosport.it/rss/calcio' }
+  ],
+  basket: [
+    { name: 'Sky Basket', url: 'https://www.sportando.basketball/feed/' }
+  ],
+  tennis: [
+    { name: 'Ubitennis', url: 'https://www.ubitennis.com/feed/' }
+  ],
+  formula1: [
+    { name: 'FormulaPassion', url: 'https://formulapassion.it/feed' }
+  ],
+  mma: [
+    { name: 'MMA Mania', url: 'https://www.mmamania.com/rss/current.xml' }
+  ],
+  ciclismo: [
+    { name: 'CyclingNews', url: 'https://www.cyclingnews.com/rss/news/' }
+  ]
+}
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[array[i], array[j]] = [array[j], array[i]]
   }
+}
 
-  if (text === '.brum') {
-    if (global.logoGame?.[m.chat]) return m.reply('⚠️ Partita già in corso!');
-    global.cooldowns = global.cooldowns || {};
-    const now = Date.now(), key = `logo_${m.chat}`;
-    if (now - (global.cooldowns[key] || 0) < 10000) {
-      return m.reply(`⏳ Attendi ${Math.ceil((10000 - (now - global.cooldowns[key]))/1000)}s prima di riprovare.`);
-    }
-    global.cooldowns[key] = now;
+async function getNews(sport = 'calcio') {
+  let news = []
+  const sources = sourcesBySport[sport] || []
 
-    const loghi = [
-      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/bmw.png', marca: 'bmw' },
-      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/audi.png', marca: 'audi' },
-      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/toyota.png', marca: 'toyota' },
-      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/mercedes-benz.png', marca: 'mercedes-benz' },
-      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/ford.png', marca: 'ford' },
-    ];
+  for (const src of sources) {
+    try {
+      const res = await fetch(src.url)
+      const xml = await res.text()
+      const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 3)
 
-    const scelta = loghi[Math.floor(Math.random() * loghi.length)];
-    const frasi = ['🚘 *INDOVINA IL LOGO!*', '🏁 *Che marca è questa?*', '🔍 *Riconosci questa auto?*'];
-    const frase = frasi[Math.floor(Math.random() * frasi.length)];
+      for (const item of items) {
+        const titleMatch = item[1].match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || item[1].match(/<title>(.*?)<\/title>/)
+        const linkMatch = item[1].match(/<link>(.*?)<\/link>/)
 
-    global.logoGame = global.logoGame || {};
-    global.logoGame[m.chat] = {
-      risposta: scelta.marca,
-      timeout: setTimeout(() => {
-        if (global.logoGame?.[m.chat]) {
-          conn.reply(m.chat, `⏰ Tempo scaduto! Risposta: *${scelta.marca}*`, m);
-          delete global.logoGame[m.chat];
+        if (titleMatch && linkMatch) {
+          const title = titleMatch[1]
+          const link = linkMatch[1]
+
+          let imageUrl = 'https://ibb.co/JwkPWhZX'
+          try {
+            const images = await googleImage(title)
+            if (images?.length) {
+              shuffle(images)
+              imageUrl = images[0]
+            }
+          } catch (err) {
+            console.warn(`Immagine non trovata per: ${title}`)
+          }
+
+          news.push({
+            title,
+            link,
+            source: src.name,
+            image: imageUrl
+          })
         }
-      }, 60000)
-    };
-
-    await conn.sendMessage(m.chat, { image: { url: scelta.url }, caption: `${frase}\n⌛ 60 secondi.` }, { quoted: m });
+      }
+    } catch (e) {
+      console.error(`❌ Errore su ${src.name}:`, e.message)
+    }
   }
-};
 
-handler.before = async (m, { conn }) => {
-  const game = global.logoGame?.[m.chat];
-  if (!game || m.key.fromMe) return;
-  const text = m.text?.toLowerCase().trim();
-  if (!text) return;
-  if (text === game.risposta) {
-    clearTimeout(game.timeout);
-    conn.reply(m.chat, `✅ *CORRETTO!* Era: *${game.risposta}*`, m);
-    delete global.logoGame[m.chat];
+  return news
+}
+
+const handler = async (m, { conn, args }) => {
+  const user = m.sender
+  const data = global.db.data.users[user] || {}
+  const sport = args[0]?.toLowerCase() || data.preferredSport || 'calcio'
+
+  const news = await getNews(sport)
+
+  if (!news || news.length === 0) {
+    return m.reply('📭 Nessuna notizia trovata.')
   }
-};
 
-handler.help = ['brum','skiplogo'];
-handler.tags = ['game'];
-handler.command = ['brum','skiplogo'];
-export default handler;
+  const cards = news.slice(0, 6).map(n => ({
+    title: n.title,
+    body: `🗞️ Fonte: ${n.source}`,
+    footer: 'Tocca per leggere la notizia',
+    image: {
+      url: n.image
+    },
+    buttons: [
+      {
+        name: 'cta_url',
+        buttonParamsJson: JSON.stringify({
+          display_text: 'Leggi',
+          url: n.link
+        })
+      }
+    ]
+  }))
+
+  await conn.sendMessage(
+    m.chat,
+    {
+      text: `📰 Ultime notizie - ${sport.toUpperCase()}`,
+      footer: '🗞️ Powered by Origin-Bot',
+      cards
+    },
+    { quoted: m }
+  )
+
+  // 🔘 Bottoni per cambiare sport
+  await conn.sendMessage(
+    m.chat,
+    {
+      text: '🎯 Vuoi leggere notizie di un altro sport?',
+      footer: 'Scegli una categoria:',
+      buttons: [
+        { buttonId: '.news calcio', buttonText: { displayText: '⚽ Calcio' }, type: 1 },
+        { buttonId: '.news basket', buttonText: { displayText: '🏀 Basket' }, type: 1 },
+        { buttonId: '.news tennis', buttonText: { displayText: '🎾 Tennis' }, type: 1 },
+        { buttonId: '.news formula1', buttonText: { displayText: '🏎 Formula 1' }, type: 1 },
+        { buttonId: '.news mma', buttonText: { displayText: '🥋 MMA' }, type: 1 },
+        { buttonId: '.news ciclismo', buttonText: { displayText: '🚴‍♂️ Ciclismo' }, type: 1 }
+      ],
+      headerType: 1
+    },
+    { quoted: m }
+  )
+}
+
+handler.command = /^news$/i
+handler.tags = ['news']
+handler.help = ['news', 'news <sport>']
+export default handler
