@@ -1,4 +1,4 @@
-llet handler = async (m, { conn, isAdmin }) => {
+let handler = async (m, { conn, isAdmin }) => {
   const text = m.text?.toLowerCase();
 
   if (text === '.skiplogo') {
@@ -21,11 +21,11 @@ llet handler = async (m, { conn, isAdmin }) => {
     global.cooldowns[key] = now;
 
     const loghi = [
-      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/bmw.png', marca: 'bmw' },
-      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/audi.png', marca: 'audi' },
-      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/toyota.png', marca: 'toyota' },
-      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/mercedes-benz.png', marca: 'mercedes-benz' },
-      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/ford.png', marca: 'ford' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/bmw.png', marca: 'bmw', nazione: 'Germania' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/audi.png', marca: 'audi', nazione: 'Germania' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/toyota.png', marca: 'toyota', nazione: 'Giappone' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/mercedes-benz.png', marca: 'mercedes-benz', nazione: 'Germania' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/ford.png', marca: 'ford', nazione: 'USA' },
     ];
 
     const scelta = loghi[Math.floor(Math.random() * loghi.length)];
@@ -35,7 +35,7 @@ llet handler = async (m, { conn, isAdmin }) => {
     global.logoGame = global.logoGame || {};
     global.logoGame[m.chat] = {
       risposta: scelta.marca,
-      rispostaOriginale: scelta.marca.charAt(0).toUpperCase() + scelta.marca.slice(1),
+      rispostaOriginale: scelta.nazione,
       startTime: Date.now(),
       timeout: setTimeout(() => {
         if (global.logoGame?.[m.chat]) {
@@ -99,7 +99,8 @@ handler.before = async (m, { conn }) => {
   }
 };
 
-handler.help = ['brum','skiplogo'];
+handler.help = ['brum', 'skiplogo'];
 handler.tags = ['game'];
-handler.command = ['brum','skiplogo'];
+handler.command = ['brum', 'skiplogo'];
+
 export default handler;
