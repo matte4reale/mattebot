@@ -21,11 +21,36 @@ let handler = async (m, { conn, isAdmin }) => {
     global.cooldowns[key] = now;
 
     const loghi = [
-      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/bmw.png', marca: 'bmw', nazione: 'Germania' },
-      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/audi.png', marca: 'audi', nazione: 'Germania' },
-      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/toyota.png', marca: 'toyota', nazione: 'Giappone' },
-      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/mercedes-benz.png', marca: 'mercedes-benz', nazione: 'Germania' },
-      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/ford.png', marca: 'ford', nazione: 'USA' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/audi.png', marca: 'audi' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/bmw.png', marca: 'bmw' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/mercedes-benz.png', marca: 'mercedes-benz' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/porsche.png', marca: 'porsche' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/volkswagen.png', marca: 'volkswagen' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/opel.png', marca: 'opel' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/ford.png', marca: 'ford' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/smart.png', marca: 'smart' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/maybach.png', marca: 'maybach' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/fiat.png', marca: 'fiat' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/ferrari.png', marca: 'ferrari' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/lamborghini.png', marca: 'lamborghini' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/maserati.png', marca: 'maserati' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/alfa-romeo.png', marca: 'alfa-romeo' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/lancia.png', marca: 'lancia' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/pagani.png', marca: 'pagani' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/de-tomaso.png', marca: 'de-tomaso' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/bugatti.png', marca: 'bugatti' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/tesla.png', marca: 'tesla' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/honda.png', marca: 'honda' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/toyota.png', marca: 'toyota' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/nissan.png', marca: 'nissan' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/mazda.png', marca: 'mazda' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/chevrolet.png', marca: 'chevrolet' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/volvo.png', marca: 'volvo' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/jeep.png', marca: 'jeep' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/mini.png', marca: 'mini' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/kia.png', marca: 'kia' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/hyundai.png', marca: 'hyundai' },
+      { url: 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/thumb/land-rover.png', marca: 'land-rover' },
     ];
 
     const scelta = loghi[Math.floor(Math.random() * loghi.length)];
@@ -35,7 +60,6 @@ let handler = async (m, { conn, isAdmin }) => {
     global.logoGame = global.logoGame || {};
     global.logoGame[m.chat] = {
       risposta: scelta.marca,
-      rispostaOriginale: scelta.nazione,
       startTime: Date.now(),
       timeout: setTimeout(() => {
         if (global.logoGame?.[m.chat]) {
@@ -56,33 +80,14 @@ handler.before = async (m, { conn }) => {
   if (!text) return;
   if (text === game.risposta) {
     clearTimeout(game.timeout);
-
-    const userId = m.sender;
-    global.userStats = global.userStats || {};
-    if (!global.userStats[userId]) global.userStats[userId] = { coin: 0, xp: 0 };
-
-    // Calcola tempo impiegato in secondi
+    const reward = 100;
+    const exp = 10;
     const timeTaken = Math.floor((Date.now() - game.startTime) / 1000);
-
-    // Ricompense base
-    const rewardBase = 10;
-    const expBase = 5;
-
-    // Bonus velocità: +5 coin se risposta entro 30 secondi
-    const timeBonus = timeTaken <= 30 ? 5 : 0;
-
-    const reward = rewardBase + timeBonus;
-    const exp = expBase;
-
-    // Aggiorna stats
-    global.userStats[userId].coin += reward;
-    global.userStats[userId].xp += exp;
-
-    // Messaggio congratulazioni formattato
-    let congratsMessage = `
+    const timeBonus = 0;
+    const congratsMessage = `
 ╭━『 🎉 *RISPOSTA CORRETTA!* 』━╮
 ┃
-┃ 🌍 *Nazione:* ${game.rispostaOriginale}
+┃ 🚗 *Marchio:* ${game.risposta}
 ┃ ⏱️ *Tempo impiegato:* ${timeTaken}s
 ┃
 ┃ 🎁 *Ricompense:*
@@ -91,8 +96,7 @@ handler.before = async (m, { conn }) => {
 ┃
 ╰━━━━━━━━━━━━━━━━╯
 
-> \`vare ✧ bot\`
-`;
+> \`vare ✧ bot\``;
 
     await conn.reply(m.chat, congratsMessage, m);
     delete global.logoGame[m.chat];
@@ -102,5 +106,4 @@ handler.before = async (m, { conn }) => {
 handler.help = ['brum', 'skiplogo'];
 handler.tags = ['game'];
 handler.command = ['brum', 'skiplogo'];
-
 export default handler;
