@@ -1,10 +1,13 @@
+import fs from 'fs';
+import path from 'path';
+
 const localitaDataset = [
-  { city: "Parigi", country: "Francia", url: "https://cdn.pixabay.com/photo/2015/03/26/09/41/eiffel-tower-690293_960_720.jpg" },
-  { city: "Roma", country: "Italia", url: "https://cdn.pixabay.com/photo/2016/11/29/03/53/colosseum-1868054_960_720.jpg" },
-  { city: "New York", country: "USA", url: "https://cdn.pixabay.com/photo/2016/11/18/18/06/new-york-1839175_960_720.jpg" },
-  { city: "Londra", country: "Regno Unito", url: "https://cdn.pixabay.com/photo/2017/09/12/11/22/london-2747702_960_720.jpg" },
-  { city: "Tokyo", country: "Giappone", url: "https://cdn.pixabay.com/photo/2018/05/28/16/09/tokyo-3434285_960_720.jpg" }
-  // ... aggiungi tutte le città che vuoi
+  { city: "Parigi", country: "Francia", url: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=640&q=80" },
+  { city: "Roma", country: "Italia", url: "https://images.unsplash.com/photo-1549899619-8a235b3443ee?auto=format&fit=crop&w=640&q=80" },
+  { city: "New York", country: "USA", url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=640&q=80" },
+  { city: "Londra", country: "Regno Unito", url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=640&q=80" },
+  { city: "Tokyo", country: "Giappone", url: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=640&q=80" }
+  // aggiungi altre località qui con foto da Unsplash o altra fonte simile
 ];
 
 let currentGame = {};
@@ -24,7 +27,7 @@ const handler = async (m, { conn, isAdmin }) => {
 
   if (text === '.mappa') {
     if (currentGame[m.chat]) return m.reply('⚠️ Partita già in corso!');
-    
+
     global.cooldowns = global.cooldowns || {};
     const now = Date.now(), key = `geo_${m.chat}`;
     if (now - (global.cooldowns[key] || 0) < 15000) {
@@ -45,13 +48,15 @@ const handler = async (m, { conn, isAdmin }) => {
       startTime: Date.now()
     };
 
-    // Link mappa (puoi personalizzare)
-    const mapImageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/BlankMap-World.svg/1200px-BlankMap-World.svg.png';
+    // Percorso locale della mappa (assicurati che sia nella cartella plugins o dove vuoi)
+    const mapFilePath = path.resolve('./plugins/mappa.png');
 
-    await conn.sendMessage(m.chat, { text: `🌍 Ecco la mappa:\n${mapImageUrl}` }, { quoted: m });
+    // Invia prima la mappa locale
+    await conn.sendMessage(m.chat, { image: fs.readFileSync(mapFilePath) }, { quoted: m });
 
+    // Dopo 1.5 secondi invia la foto della città da URL
     setTimeout(async () => {
-      await conn.sendMessage(m.chat, { text: `📸 Foto città:\n${scelta.url}` }, { quoted: m });
+      await conn.sendMessage(m.chat, { image: { url: scelta.url }, caption: 'Indovina la città da questa immagine!' }, { quoted: m });
     }, 1500);
   }
 };
@@ -87,7 +92,7 @@ handler.before = async (m, { conn }) => {
   }
 };
 
-handler.help = ['mappa','skipmap'];
+handler.help = ['mappa', 'skipmap'];
 handler.tags = ['game'];
-handler.command = ['mappa','skipmap'];
+handler.command = ['mappa', 'skipmap'];
 export default handler;
