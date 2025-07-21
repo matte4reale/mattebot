@@ -4,12 +4,7 @@ let localitaDataset = [
   { city: "New York", country: "USA", url: "https://cdn.pixabay.com/photo/2016/03/27/19/34/new-york-1284917_1280.jpg" },
   { city: "London", country: "UK", url: "https://cdn.pixabay.com/photo/2015/06/08/15/11/london-802605_1280.jpg" },
   { city: "Sydney", country: "Australia", url: "https://cdn.pixabay.com/photo/2016/11/29/09/08/sydney-opera-house-1868454_1280.jpg" },
-  { city: "Tokyo", country: "Japan", url: "https://cdn.pixabay.com/photo/2016/10/02/22/17/tokyo-1712459_1280.jpg" },
-  { city: "Berlin", country: "Germany", url: "https://cdn.pixabay.com/photo/2017/02/15/10/56/berlin-2064114_1280.jpg" },
-  { city: "Moscow", country: "Russia", url: "https://cdn.pixabay.com/photo/2017/06/05/22/03/moscow-2378771_1280.jpg" },
-  { city: "Dubai", country: "UAE", url: "https://cdn.pixabay.com/photo/2016/01/19/17/45/dubai-1149376_1280.jpg" },
-  { city: "Rio de Janeiro", country: "Brazil", url: "https://cdn.pixabay.com/photo/2016/11/06/05/14/rio-de-janeiro-1807533_1280.jpg" }
-  // Aggiungi altre località se vuoi...
+  { city: "Tokyo", country: "Japan", url: "https://cdn.pixabay.com/photo/2016/10/02/22/17/tokyo-1712459_1280.jpg" }
 ];
 
 let currentGame = {};
@@ -43,7 +38,7 @@ const handler = async (m, { conn, isAdmin }) => {
       risposta: scelta.city.toLowerCase(),
       timeout: setTimeout(() => {
         if (currentGame[m.chat]) {
-          conn.reply(m.chat, `⏰ Tempo scaduto! La risposta corretta era: *${scelta.city}*`, m);
+          conn.sendMessage(m.chat, { text: `⏰ Tempo scaduto! La risposta corretta era: *${scelta.city}*` }, { quoted: m });
           delete currentGame[m.chat];
         }
       }, 60000),
@@ -52,17 +47,28 @@ const handler = async (m, { conn, isAdmin }) => {
 
     const mapImageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/BlankMap-World.svg/1200px-BlankMap-World.svg.png';
 
-    await conn.sendMessage(m.chat, {
-      image: { url: mapImageUrl },
-      caption: `🌍 *Indovina la città dalla foto che ti invierò dopo!*\n\nRispondi scrivendo il nome della città entro 60 secondi!`
-    }, { quoted: m });
-
-    setTimeout(() => {
-      conn.sendMessage(m.chat, {
-        image: { url: scelta.url },
-        caption: `📸 Ecco la foto della città! Indovina!`
+    try {
+      await conn.sendMessage(m.chat, {
+        image: { url: mapImageUrl },
+        caption: `🌍 *Indovina la città dalla foto che ti invierò dopo!*\n\nRispondi scrivendo il nome della città entro 60 secondi!`
       }, { quoted: m });
-    }, 1500);
+
+      setTimeout(async () => {
+        try {
+          await conn.sendMessage(m.chat, {
+            image: { url: scelta.url },
+            caption: `📸 Ecco la foto della città! Indovina!`
+          }, { quoted: m });
+        } catch (err) {
+          console.error('Errore invio immagine città:', err);
+          conn.sendMessage(m.chat, { text: '⚠️ Errore nel caricare l\'immagine della città.' }, { quoted: m });
+        }
+      }, 1500);
+    } catch (err) {
+      console.error('Errore invio mappa:', err);
+      m.reply('⚠️ Errore nel caricare la mappa.');
+      delete currentGame[m.chat];
+    }
   }
 };
 
