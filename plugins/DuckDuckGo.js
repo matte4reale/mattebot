@@ -1,44 +1,32 @@
-import fetch from 'node-fetch';
-
-let handler = async (m, { text, conn }) => {
-  if (!text) return m.reply('📸 Scrivi cosa vuoi cercare!\nEsempio: `.apiimg lamborghini`');
-
-  const query = encodeURIComponent(text.trim());
+let handler = async (m, { conn, text }) => {
+  if (!text) return m.reply('❗ Scrivi cosa cercare\nEsempio: *.apiimg ferrari*');
 
   try {
-    // Ottieni il token di sessione vqd necessario per DuckDuckGo
-    const tokenRes = await fetch(`https://duckduckgo.com/?q=${query}`);
-    const tokenHtml = await tokenRes.text();
-    const vqdMatch = tokenHtml.match(/vqd='([\d-]+)'/);
+    const res1 = await fetch(`https://duckduckgo.com/?q=${encodeURIComponent(text)}`);
+    const html = await res1.text();
+    const vqd = html.match(/vqd='([\d-]+)'/)?.[1];
+    if (!vqd) throw '❌ Errore ottenendo token vqd';
 
-    if (!vqdMatch) throw '❌ Impossibile ottenere il token di ricerca';
+    const res2 = await fetch(`https://duckduckgo.com/i.js?l=us-en&o=json&q=${encodeURIComponent(text)}&vqd=${vqd}&f=,,,&p=1`);
+    const data = await res2.json();
+    const immagini = data.results?.slice(0, 10);
 
-    const vqd = vqdMatch[1];
+    if (!immagini || immagini.length === 0) throw '❗ Nessuna immagine trovata';
 
-    const apiRes = await fetch(`https://duckduckgo.com/i.js?l=it-it&o=json&q=${query}&vqd=${vqd}&f=,,,&p=1`);
-    const apiData = await apiRes.json();
-
-    if (!apiData.results || apiData.results.length === 0) {
-      return m.reply('❗ Nessuna immagine trovata.');
-    }
-
-    const results = apiData.results.slice(0, 10); // Prendi max 10 immagini
-
-    for (let img of results) {
+    for (let img of immagini) {
       await conn.sendMessage(m.chat, {
         image: { url: img.image },
-        caption: `🖼️ ${text}\n🔗 ${img.url}`,
+        caption: `🖼️ *${text.trim()}*\n🔗 ${img.url}`
       }, { quoted: m });
     }
-
   } catch (err) {
     console.error(err);
     m.reply('⚠️ Errore durante la ricerca immagini.');
   }
 };
 
-handler.help = ['apiimg <query>'];
+handler.command = ['apiimg'];
+handler.help = ['apiimg <termine>'];
 handler.tags = ['tools'];
-handler.command = /^apiimg$/i;
 
 export default handler;
