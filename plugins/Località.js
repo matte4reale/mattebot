@@ -1,18 +1,4 @@
-import fs from 'fs/promises';
-
-let localita = [];
-
-async function caricaLocalita() {
-  try {
-    const data = await fs.readFile('./lib/localita.dataset(1)json', 'utf-8');
-    localita = JSON.parse(data);
-  } catch (e) {
-    console.error('Errore caricando localita.json:', e);
-  }
-}
-
-// Carica le località appena parte il modulo
-caricaLocalita();
+import fs from 'fs';
 
 let handler = async (m, { conn, isAdmin }) => {
   const text = m.text?.toLowerCase();
@@ -30,17 +16,17 @@ let handler = async (m, { conn, isAdmin }) => {
   if (text === '.indovinalocalità') {
     if (global.geoGame?.[m.chat]) return m.reply('⚠️ Partita già in corso!');
     global.cooldowns = global.cooldowns || {};
-    const now = Date.now();
-    const key = `geo_${m.chat}`;
-
+    const now = Date.now(), key = `geo_${m.chat}`;
     if (now - (global.cooldowns[key] || 0) < 15000) {
-      const wait = Math.ceil((15000 - (now - global.cooldowns[key])) / 1000);
-      return m.reply(`⏳ Attendi ${wait}s prima di riprovare.`);
+      return m.reply(`⏳ Attendi ${Math.ceil((15000 - (now - global.cooldowns[key]))/1000)}s prima di riprovare.`);
     }
     global.cooldowns[key] = now;
 
-    if (!localita.length) {
-      return m.reply('⚠️ Errore: lista località non caricata.');
+    let localita = [];
+    try {
+      localita = JSON.parse(fs.readFileSync('./localita_dataset(1).json'));
+    } catch (e) {
+      return m.reply('⚠️ Errore durante il caricamento delle località.');
     }
 
     const scelta = localita[Math.floor(Math.random() * localita.length)];
@@ -58,28 +44,22 @@ let handler = async (m, { conn, isAdmin }) => {
       }, 60000)
     };
 
-    await conn.sendMessage(m.chat, {
-      image: { url: scelta.url },
-      caption: `${intro}\n⌛ Hai 60 secondi.`
-    }, { quoted: m });
+    await conn.sendMessage(m.chat, { image: { url: scelta.url }, caption: `${intro}\n⌛ Hai 60 secondi.` }, { quoted: m });
   }
 };
 
 handler.before = async (m, { conn }) => {
   const game = global.geoGame?.[m.chat];
   if (!game || m.key.fromMe) return;
-
-  const rispostaUtente = m.text?.toLowerCase().trim();
-  if (!rispostaUtente) return;
-
-  if (rispostaUtente === game.risposta) {
+  const text = m.text?.toLowerCase().trim();
+  if (!text) return;
+  if (text === game.risposta) {
     clearTimeout(game.timeout);
-
     const timeTaken = ((Date.now() - game.startTime) / 1000).toFixed(1);
     const reward = Math.floor(Math.random() * 100 + 100);
     const exp = Math.floor(Math.random() * 10 + 10);
 
-    const congratsMessage = `
+    let congratsMessage = `
 ╭━『 🎉 *RISPOSTA CORRETTA!* 』━╮
 ┃
 ┃ 🗺️ *Città:* ${game.risposta}
@@ -91,15 +71,14 @@ handler.before = async (m, { conn }) => {
 ┃
 ╰━━━━━━━━━━━━━━━━╯
 
-> \`vare ✧ bot\``;
+> \`by chatunity\``;
 
     await conn.reply(m.chat, congratsMessage, m);
     delete global.geoGame[m.chat];
   }
 };
 
-handler.help = ['indovinalocalità', 'skipmap'];
+handler.help = ['indovinalocalità','skipmap'];
 handler.tags = ['game'];
-handler.command = ['indovinalocalità', 'skipmap'];
-
+handler.command = ['indovinalocalità','skipmap'];
 export default handler;
