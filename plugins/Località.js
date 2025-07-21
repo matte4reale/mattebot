@@ -1,10 +1,10 @@
-let localitaDataset = [
-  { city: "Paris", country: "France", url: "https://cdn.pixabay.com/photo/2015/04/23/22/00/eiffel-tower-736529_1280.jpg" },
-  { city: "Rome", country: "Italy", url: "https://cdn.pixabay.com/photo/2016/11/29/03/55/colosseum-1868867_1280.jpg" },
-  { city: "New York", country: "USA", url: "https://cdn.pixabay.com/photo/2016/03/27/19/34/new-york-1284917_1280.jpg" },
-  { city: "London", country: "UK", url: "https://cdn.pixabay.com/photo/2015/06/08/15/11/london-802605_1280.jpg" },
-  { city: "Sydney", country: "Australia", url: "https://cdn.pixabay.com/photo/2016/11/29/09/08/sydney-opera-house-1868454_1280.jpg" },
-  { city: "Tokyo", country: "Japan", url: "https://cdn.pixabay.com/photo/2016/10/02/22/17/tokyo-1712459_1280.jpg" }
+const localitaDataset = [
+  { city: "Parigi", country: "Francia", url: "https://cdn.pixabay.com/photo/2015/03/26/09/41/eiffel-tower-690293_960_720.jpg" },
+  { city: "Roma", country: "Italia", url: "https://cdn.pixabay.com/photo/2016/11/29/03/53/colosseum-1868054_960_720.jpg" },
+  { city: "New York", country: "USA", url: "https://cdn.pixabay.com/photo/2016/11/18/18/06/new-york-1839175_960_720.jpg" },
+  { city: "Londra", country: "Regno Unito", url: "https://cdn.pixabay.com/photo/2017/09/12/11/22/london-2747702_960_720.jpg" },
+  { city: "Tokyo", country: "Giappone", url: "https://cdn.pixabay.com/photo/2018/05/28/16/09/tokyo-3434285_960_720.jpg" }
+  // ... aggiungi tutte le città che vuoi
 ];
 
 let currentGame = {};
@@ -24,7 +24,7 @@ const handler = async (m, { conn, isAdmin }) => {
 
   if (text === '.mappa') {
     if (currentGame[m.chat]) return m.reply('⚠️ Partita già in corso!');
-
+    
     global.cooldowns = global.cooldowns || {};
     const now = Date.now(), key = `geo_${m.chat}`;
     if (now - (global.cooldowns[key] || 0) < 15000) {
@@ -45,39 +45,23 @@ const handler = async (m, { conn, isAdmin }) => {
       startTime: Date.now()
     };
 
+    // Link mappa (puoi personalizzare)
     const mapImageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/BlankMap-World.svg/1200px-BlankMap-World.svg.png';
 
-    try {
-      await conn.sendMessage(m.chat, {
-        image: { url: mapImageUrl },
-        caption: `🌍 *Indovina la città dalla foto che ti invierò dopo!*\n\nRispondi scrivendo il nome della città entro 60 secondi!`
-      }, { quoted: m });
+    await conn.sendMessage(m.chat, { text: `🌍 Ecco la mappa:\n${mapImageUrl}` }, { quoted: m });
 
-      setTimeout(async () => {
-        try {
-          await conn.sendMessage(m.chat, {
-            image: { url: scelta.url },
-            caption: `📸 Ecco la foto della città! Indovina!`
-          }, { quoted: m });
-        } catch (err) {
-          console.error('Errore invio immagine città:', err);
-          conn.sendMessage(m.chat, { text: '⚠️ Errore nel caricare l\'immagine della città.' }, { quoted: m });
-        }
-      }, 1500);
-    } catch (err) {
-      console.error('Errore invio mappa:', err);
-      m.reply('⚠️ Errore nel caricare la mappa.');
-      delete currentGame[m.chat];
-    }
+    setTimeout(async () => {
+      await conn.sendMessage(m.chat, { text: `📸 Foto città:\n${scelta.url}` }, { quoted: m });
+    }, 1500);
   }
 };
 
 handler.before = async (m, { conn }) => {
-  const game = currentGame[m.chat];
-  if (!game || m.key.fromMe) return;
+  if (!currentGame[m.chat] || m.key.fromMe) return;
   const text = m.text?.toLowerCase().trim();
   if (!text) return;
 
+  const game = currentGame[m.chat];
   if (text === game.risposta) {
     clearTimeout(game.timeout);
     const timeTaken = ((Date.now() - game.startTime) / 1000).toFixed(1);
@@ -103,8 +87,7 @@ handler.before = async (m, { conn }) => {
   }
 };
 
-handler.help = ['mappa', 'skipmap'];
+handler.help = ['mappa','skipmap'];
 handler.tags = ['game'];
-handler.command = ['mappa', 'skipmap'];
-
+handler.command = ['mappa','skipmap'];
 export default handler;
