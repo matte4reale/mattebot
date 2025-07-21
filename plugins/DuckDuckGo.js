@@ -2,25 +2,23 @@ let handler = async (m, { conn, text }) => {
   if (!text) return m.reply('❗ Scrivi cosa cercare\nEsempio: *.apiimg ferrari*');
 
   try {
-    const res1 = await fetch(`https://duckduckgo.com/?q=${encodeURIComponent(text)}`);
-    const html = await res1.text();
-    const vqd = html.match(/vqd='([\d-]+)'/)?.[1];
-    if (!vqd) throw '❌ Errore ottenendo token vqd';
+    const res = await fetch(`https://www.bing.com/images/search?q=${encodeURIComponent(text)}&form=HDRSC2`);
+    const html = await res.text();
 
-    const res2 = await fetch(`https://duckduckgo.com/i.js?l=us-en&o=json&q=${encodeURIComponent(text)}&vqd=${vqd}&f=,,,&p=1`);
-    const data = await res2.json();
-    const immagini = data.results?.slice(0, 10);
+    const matches = [...html.matchAll(/"murl":"(https:\/\/[^"]+)"/g)];
+    const urls = matches.slice(0, 10).map(x => x[1]);
 
-    if (!immagini || immagini.length === 0) throw '❗ Nessuna immagine trovata';
+    if (urls.length === 0) throw 'Nessuna immagine trovata.';
 
-    for (let img of immagini) {
+    for (const url of urls) {
       await conn.sendMessage(m.chat, {
-        image: { url: img.image },
-        caption: `🖼️ *${text.trim()}*\n🔗 ${img.url}`
+        image: { url },
+        caption: `🔗 ${url}`
       }, { quoted: m });
     }
-  } catch (err) {
-    console.error(err);
+
+  } catch (e) {
+    console.error(e);
     m.reply('⚠️ Errore durante la ricerca immagini.');
   }
 };
