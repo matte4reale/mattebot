@@ -1,140 +1,78 @@
-import { googleImage } from '@bochilteam/scraper'
+let handler = async (m, { conn, isAdmin }) => {
+  const text = m.text?.toLowerCase();
 
-const sourcesBySport = {
-  calcio: [
-    { name: 'Gazzetta', url: 'https://www.gazzetta.it/rss/Calcio.xml' },
-    { name: 'Tuttosport', url: 'https://www.tuttosport.com/rss/calcio.xml' },
-    { name: 'Corriere dello Sport', url: 'https://www.corrieredellosport.it/rss/calcio' }
-  ],
-  basket: [
-    { name: 'Sky Basket', url: 'https://www.sportando.basketball/feed/' }
-  ],
-  tennis: [
-    { name: 'Ubitennis', url: 'https://www.ubitennis.com/feed/' }
-  ],
-  formula1: [
-    { name: 'FormulaPassion', url: 'https://formulapassion.it/feed' }
-  ],
-  mma: [
-    { name: 'MMA Mania', url: 'https://www.mmamania.com/rss/current.xml' }
-  ],
-  ciclismo: [
-    { name: 'CyclingNews', url: 'https://www.cyclingnews.com/rss/news/' }
-  ]
-}
-
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[array[i], array[j]] = [array[j], array[i]]
+  if (text === '.skiplogo') {
+    if (!m.isGroup) return m.reply('⚠️ Questo comando funziona solo nei gruppi!');
+    if (!global.logoGame?.[m.chat]) return m.reply('⚠️ Nessuna partita attiva!');
+    if (!isAdmin && !m.fromMe) return m.reply('❌ Solo admin possono interrompere!');
+    clearTimeout(global.logoGame[m.chat].timeout);
+    await conn.reply(m.chat, `🛑 Gioco interrotto. La risposta era: *${global.logoGame[m.chat].risposta}*`, m);
+    delete global.logoGame[m.chat];
+    return;
   }
-}
 
-async function getNews(sport = 'calcio') {
-  let news = []
-  const sources = sourcesBySport[sport] || []
+  if (text === '.brum') {
+    if (global.logoGame?.[m.chat]) return m.reply('⚠️ Partita già in corso!');
+    global.cooldowns = global.cooldowns || {};
+    const now = Date.now();
+    const key = `logo_${m.chat}`;
 
-  for (const src of sources) {
-    try {
-      const res = await fetch(src.url)
-      const xml = await res.text()
-      const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 3)
-
-      for (const item of items) {
-        const titleMatch = item[1].match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || item[1].match(/<title>(.*?)<\/title>/)
-        const linkMatch = item[1].match(/<link>(.*?)<\/link>/)
-
-        if (titleMatch && linkMatch) {
-          const title = titleMatch[1]
-          const link = linkMatch[1]
-
-          let imageUrl = 'https://ibb.co/JwkPWhZX'
-          try {
-            const images = await googleImage(title)
-            if (images?.length) {
-              shuffle(images)
-              imageUrl = images[0]
-            }
-          } catch (err) {
-            console.warn(`Immagine non trovata per: ${title}`)
-          }
-
-          news.push({
-            title,
-            link,
-            source: src.name,
-            image: imageUrl
-          })
-        }
-      }
-    } catch (e) {
-      console.error(`❌ Errore su ${src.name}:`, e.message)
+    if (now - (global.cooldowns[key] || 0) < 10000) {
+      const rem = Math.ceil((10000 - (now - global.cooldowns[key])) / 1000);
+      return m.reply(`⏳ Aspetta ancora ${rem}s prima di giocare di nuovo.`);
     }
-  }
+    global.cooldowns[key] = now;
 
-  return news
-}
-
-const handler = async (m, { conn, args }) => {
-  const user = m.sender
-  const data = global.db.data.users[user] || {}
-  const sport = args[0]?.toLowerCase() || data.preferredSport || 'calcio'
-
-  const news = await getNews(sport)
-
-  if (!news || news.length === 0) {
-    return m.reply('📭 Nessuna notizia trovata.')
-  }
-
-  const cards = news.slice(0, 6).map(n => ({
-    title: n.title,
-    body: `🗞️ Fonte: ${n.source}`,
-    footer: 'Tocca per leggere la notizia',
-    image: {
-      url: n.image
-    },
-    buttons: [
+    const loghi = [
       {
-        name: 'cta_url',
-        buttonParamsJson: JSON.stringify({
-          display_text: 'Leggi',
-          url: n.link
-        })
+        url: 'https://i.postimg.cc/fy7MfQDn/bmw-logo.png',
+        marca: 'bmw'
       }
-    ]
-  }))
+    ];
 
-  await conn.sendMessage(
-    m.chat,
-    {
-      text: `📰 Ultime notizie - ${sport.toUpperCase()}`,
-      footer: '🗞️ Powered by Origin-Bot',
-      cards
-    },
-    { quoted: m }
-  )
+    const scelta = loghi[0]; // solo uno
+    const frase = '🚘 *INDOVINA LA MARCA DAL LOGO!*';
 
-  // 🔘 Bottoni per cambiare sport
-  await conn.sendMessage(
-    m.chat,
-    {
-      text: '🎯 Vuoi leggere notizie di un altro sport?',
-      footer: 'Scegli una categoria:',
-      buttons: [
-        { buttonId: '.news calcio', buttonText: { displayText: '⚽ Calcio' }, type: 1 },
-        { buttonId: '.news basket', buttonText: { displayText: '🏀 Basket' }, type: 1 },
-        { buttonId: '.news tennis', buttonText: { displayText: '🎾 Tennis' }, type: 1 },
-        { buttonId: '.news formula1', buttonText: { displayText: '🏎 Formula 1' }, type: 1 },
-        { buttonId: '.news mma', buttonText: { displayText: '🥋 MMA' }, type: 1 },
-        { buttonId: '.news ciclismo', buttonText: { displayText: '🚴‍♂️ Ciclismo' }, type: 1 }
-      ],
-      headerType: 1
-    },
-    { quoted: m }
-  )
-}
+    global.logoGame = global.logoGame || {};
+    global.logoGame[m.chat] = {
+      risposta: scelta.marca,
+      timeout: setTimeout(() => {
+        if (global.logoGame?.[m.chat]) {
+          conn.reply(m.chat, `⏰ Tempo scaduto! Risposta: *${scelta.marca}*`, m);
+          delete global.logoGame[m.chat];
+        }
+      }, 60000)
+    };
 
-handler.command = /^news$/i
-handler.tags = ['news']
-handler.help = ['news', 'news <sport>']
-export default handler
+    await conn.sendMessage(
+      m.chat,
+      {
+        image: { url: scelta.url },
+        caption: `${frase}\n⌛ Hai 60 secondi per rispondere!`
+      },
+      { quoted: m }
+    );
+  }
+};
+
+handler.before = async (m, { conn }) => {
+  const chat = m.chat;
+  const game = global.logoGame?.[chat];
+  if (!game) return;
+  if (m.key.fromMe) return;
+
+  const text = m.text?.toLowerCase().trim();
+  if (!text) return;
+
+  if (text === game.risposta) {
+    clearTimeout(game.timeout);
+    conn.reply(chat, `✅ *RISPOSTA CORRETTA!* 🎉\nLa marca era: *${game.risposta}*`, m);
+    delete global.logoGame[chat];
+  }
+};
+
+handler.help = ['brum', 'skiplogo'];
+handler.tags = ['game'];
+handler.command = ['brum', 'skiplogo'];
+
+export default handler;
