@@ -1,25 +1,25 @@
-let handler = async (m, { conn, isAdmin, command }) => {
+let handler = async (m, { conn }) => {
   const localita = [
-    { città: "Parigi", paese: "Francia", url: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34" },
-    { città: "New York", paese: "Stati Uniti", url: "https://images.unsplash.com/photo-1549921296-3a6b207b117f" },
-    { città: "Roma", paese: "Italia", url: "https://images.unsplash.com/photo-1580894908360-ec1b9080f0db" },
-    { città: "Tokyo", paese: "Giappone", url: "https://images.unsplash.com/photo-1589916074303-406386f21090" },
-    { città: "Londra", paese: "Regno Unito", url: "https://images.unsplash.com/photo-1554118811-1e1e007b8b5b" },
-    { città: "Pechino", paese: "Cina", url: "https://images.unsplash.com/photo-1576085898320-6c8523f3356e" },
-    { città: "Mosca", paese: "Russia", url: "https://images.unsplash.com/photo-1613742922896-e192eb6c1d90" },
-    { città: "Rio de Janeiro", paese: "Brasile", url: "https://images.unsplash.com/photo-1582744821089-3ee9a997caa2" },
-    { città: "Atene", paese: "Grecia", url: "https://images.unsplash.com/photo-1560774351-e7e5a2c1d8ed" },
-    { città: "Berlino", paese: "Germania", url: "https://images.unsplash.com/photo-1599478372772-9c5d8235f432" },
-    { città: "Bangkok", paese: "Thailandia", url: "https://images.unsplash.com/photo-1599146815255-cac89c237ca8" },
-    { città: "Sidney", paese: "Australia", url: "https://images.unsplash.com/photo-1506973035872-a4f23c1f8c00" },
-    { città: "Il Cairo", paese: "Egitto", url: "https://images.unsplash.com/photo-1580663139593-60b9812252c1" },
-    { città: "Toronto", paese: "Canada", url: "https://images.unsplash.com/photo-1598367813708-174e0b60a5e0" },
-    { città: "San Francisco", paese: "Stati Uniti", url: "https://images.unsplash.com/photo-1579930694463-2eac887ba0ec" },
-    { città: "Barcellona", paese: "Spagna", url: "https://images.unsplash.com/photo-1533142266415-ac591a4f9f4c" },
-    { città: "Istanbul", paese: "Turchia", url: "https://images.unsplash.com/photo-1598620613274-8f7b91e3eaa3" },
-    { città: "Dubai", paese: "Emirati Arabi Uniti", url: "https://images.unsplash.com/photo-1596803240502-b308c9c1ef94" },
-    { città: "Singapore", paese: "Singapore", url: "https://images.unsplash.com/photo-1572177812156-58036aae4392" },
-    { città: "Città del Messico", paese: "Messico", url: "https://images.unsplash.com/photo-1601066526190-88262f1c26f9" }
+    { città: "Parigi", paese: "Francia", url: "https://cdn.pixabay.com/photo/2015/03/26/09/54/eiffel-tower-690293_960_720.jpg" },
+    { città: "Roma", paese: "Italia", url: "https://cdn.pixabay.com/photo/2016/09/07/11/37/colosseum-1650726_960_720.jpg" },
+    { città: "Londra", paese: "Regno Unito", url: "https://cdn.pixabay.com/photo/2017/01/20/00/30/london-1990680_960_720.jpg" },
+    { città: "New York", paese: "Stati Uniti", url: "https://cdn.pixabay.com/photo/2016/11/18/17/20/new-york-1834576_960_720.jpg" },
+    { città: "Tokyo", paese: "Giappone", url: "https://cdn.pixabay.com/photo/2018/01/15/07/51/tokyo-3088451_960_720.jpg" },
+    { città: "Barcellona", paese: "Spagna", url: "https://cdn.pixabay.com/photo/2017/01/20/00/30/barcelona-1990650_960_720.jpg" },
+    { città: "Dubai", paese: "Emirati Arabi Uniti", url: "https://cdn.pixabay.com/photo/2016/03/27/21/16/dubai-1281925_960_720.jpg" },
+    { città: "Mosca", paese: "Russia", url: "https://cdn.pixabay.com/photo/2017/08/06/22/01/moscow-2594513_960_720.jpg" },
+    { città: "Bangkok", paese: "Thailandia", url: "https://cdn.pixabay.com/photo/2016/10/03/19/59/wat-arun-1710955_960_720.jpg" },
+    { città: "Istanbul", paese: "Turchia", url: "https://cdn.pixabay.com/photo/2017/02/15/12/12/mosque-2063912_960_720.jpg" },
+    { città: "Il Cairo", paese: "Egitto", url: "https://cdn.pixabay.com/photo/2015/03/27/13/16/pyramids-694041_960_720.jpg" },
+    { città: "Atene", paese: "Grecia", url: "https://cdn.pixabay.com/photo/2016/11/29/03/53/acropolis-1868044_960_720.jpg" },
+    { città: "San Francisco", paese: "Stati Uniti", url: "https://cdn.pixabay.com/photo/2015/10/12/15/03/san-francisco-984608_960_720.jpg" },
+    { città: "Berlino", paese: "Germania", url: "https://cdn.pixabay.com/photo/2016/09/01/08/16/berlin-1639991_960_720.jpg" },
+    { città: "Praga", paese: "Repubblica Ceca", url: "https://cdn.pixabay.com/photo/2016/09/09/08/41/prague-1653340_960_720.jpg" },
+    { città: "Vienna", paese: "Austria", url: "https://cdn.pixabay.com/photo/2017/04/06/09/53/vienna-2201735_960_720.jpg" },
+    { città: "Lisbona", paese: "Portogallo", url: "https://cdn.pixabay.com/photo/2018/09/01/09/52/lisbon-3643781_960_720.jpg" },
+    { città: "Toronto", paese: "Canada", url: "https://cdn.pixabay.com/photo/2017/09/17/21/47/toronto-2754255_960_720.jpg" },
+    { città: "Buenos Aires", paese: "Argentina", url: "https://cdn.pixabay.com/photo/2018/02/13/14/19/argentina-3152617_960_720.jpg" },
+    { città: "Città del Messico", paese: "Messico", url: "https://cdn.pixabay.com/photo/2015/03/26/09/43/palace-690273_960_720.jpg" }
   ];
 
   if (!global.geoGame) global.geoGame = {};
@@ -37,10 +37,10 @@ let handler = async (m, { conn, isAdmin, command }) => {
     }, 60000)
   };
 
-  // Mappa fissa
+  // Mappa fissa da file locale
   await conn.sendFile(m.chat, './plugins/mappa.png', 'mappa.png', '🌍 *Indica lo stato corretto della località raffigurata!*', m);
 
-  // Immagine da indovinare
+  // Immagine città da indovinare
   await conn.sendMessage(m.chat, {
     image: { url: scelta.url },
     caption: '🖼️ *Indovina lo stato da questa immagine!*\nHai 60 secondi!'
