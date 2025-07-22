@@ -17,12 +17,13 @@ const handler = async (m, { conn, args, command }) => {
         }
 
         try {
-            const groupCode = link.split('https://chat.whatsapp.com/')[1];
-            const newGroupId = await conn.groupAcceptInvite(groupCode);
-            linkGruppoNuovo[chatId] = { link, groupId: newGroupId };
-            return m.reply('✅ Link del nuovo gruppo salvato.');
-        } catch {
-            return m.reply('❌ Link non valido o già usato.');
+            const groupCode = link.split('https://chat.whatsapp.com/')[1].trim();
+            await conn.groupAcceptInvite(groupCode); // Unisciti al gruppo
+            linkGruppoNuovo[chatId] = { link, groupId: groupCode };
+            return m.reply('✅ Link del nuovo gruppo salvato con successo.');
+        } catch (e) {
+            console.error(e);
+            return m.reply('❌ Errore: link non valido, già usato o bot senza permessi.');
         }
     }
 
@@ -62,13 +63,13 @@ const handler = async (m, { conn, args, command }) => {
         const dati = linkGruppoNuovo[chatOrigine];
         const utenti = backupUtenti[chatOrigine];
 
-        if (!dati || !utenti) return m.reply('❌ Mancano dati.');
+        if (!dati || !utenti) return m.reply('❌ Mancano dati salvati.');
 
         let riusciti = 0, falliti = 0;
 
         for (const user of utenti) {
             try {
-                await conn.sendMessage(user, { text: '.' });
+                await conn.sendMessage(user, { text: '.' }); // ping
                 await conn.sendMessage(user, {
                     text: `🔗 Il gruppo è stato ricreato:\n\n👉 ${dati.link}`
                 });
@@ -86,10 +87,10 @@ const handler = async (m, { conn, args, command }) => {
         const dati = linkGruppoNuovo[chatOrigine];
         const utenti = backupUtenti[chatOrigine];
 
-        if (!dati || !utenti) return m.reply('❌ Mancano dati.');
+        if (!dati || !utenti) return m.reply('❌ Mancano dati salvati.');
 
         if (utenti.length > 6) {
-            return m.reply('❗ Ci sono più di 6 membri, non posso aggiungerli tutti.\nUsa il bottone "📤 Inoltra Link".');
+            return m.reply('❗ Ci sono più di 6 membri, non posso aggiungerli tutti.\nUsa "📤 Inoltra Link".');
         }
 
         try {
