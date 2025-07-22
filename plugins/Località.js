@@ -1,71 +1,98 @@
+import path from 'path';
+
+let localita_dataset = [
+  {
+    url: 'https://raw.githubusercontent.com/cs-sfu/GeoDataset/main/images/toronto.jpg',
+    nome: 'Toronto'
+  },
+  {
+    url: 'https://raw.githubusercontent.com/cs-sfu/GeoDataset/main/images/niagara_falls.jpg',
+    nome: 'Cascate del Niagara'
+  },
+  {
+    url: 'https://raw.githubusercontent.com/cs-sfu/GeoDataset/main/images/grand_canyon.jpg',
+    nome: 'Grand Canyon'
+  },
+  {
+    url: 'https://raw.githubusercontent.com/cs-sfu/GeoDataset/main/images/yosemite.jpg',
+    nome: 'Yosemite'
+  },
+  {
+    url: 'https://raw.githubusercontent.com/cs-sfu/GeoDataset/main/images/banff.jpg',
+    nome: 'Banff'
+  },
+  // aggiungi altre fino a 20
+];
+
 let handler = async (m, { conn }) => {
-  if (!m.chat) return;
-
-  const cittàDataset = [
-    {
-      paese: "Francia",
-      città: "Parigi",
-      img: "https://raw.githubusercontent.com/MatteBotAssets/geo-images/main/paris.jpg"
-    },
-    {
-      paese: "Italia",
-      città: "Roma",
-      img: "https://raw.githubusercontent.com/MatteBotAssets/geo-images/main/rome.jpg"
-    },
-    {
-      paese: "Giappone",
-      città: "Tokyo",
-      img: "https://raw.githubusercontent.com/MatteBotAssets/geo-images/main/tokyo.jpg"
-    },
-    {
-      paese: "USA",
-      città: "New York",
-      img: "https://raw.githubusercontent.com/MatteBotAssets/geo-images/main/newyork.jpg"
-    },
-    {
-      paese: "Regno Unito",
-      città: "Londra",
-      img: "https://raw.githubusercontent.com/MatteBotAssets/geo-images/main/london.jpg"
+  if (m.text.toLowerCase() === '.mappa') {
+    if (global.geoGame && global.geoGame[m.chat]) {
+      return conn.reply(m.chat, '⚠️ Gioco già in corso, usa .skipmap per saltare.', m);
     }
-  ];
 
-  const scelta = cittàDataset[Math.floor(Math.random() * cittàDataset.length)];
-  const opzioni = [scelta.paese];
+    // Scegli una località a caso
+    let scelta = localita_dataset[Math.floor(Math.random() * localita_dataset.length)];
 
-  while (opzioni.length < 5) {
-    let rnd = cittàDataset[Math.floor(Math.random() * cittàDataset.length)].paese;
-    if (!opzioni.includes(rnd)) opzioni.push(rnd);
+    // Prepara le opzioni: 4 risposte casuali + quella giusta
+    let opzioni = [scelta.nome];
+    while (opzioni.length < 5) {
+      let randomLoc = localita_dataset[Math.floor(Math.random() * localita_dataset.length)].nome;
+      if (!opzioni.includes(randomLoc)) opzioni.push(randomLoc);
+    }
+    // Mischia le opzioni
+    opzioni = opzioni.sort(() => Math.random() - 0.5);
+
+    // Salva il gioco globale
+    global.geoGame = global.geoGame || {};
+    global.geoGame[m.chat] = {
+      risposta: scelta.nome,
+      timeout: setTimeout(() => {
+        conn.reply(m.chat, `⏰ Tempo scaduto! La risposta era: *${scelta.nome}*`, m);
+        delete global.geoGame[m.chat];
+      }, 60000),
+    };
+
+    // Manda la mappa dalla cartella plugin (adatta il percorso se serve)
+    await conn.sendMessage(
+      m.chat,
+      { image: { url: path.resolve('./plugins/mappa.png') }, caption: '🌍 *Indovina il luogo dalla foto!*' },
+      { quoted: m }
+    );
+
+    // Manda la foto del luogo con 5 bottoni
+    let buttons = opzioni.map(opt => ({ buttonId: opt, buttonText: { displayText: opt }, type: 1 }));
+    await conn.sendMessage(
+      m.chat,
+      {
+        image: { url: scelta.url },
+        caption: 'Qual è questo luogo?',
+        buttons,
+        headerType: 1,
+      },
+      { quoted: m }
+    );
   }
-
-  // Mischia le opzioni
-  opzioni.sort(() => Math.random() - 0.5);
-
-  global.geoGame = global.geoGame || {};
-  global.geoGame[m.chat] = {
-    risposta: scelta.paese,
-    timeout: setTimeout(() => {
-      conn.sendMessage(m.chat, { text: `⏰ Tempo scaduto! La risposta era *${scelta.paese}*.` });
-      delete global.geoGame[m.chat];
-    }, 60000)
-  };
-
-  // Invia prima la mappa politica
-  await conn.sendMessage(m.chat, {
-    image: { url: './plugins/mappa_assets/mappa.png' },
-    caption: "🧭 *Indovina lo stato dalla città nella prossima immagine!*"
-  });
-
-  // Poi la città con i bottoni
-  await conn.sendMessage(m.chat, {
-    image: { url: scelta.img },
-    caption: `🌆 Dove si trova questa città?`,
-    buttons: opzioni.map(op => ({ buttonId: `.guess ${op}`, buttonText: { displayText: op }, type: 1 })),
-    headerType: 4
-  }, { quoted: m });
 };
 
-handler.command = ['mappa'];
+handler.before = async (m, { conn }) => {
+  const game = global.geoGame?.[m.chat];
+  if (!game || m.key.fromMe) return;
+  if (!m.message?.buttonsResponseMessage) return; // solo risposte ai bottoni
+
+  let risposta = m.message.buttonsResponseMessage.selectedButtonId;
+  if (!risposta) return;
+
+  if (risposta.toLowerCase() === game.risposta.toLowerCase()) {
+    clearTimeout(game.timeout);
+    await conn.reply(m.chat, `🎉 Complimenti! Hai indovinato: *${game.risposta}*`, m);
+    delete global.geoGame[m.chat];
+  } else {
+    await conn.reply(m.chat, '❌ Sbagliato, riprova!', m);
+  }
+};
+
+handler.help = ['mappa', 'skipmap'];
 handler.tags = ['game'];
-handler.help = ['mappa'];
+handler.command = ['mappa', 'skipmap'];
 
 export default handler;
