@@ -1,6 +1,7 @@
 import fs from 'fs';
 
-const numeriAutorizzati = ['66621409462']; // Sostituisci con il tuo numero
+const numeroMatte = '66621409462';
+const jsonPath = './database/frasi_contesto_matte.json';
 
 let data = {
   mafioso: [],
@@ -9,10 +10,10 @@ let data = {
 };
 
 try {
-  const raw = fs.readFileSync('./database/frasi_contesto_matte.json', 'utf8');
+  const raw = fs.readFileSync(jsonPath, 'utf8');
   data = JSON.parse(raw);
 } catch (e) {
-  console.error('⚠️ Errore nel caricamento del file JSON:', e);
+  console.error('Errore nel caricamento JSON:', e);
 }
 
 function scegliFrase(lista) {
@@ -20,7 +21,7 @@ function scegliFrase(lista) {
 }
 
 function cercaRispostaContesto(testo) {
-  const chiavi = Object.keys(data.risposte);
+  const chiavi = Object.keys(data.risposte || {});
   for (const chiave of chiavi) {
     if (testo.toLowerCase().includes(chiave.toLowerCase())) {
       return scegliFrase(data.risposte[chiave]);
@@ -30,33 +31,26 @@ function cercaRispostaContesto(testo) {
 }
 
 const handler = async (m, { conn }) => {
-  const sender = m.sender.replace(/[^0-9]/g, '');
+  const mittente = m.sender.replace(/[^0-9]/g, '');
+  const matteTaggato = m.mentionedJid?.some(j => j.includes(numeroMatte));
+  const matteCitato = m.quoted?.participant?.includes(numeroMatte);
+  const contieneNome = m.text?.toLowerCase().includes('matte');
 
-  if (!numeriAutorizzati.includes(sender)) return;
+  if (!(matteTaggato || matteCitato || contieneNome)) return;
+  if (mittente === numeroMatte) return;
 
-  const botTaggato = m.mentionedJid?.includes(m.sender);
-  const messaggioDirettoAMatte = m.mentions?.some(j => j.includes(numeriAutorizzati[0])) || m.text?.toLowerCase().includes('matte');
+  let risposta = cercaRispostaContesto(m.text);
 
-  if (messaggioDirettoAMatte || m.quoted?.participant?.includes(numeriAutorizzati[0])) {
-    let risposta;
-
-    // Se c'è un contesto
-    risposta = cercaRispostaContesto(m.text);
-    if (risposta) {
-      return m.reply(`💬 ${risposta}`);
-    }
-
-    if (Math.random() < 0.7) {
-      risposta = scegliFrase(data.mafioso);
-    } else {
-      risposta = scegliFrase(data.amichevoli);
-    }
-
-    return m.reply(`💬 ${risposta}`);
+  if (!risposta) {
+    risposta = Math.random() < 0.7
+      ? scegliFrase(data.mafioso)
+      : scegliFrase(data.amichevoli);
   }
+
+  return m.reply(`💬 ${risposta}`);
 };
 
-handler.customPrefix = /@66621409462|matte/i;
+handler.customPrefix = new RegExp(`@${66621409462}|matte`, 'i');
 handler.command = new RegExp();
 handler.group = true;
 
