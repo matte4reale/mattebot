@@ -12,14 +12,14 @@ let handler = async (m, { conn, command }) => {
     { regione: "Sardegna", url: "https://images.pexels.com/photos/29902042/pexels-photo-29902042.jpeg" },
     { regione: "Liguria", url: "https://images.pexels.com/photos/1797121/pexels-photo-1797121.jpeg" },
     { regione: "Marche", url: "https://images.pexels.com/photos/16363543/pexels-photo-16363543.jpeg" },
-    { regione: "Calabria", url: "https://media.istockphoto.com/id/530446239/it/foto/vista-panoramica-di-scalea-calabria-italia.jpg" },
-    { regione: "Abruzzo", url: "https://media.istockphoto.com/id/1182736856/it/foto/vista-panoramica-a-barrea-provincia-dellaquila-in-abruzzo.jpg" },
+    { regione: "Calabria", url: "https://images.pexels.com/photos/5644242/pexels-photo-5644242.jpeg" },
+    { regione: "Abruzzo", url: "https://images.pexels.com/photos/7947164/pexels-photo-7947164.jpeg" },
     { regione: "Trentino-Alto Adige", url: "https://media.istockphoto.com/id/637816996/it/foto/splendido-paesaggio-primaverile-con-il-villaggio-di-santa-maddalena-le-dolomiti-litalia-leuropa.jpg" },
-    { regione: "Friuli-Venezia Giulia", url: "https://media.istockphoto.com/id/1347140201/it/foto/citt%C3%A0-di-palmanova-mura-di-difesa-e-trincee-veduta-aerea.jpg" },
+    { regione: "Friuli-Venezia Giulia", url: "https://images.pexels.com/photos/2748019/pexels-photo-2748019.jpeg" },
     { regione: "Umbria", url: "https://images.pexels.com/photos/2031966/pexels-photo-2031966.jpeg" },
-    { regione: "Basilicata", url: "https://media.istockphoto.com/id/510042421/it/foto/corcovado.jpg" },
-    { regione: "Molise", url: "https://media.istockphoto.com/id/1469935405/it/foto/terrmoli.jpg" },
-    { regione: "Valle d'Aosta", url: "https://media.istockphoto.com/id/1452950362/it/foto/courmayeur-citt%C3%A0-di-montagna-italiana-dal-drone.jpg" }
+    { regione: "Basilicata", url: "https://images.pexels.com/photos/6580703/pexels-photo-6580703.jpeg" },
+    { regione: "Molise", url: "https://images.pexels.com/photos/7837306/pexels-photo-7837306.jpeg" },
+    { regione: "Valle d'Aosta", url: "https://images.pexels.com/photos/1327509/pexels-photo-1327509.jpeg" }
   ];
 
   global.regionGame = global.regionGame || {};
