@@ -3,34 +3,14 @@ let cooldowns = {};
 
 const localita_dataset = [
   {
-    city: "Parigi",
+    city: "parigi",
     image: "https://raw.githubusercontent.com/OpenAIExamples/geoguess-images/main/paris.jpg",
     options: ["parigi", "londra", "roma", "berlino", "madrid"]
   },
   {
-    city: "Roma",
+    city: "roma",
     image: "https://raw.githubusercontent.com/OpenAIExamples/geoguess-images/main/rome.jpg",
     options: ["madrid", "roma", "parigi", "berlino", "londra"]
-  },
-  {
-    city: "Londra",
-    image: "https://raw.githubusercontent.com/OpenAIExamples/geoguess-images/main/london.jpg",
-    options: ["parigi", "londra", "new york", "berlino", "tokyo"]
-  },
-  {
-    city: "New York",
-    image: "https://raw.githubusercontent.com/OpenAIExamples/geoguess-images/main/newyork.jpg",
-    options: ["new york", "los angeles", "chicago", "miami", "houston"]
-  },
-  {
-    city: "Tokyo",
-    image: "https://raw.githubusercontent.com/OpenAIExamples/geoguess-images/main/tokyo.jpg",
-    options: ["tokyo", "seoul", "beijing", "shanghai", "bangkok"]
-  },
-  {
-    city: "Sydney",
-    image: "https://raw.githubusercontent.com/OpenAIExamples/geoguess-images/main/sydney.jpg",
-    options: ["sydney", "melbourne", "brisbane", "perth", "adelaide"]
   }
 ];
 
@@ -48,11 +28,11 @@ async function sendQuestion(m, conn) {
   // Mischia opzioni
   const optionsShuffled = scelta.options
     .map(opt => ({ opt, sort: Math.random() }))
-    .sort((a, b) => a.sort - b.sort)
+    .sort((a,b) => a.sort - b.sort)
     .map(a => a.opt);
 
   geoGame[m.chat] = {
-    risposta: scelta.city.toLowerCase(),
+    risposta: scelta.city,
     timeout: setTimeout(() => {
       if (geoGame[m.chat]) {
         conn.reply(m.chat, `⏰ Tempo scaduto! La risposta era: *${scelta.city}*`, m);
@@ -62,7 +42,7 @@ async function sendQuestion(m, conn) {
   };
 
   let buttons = optionsShuffled.map(opt => ({
-    buttonId: `.${opt}`,
+    buttonId: opt,
     buttonText: { displayText: opt.charAt(0).toUpperCase() + opt.slice(1) },
     type: 1
   }));
@@ -76,7 +56,7 @@ async function sendQuestion(m, conn) {
 }
 
 let handler = async (m, { conn }) => {
-  const text = m.text?.toLowerCase();
+  let text = m.text?.toLowerCase();
 
   if (text === '.skipmap') {
     if (!geoGame[m.chat]) return conn.reply(m.chat, '⚠️ Nessuna partita in corso.', m);
@@ -96,7 +76,7 @@ let handler = async (m, { conn }) => {
       await conn.reply(m.chat, `🎉 Risposta corretta! Era *${geoGame[m.chat].risposta}*`, m);
       delete geoGame[m.chat];
     } else if (text?.startsWith('.')) {
-      return; // ignora altri comandi
+      return; // ignora comandi
     } else {
       await conn.reply(m.chat, '❌ Risposta sbagliata, riprova!', m);
     }
