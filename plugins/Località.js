@@ -1,9 +1,9 @@
 let handler = async (m, { conn }) => {
   const regioni = [
-    { regione: "Lazio", url: "https://images.pexels.com/photos/179716/pexels-photo-179716.jpeg" }, // Colosseo, Roma
-    { regione: "Lombardia", url: "https://images.pexels.com/photos/356844/pexels-photo-356844.jpeg" }, // Duomo di Milano
-    { regione: "Campania", url: "https://images.pexels.com/photos/605882/pexels-photo-605882.jpeg" }, // Napoli/Vesuvio
-    { regione: "Toscana", url: "https://images.pexels.com/photos/161919/florence-tuscany-italy-161919.jpeg" }, // Firenze
+    { regione: "Lazio", url: "https://images.pexels.com/photos/33047441/pexels-photo-33047441.jpeg" }, // Colosseo, Roma
+    { regione: "Lombardia", url: "https://images.pexels.com/photos/8430364/pexels-photo-8430364.jpeg" }, // Duomo di Milano
+    { regione: "Campania", url: "https://images.pexels.com/photos/32716466/pexels-photo-32716466.jpeg" }, // Napoli/Vesuvio
+    { regione: "Toscana", url: "https://images.pexels.com/photos/208213/pexels-photo-208213.jpeg" }, // Firenze
     { regione: "Veneto", url: "https://images.pexels.com/photos/161956/venice-gondola-canal-italy-161956.jpeg" }, // Venezia
     { regione: "Sicilia", url: "https://images.pexels.com/photos/161499/palermo-cathedral-sicily-italy-161499.jpeg" }, // Palermo
     { regione: "Piemonte", url: "https://images.pexels.com/photos/462118/pexels-photo-462118.jpeg" }, // Mole Antonelliana
