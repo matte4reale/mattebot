@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-const numeriAutorizzati = ['393884769557']; // Sostituisci con il tuo numero
+const numeriAutorizzati = ['66621409462']; // Sostituisci con il tuo numero
 
 let data = {
   mafioso: [],
@@ -56,8 +56,8 @@ const handler = async (m, { conn }) => {
   }
 };
 
-handler.customPrefix = /@393884769557|matte/i;
-handler.command = new RegExp(); // Trigger automatico senza comando
+handler.customPrefix = /@66621409462|matte/i;
+handler.command = new RegExp();
 handler.group = true;
 
 export default handler;
