@@ -37,13 +37,9 @@ let handler = async (m, { conn }) => {
     }, 60000)
   };
 
-  // Mappa fissa da file locale
-  await conn.sendFile(m.chat, './plugins/mappa.png', 'mappa.png', '🌍 *Indica lo stato corretto della località raffigurata!*', m);
-
-  // Immagine città da indovinare
   await conn.sendMessage(m.chat, {
     image: { url: scelta.url },
-    caption: '🖼️ *Indovina lo stato da questa immagine!*\nHai 60 secondi!'
+    caption: '🖼️ *Indovina lo stato della località mostrata in foto!*\nHai 60 secondi!'
   }, { quoted: m });
 };
 
