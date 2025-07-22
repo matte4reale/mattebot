@@ -1,25 +1,15 @@
 let handler = async (m, { conn }) => {
   const localita = [
-    { città: "Parigi", paese: "Francia", url: "https://cdn.pixabay.com/photo/2015/03/26/09/54/eiffel-tower-690293_960_720.jpg" },
-    { città: "Roma", paese: "Italia", url: "https://cdn.pixabay.com/photo/2016/09/07/11/37/colosseum-1650726_960_720.jpg" },
-    { città: "Londra", paese: "Regno Unito", url: "https://cdn.pixabay.com/photo/2017/01/20/00/30/london-1990680_960_720.jpg" },
-    { città: "New York", paese: "Stati Uniti", url: "https://cdn.pixabay.com/photo/2016/11/18/17/20/new-york-1834576_960_720.jpg" },
-    { città: "Tokyo", paese: "Giappone", url: "https://cdn.pixabay.com/photo/2018/01/15/07/51/tokyo-3088451_960_720.jpg" },
-    { città: "Barcellona", paese: "Spagna", url: "https://cdn.pixabay.com/photo/2017/01/20/00/30/barcelona-1990650_960_720.jpg" },
-    { città: "Dubai", paese: "Emirati Arabi Uniti", url: "https://cdn.pixabay.com/photo/2016/03/27/21/16/dubai-1281925_960_720.jpg" },
-    { città: "Mosca", paese: "Russia", url: "https://cdn.pixabay.com/photo/2017/08/06/22/01/moscow-2594513_960_720.jpg" },
-    { città: "Bangkok", paese: "Thailandia", url: "https://cdn.pixabay.com/photo/2016/10/03/19/59/wat-arun-1710955_960_720.jpg" },
-    { città: "Istanbul", paese: "Turchia", url: "https://cdn.pixabay.com/photo/2017/02/15/12/12/mosque-2063912_960_720.jpg" },
-    { città: "Il Cairo", paese: "Egitto", url: "https://cdn.pixabay.com/photo/2015/03/27/13/16/pyramids-694041_960_720.jpg" },
-    { città: "Atene", paese: "Grecia", url: "https://cdn.pixabay.com/photo/2016/11/29/03/53/acropolis-1868044_960_720.jpg" },
-    { città: "San Francisco", paese: "Stati Uniti", url: "https://cdn.pixabay.com/photo/2015/10/12/15/03/san-francisco-984608_960_720.jpg" },
-    { città: "Berlino", paese: "Germania", url: "https://cdn.pixabay.com/photo/2016/09/01/08/16/berlin-1639991_960_720.jpg" },
-    { città: "Praga", paese: "Repubblica Ceca", url: "https://cdn.pixabay.com/photo/2016/09/09/08/41/prague-1653340_960_720.jpg" },
-    { città: "Vienna", paese: "Austria", url: "https://cdn.pixabay.com/photo/2017/04/06/09/53/vienna-2201735_960_720.jpg" },
-    { città: "Lisbona", paese: "Portogallo", url: "https://cdn.pixabay.com/photo/2018/09/01/09/52/lisbon-3643781_960_720.jpg" },
-    { città: "Toronto", paese: "Canada", url: "https://cdn.pixabay.com/photo/2017/09/17/21/47/toronto-2754255_960_720.jpg" },
-    { città: "Buenos Aires", paese: "Argentina", url: "https://cdn.pixabay.com/photo/2018/02/13/14/19/argentina-3152617_960_720.jpg" },
-    { città: "Città del Messico", paese: "Messico", url: "https://cdn.pixabay.com/photo/2015/03/26/09/43/palace-690273_960_720.jpg" }
+    { città: "Parigi", paese: "Francia", url: "https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg" },
+    { città: "Roma", paese: "Italia", url: "https://images.pexels.com/photos/179716/pexels-photo-179716.jpeg" },
+    { città: "Londra", paese: "Regno Unito", url: "https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg" },
+    { città: "New York", paese: "Stati Uniti", url: "https://images.pexels.com/photos/466685/pexels-photo-466685.jpeg" },
+    { città: "Tokyo", paese: "Giappone", url: "https://images.pexels.com/photos/208701/pexels-photo-208701.jpeg" },
+    { città: "Barcellona", paese: "Spagna", url: "https://images.pexels.com/photos/3611027/pexels-photo-3611027.jpeg" },
+    { città: "Dubai", paese: "Emirati Arabi Uniti", url: "https://images.pexels.com/photos/325185/pexels-photo-325185.jpeg" },
+    { città: "Mosca", paese: "Russia", url: "https://images.pexels.com/photos/1270756/pexels-photo-1270756.jpeg" },
+    { città: "Bangkok", paese: "Thailandia", url: "https://images.pexels.com/photos/674010/pexels-photo-674010.jpeg" },
+    { città: "Istanbul", paese: "Turchia", url: "https://images.pexels.com/photos/358457/pexels-photo-358457.jpeg" }
   ];
 
   if (!global.geoGame) global.geoGame = {};
