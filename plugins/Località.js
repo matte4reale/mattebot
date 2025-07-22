@@ -1,39 +1,38 @@
-// Dataset locale dentro il plugin (esempio con 6 città, estendi pure)
+let geoGame = {};
+let cooldowns = {};
+
 const localita_dataset = [
   {
     city: "Parigi",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Paris_Night.jpg/640px-Paris_Night.jpg",
+    image: "https://raw.githubusercontent.com/OpenAIExamples/geoguess-images/main/paris.jpg",
     options: ["parigi", "londra", "roma", "berlino", "madrid"]
   },
   {
     city: "Roma",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Colosseum_in_Rome%2C_Italy_-_April_2007.jpg/640px-Colosseum_in_Rome%2C_Italy_-_April_2007.jpg",
+    image: "https://raw.githubusercontent.com/OpenAIExamples/geoguess-images/main/rome.jpg",
     options: ["madrid", "roma", "parigi", "berlino", "londra"]
   },
   {
+    city: "Londra",
+    image: "https://raw.githubusercontent.com/OpenAIExamples/geoguess-images/main/london.jpg",
+    options: ["parigi", "londra", "new york", "berlino", "tokyo"]
+  },
+  {
     city: "New York",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Manhattan_Midtown_Skyline_2017.jpg/640px-Manhattan_Midtown_Skyline_2017.jpg",
-    options: ["los angeles", "new york", "chicago", "toronto", "boston"]
+    image: "https://raw.githubusercontent.com/OpenAIExamples/geoguess-images/main/newyork.jpg",
+    options: ["new york", "los angeles", "chicago", "miami", "houston"]
   },
   {
     city: "Tokyo",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Tokyo_Tower_and_Skytree.jpg/640px-Tokyo_Tower_and_Skytree.jpg",
-    options: ["tokyo", "seoul", "shanghai", "bangkok", "taipei"]
+    image: "https://raw.githubusercontent.com/OpenAIExamples/geoguess-images/main/tokyo.jpg",
+    options: ["tokyo", "seoul", "beijing", "shanghai", "bangkok"]
   },
   {
     city: "Sydney",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Sydney_Opera_House_-_Dec_2008.jpg/640px-Sydney_Opera_House_-_Dec_2008.jpg",
-    options: ["melbourne", "sydney", "brisbane", "perth", "auckland"]
-  },
-  {
-    city: "Londra",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/London_Eye_Twilight_April_2006.jpg/640px-London_Eye_Twilight_April_2006.jpg",
-    options: ["londra", "parigi", "amsterdam", "bruxelles", "dublino"]
+    image: "https://raw.githubusercontent.com/OpenAIExamples/geoguess-images/main/sydney.jpg",
+    options: ["sydney", "melbourne", "brisbane", "perth", "adelaide"]
   }
 ];
-
-let geoGame = {};
-let cooldowns = {};
 
 async function sendQuestion(m, conn) {
   if (geoGame[m.chat]) return conn.reply(m.chat, '⚠️ Partita già in corso!');
@@ -44,10 +43,9 @@ async function sendQuestion(m, conn) {
   }
   cooldowns[m.chat] = now;
 
-  // Scegli una città casuale
   const scelta = localita_dataset[Math.floor(Math.random() * localita_dataset.length)];
 
-  // Mescola le opzioni
+  // Mischia opzioni
   const optionsShuffled = scelta.options
     .map(opt => ({ opt, sort: Math.random() }))
     .sort((a, b) => a.sort - b.sort)
@@ -65,7 +63,7 @@ async function sendQuestion(m, conn) {
 
   let buttons = optionsShuffled.map(opt => ({
     buttonId: `.${opt}`,
-    buttonText: { displayText: opt },
+    buttonText: { displayText: opt.charAt(0).toUpperCase() + opt.slice(1) },
     type: 1
   }));
 
@@ -98,8 +96,7 @@ let handler = async (m, { conn }) => {
       await conn.reply(m.chat, `🎉 Risposta corretta! Era *${geoGame[m.chat].risposta}*`, m);
       delete geoGame[m.chat];
     } else if (text?.startsWith('.')) {
-      // Ignora altri comandi
-      return;
+      return; // ignora altri comandi
     } else {
       await conn.reply(m.chat, '❌ Risposta sbagliata, riprova!', m);
     }
