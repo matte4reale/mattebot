@@ -14,7 +14,7 @@ let handler = async (m, { conn, command }) => {
     { regione: "Marche", url: "https://images.pexels.com/photos/16363543/pexels-photo-16363543.jpeg" },
     { regione: "Calabria", url: "https://images.pexels.com/photos/5644242/pexels-photo-5644242.jpeg" },
     { regione: "Abruzzo", url: "https://images.pexels.com/photos/7947164/pexels-photo-7947164.jpeg" },
-    { regione: "Trentino-Alto Adige", url: "https://media.istockphoto.com/id/637816996/it/foto/splendido-paesaggio-primaverile-con-il-villaggio-di-santa-maddalena-le-dolomiti-litalia-leuropa.jpg" },
+    { regione: "Trentino-Alto Adige", url: "https://images.pexels.com/photos/6184622/pexels-photo-6184622.jpeg" },
     { regione: "Friuli-Venezia Giulia", url: "https://images.pexels.com/photos/2748019/pexels-photo-2748019.jpeg" },
     { regione: "Umbria", url: "https://images.pexels.com/photos/2031966/pexels-photo-2031966.jpeg" },
     { regione: "Basilicata", url: "https://images.pexels.com/photos/6580703/pexels-photo-6580703.jpeg" },
