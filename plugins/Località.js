@@ -1,40 +1,50 @@
 let handler = async (m, { conn }) => {
-  const localita = [
-    { città: "Parigi", paese: "Francia", url: "https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg" },
-    { città: "Roma", paese: "Italia", url: "https://images.pexels.com/photos/179716/pexels-photo-179716.jpeg" },
-    { città: "Londra", paese: "Regno Unito", url: "https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg" },
-    { città: "New York", paese: "Stati Uniti", url: "https://images.pexels.com/photos/466685/pexels-photo-466685.jpeg" },
-    { città: "Tokyo", paese: "Giappone", url: "https://images.pexels.com/photos/208701/pexels-photo-208701.jpeg" },
-    { città: "Barcellona", paese: "Spagna", url: "https://images.pexels.com/photos/3611027/pexels-photo-3611027.jpeg" },
-    { città: "Dubai", paese: "Emirati Arabi Uniti", url: "https://images.pexels.com/photos/325185/pexels-photo-325185.jpeg" },
-    { città: "Mosca", paese: "Russia", url: "https://images.pexels.com/photos/1270756/pexels-photo-1270756.jpeg" },
-    { città: "Bangkok", paese: "Thailandia", url: "https://images.pexels.com/photos/674010/pexels-photo-674010.jpeg" },
-    { città: "Istanbul", paese: "Turchia", url: "https://images.pexels.com/photos/358457/pexels-photo-358457.jpeg" }
+  const regioni = [
+    { regione: "Lazio", url: "https://images.pexels.com/photos/179716/pexels-photo-179716.jpeg" }, // Colosseo, Roma
+    { regione: "Lombardia", url: "https://images.pexels.com/photos/356844/pexels-photo-356844.jpeg" }, // Duomo di Milano
+    { regione: "Campania", url: "https://images.pexels.com/photos/605882/pexels-photo-605882.jpeg" }, // Napoli/Vesuvio
+    { regione: "Toscana", url: "https://images.pexels.com/photos/161919/florence-tuscany-italy-161919.jpeg" }, // Firenze
+    { regione: "Veneto", url: "https://images.pexels.com/photos/161956/venice-gondola-canal-italy-161956.jpeg" }, // Venezia
+    { regione: "Sicilia", url: "https://images.pexels.com/photos/161499/palermo-cathedral-sicily-italy-161499.jpeg" }, // Palermo
+    { regione: "Piemonte", url: "https://images.pexels.com/photos/462118/pexels-photo-462118.jpeg" }, // Mole Antonelliana
+    { regione: "Emilia-Romagna", url: "https://images.pexels.com/photos/3762878/pexels-photo-3762878.jpeg" }, // Bologna
+    { regione: "Puglia", url: "https://images.pexels.com/photos/1280503/pexels-photo-1280503.jpeg" }, // Alberobello
+    { regione: "Sardegna", url: "https://images.pexels.com/photos/1770809/pexels-photo-1770809.jpeg" }, // Costa sarda
+    { regione: "Liguria", url: "https://images.pexels.com/photos/460740/pexels-photo-460740.jpeg" }, // Cinque Terre
+    { regione: "Marche", url: "https://images.pexels.com/photos/12907149/pexels-photo-12907149.jpeg" }, // Urbino
+    { regione: "Calabria", url: "https://images.pexels.com/photos/4878706/pexels-photo-4878706.jpeg" }, // Scilla
+    { regione: "Abruzzo", url: "https://images.pexels.com/photos/15045745/pexels-photo-15045745.jpeg" }, // Gran Sasso
+    { regione: "Trentino-Alto Adige", url: "https://images.pexels.com/photos/1005417/pexels-photo-1005417.jpeg" }, // Dolomiti
+    { regione: "Friuli-Venezia Giulia", url: "https://images.pexels.com/photos/6109400/pexels-photo-6109400.jpeg" }, // Trieste
+    { regione: "Umbria", url: "https://images.pexels.com/photos/4748351/pexels-photo-4748351.jpeg" }, // Assisi
+    { regione: "Basilicata", url: "https://images.pexels.com/photos/1274283/pexels-photo-1274283.jpeg" }, // Matera
+    { regione: "Molise", url: "https://images.pexels.com/photos/8797919/pexels-photo-8797919.jpeg" }, // Campobasso
+    { regione: "Valle d'Aosta", url: "https://images.pexels.com/photos/14317406/pexels-photo-14317406.jpeg" } // Monte Bianco
   ];
 
-  if (!global.geoGame) global.geoGame = {};
-  if (global.geoGame[m.chat]) return m.reply("⚠️ Una partita è già in corso!");
+  if (!global.regionGame) global.regionGame = {};
+  if (global.regionGame[m.chat]) return m.reply("⚠️ Una partita è già in corso!");
 
-  const scelta = localita[Math.floor(Math.random() * localita.length)];
+  const scelta = regioni[Math.floor(Math.random() * regioni.length)];
 
-  global.geoGame[m.chat] = {
-    risposta: scelta.paese.toLowerCase(),
+  global.regionGame[m.chat] = {
+    risposta: scelta.regione.toLowerCase(),
     timeout: setTimeout(() => {
-      if (global.geoGame[m.chat]) {
-        conn.sendMessage(m.chat, { text: `⏱️ Tempo scaduto! La risposta era: *${scelta.paese}*` });
-        delete global.geoGame[m.chat];
+      if (global.regionGame[m.chat]) {
+        conn.sendMessage(m.chat, { text: `⏱️ Tempo scaduto! La risposta era: *${scelta.regione}*` });
+        delete global.regionGame[m.chat];
       }
     }, 60000)
   };
 
   await conn.sendMessage(m.chat, {
     image: { url: scelta.url },
-    caption: '🖼️ *Indovina lo stato della località mostrata in foto!*\nHai 60 secondi!'
+    caption: '🇮🇹 *Indovina la regione italiana dalla foto del luogo!*\n⌛ Hai 60 secondi.'
   }, { quoted: m });
 };
 
 handler.before = async (m, { conn }) => {
-  const gioco = global.geoGame?.[m.chat];
+  const gioco = global.regionGame?.[m.chat];
   if (!gioco || m.key.fromMe) return;
 
   const risposta = m.text?.toLowerCase().trim();
@@ -43,13 +53,13 @@ handler.before = async (m, { conn }) => {
   if (risposta === gioco.risposta) {
     clearTimeout(gioco.timeout);
     await conn.sendMessage(m.chat, {
-      text: `🎉 *Risposta corretta!*\nLo stato era: *${gioco.risposta.toUpperCase()}*`
+      text: `🎉 *Risposta corretta!*\nEra la regione: *${gioco.risposta.toUpperCase()}*`
     });
-    delete global.geoGame[m.chat];
+    delete global.regionGame[m.chat];
   }
 };
 
-handler.help = ['mappa'];
+handler.help = ['regioni'];
 handler.tags = ['game'];
-handler.command = ['mappa'];
+handler.command = ['regioni'];
 export default handler;
