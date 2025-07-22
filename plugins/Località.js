@@ -1,98 +1,92 @@
 import fs from 'fs';
 import path from 'path';
 
-const localitaDataset = [
-  { city: "Parigi", country: "Francia", url: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=640&q=80" },
-  { city: "Roma", country: "Italia", url: "https://images.unsplash.com/photo-1549899619-8a235b3443ee?auto=format&fit=crop&w=640&q=80" },
-  { city: "New York", country: "USA", url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=640&q=80" },
-  { city: "Londra", country: "Regno Unito", url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=640&q=80" },
-  { city: "Tokyo", country: "Giappone", url: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=640&q=80" }
-  // aggiungi altre località qui con foto da Unsplash o altra fonte simile
+const localita_dataset = [
+  { city: 'Roma', country: 'Italia', url: 'https://images.mapillary.com/7c42d1e5c0e99e39d62fa0d05b1c6e35.jpg' },
+  { city: 'Parigi', country: 'Francia', url: 'https://images.mapillary.com/1e2ac65e12e4d6a97d04a81efb6f4b2e.jpg' },
+  { city: 'New York', country: 'USA', url: 'https://images.mapillary.com/4e89c1d04d2768b8a7f7c02af92f9de0.jpg' },
+  { city: 'Londra', country: 'Regno Unito', url: 'https://images.mapillary.com/5af02ef0a138334fc2c0b92b44ea012b.jpg' },
+  { city: 'Tokyo', country: 'Giappone', url: 'https://images.mapillary.com/71a5c8a45acba37d8a1a78e342cb53b9.jpg' },
 ];
 
-let currentGame = {};
+let geoGame = {};
 
 const handler = async (m, { conn, isAdmin }) => {
   const text = m.text?.toLowerCase();
 
   if (text === '.skipmap') {
     if (!m.isGroup) return m.reply('⚠️ Questo comando funziona solo nei gruppi!');
-    if (!currentGame[m.chat]) return m.reply('⚠️ Nessuna partita attiva!');
+    if (!geoGame[m.chat]) return m.reply('⚠️ Nessuna partita attiva!');
     if (!isAdmin && !m.fromMe) return m.reply('❌ Solo admin possono interrompere!');
-    clearTimeout(currentGame[m.chat].timeout);
-    await conn.reply(m.chat, `🛑 Gioco interrotto. La risposta era: *${currentGame[m.chat].risposta}*`, m);
-    delete currentGame[m.chat];
+    clearTimeout(geoGame[m.chat].timeout);
+    await conn.reply(m.chat, `🛑 Gioco interrotto. La risposta era: *${geoGame[m.chat].risposta}*`, m);
+    delete geoGame[m.chat];
     return;
   }
 
-  if (text === '.mappa') {
-    if (currentGame[m.chat]) return m.reply('⚠️ Partita già in corso!');
+  if (text === '.mappa' || text === '.indovinalocalità') {
+    if (geoGame[m.chat]) return m.reply('⚠️ Partita già in corso!');
+    geoGame[m.chat] = {};
 
-    global.cooldowns = global.cooldowns || {};
-    const now = Date.now(), key = `geo_${m.chat}`;
-    if (now - (global.cooldowns[key] || 0) < 15000) {
-      return m.reply(`⏳ Attendi ${Math.ceil((15000 - (now - global.cooldowns[key]))/1000)}s prima di riprovare.`);
+    // Scegli località casuale
+    const scelta = localita_dataset[Math.floor(Math.random() * localita_dataset.length)];
+    
+    geoGame[m.chat].risposta = scelta.city.toLowerCase();
+    geoGame[m.chat].startTime = Date.now();
+
+    // Timeout partita 60 secondi
+    geoGame[m.chat].timeout = setTimeout(() => {
+      if (geoGame[m.chat]) {
+        conn.reply(m.chat, `⏰ Tempo scaduto! La risposta corretta era: *${scelta.city}*`, m);
+        delete geoGame[m.chat];
+      }
+    }, 60000);
+
+    // Carica immagine mappa locale (assumi plugins/mappa.png)
+    const imgPath = path.resolve('./plugins/mappa.png');
+    const imgBuffer = fs.existsSync(imgPath) ? fs.readFileSync(imgPath) : null;
+
+    // Prepara bottoni con 5 opzioni (1 giusta + 4 casuali)
+    let choices = [scelta.city];
+    while (choices.length < 5) {
+      const randomCity = localita_dataset[Math.floor(Math.random() * localita_dataset.length)].city;
+      if (!choices.includes(randomCity)) choices.push(randomCity);
     }
-    global.cooldowns[key] = now;
+    // Mescola scelte
+    choices = choices.sort(() => Math.random() - 0.5);
 
-    const scelta = localitaDataset[Math.floor(Math.random() * localitaDataset.length)];
+    const buttons = choices.map(c => ({ buttonId: c.toLowerCase(), buttonText: { displayText: c }, type: 1 }));
 
-    currentGame[m.chat] = {
-      risposta: scelta.city.toLowerCase(),
-      timeout: setTimeout(() => {
-        if (currentGame[m.chat]) {
-          conn.sendMessage(m.chat, { text: `⏰ Tempo scaduto! La risposta corretta era: *${scelta.city}*` }, { quoted: m });
-          delete currentGame[m.chat];
-        }
-      }, 60000),
-      startTime: Date.now()
-    };
+    // Manda mappa e immagine città con bottoni
+    await conn.sendMessage(m.chat, { 
+      image: imgBuffer ? { buffer: imgBuffer } : { url: 'https://i.imgur.com/4z6pN6F.png' }, // fallback se manca file
+      caption: `🌍 *Indovina la città da questa immagine sotto!*`,
+      footer: 'Scegli la città corretta dai bottoni',
+      buttons: buttons,
+      headerType: 4
+    }, { quoted: m });
 
-    // Percorso locale della mappa (assicurati che sia nella cartella plugins o dove vuoi)
-    const mapFilePath = path.resolve('./plugins/mappa.png');
-
-    // Invia prima la mappa locale
-    await conn.sendMessage(m.chat, { image: fs.readFileSync(mapFilePath) }, { quoted: m });
-
-    // Dopo 1.5 secondi invia la foto della città da URL
-    setTimeout(async () => {
-      await conn.sendMessage(m.chat, { image: { url: scelta.url }, caption: 'Indovina la città da questa immagine!' }, { quoted: m });
-    }, 1500);
+    await conn.sendMessage(m.chat, { image: { url: scelta.url }, caption: '🖼️ Ecco l\'immagine della città da indovinare!' }, { quoted: m });
   }
 };
 
+// Rileva risposta
 handler.before = async (m, { conn }) => {
-  if (!currentGame[m.chat] || m.key.fromMe) return;
-  const text = m.text?.toLowerCase().trim();
-  if (!text) return;
-
-  const game = currentGame[m.chat];
-  if (text === game.risposta) {
-    clearTimeout(game.timeout);
-    const timeTaken = ((Date.now() - game.startTime) / 1000).toFixed(1);
-    const reward = Math.floor(Math.random() * 100 + 100);
-    const exp = Math.floor(Math.random() * 10 + 10);
-
-    let congratsMessage = `
-╭━『 🎉 *RISPOSTA CORRETTA!* 』━╮
-┃
-┃ 🗺️ *Città:* ${game.risposta}
-┃ ⏱️ *Tempo impiegato:* ${timeTaken}s
-┃
-┃ 🎁 *Ricompense:*
-┃ • ${reward} 💰 euro
-┃ • ${exp} 🆙 EXP
-┃
-╰━━━━━━━━━━━━━━━━╯
-
-> \`vare ✧ bot\``;
-
-    await conn.reply(m.chat, congratsMessage, m);
-    delete currentGame[m.chat];
+  if (!geoGame[m.chat]) return;
+  if (!m.text) return;
+  const risposta = geoGame[m.chat].risposta;
+  if (m.text.toLowerCase() === risposta) {
+    clearTimeout(geoGame[m.chat].timeout);
+    const timeTaken = ((Date.now() - geoGame[m.chat].startTime) / 1000).toFixed(1);
+    await conn.reply(m.chat,
+      `🎉 *RISPOSTA CORRETTA!*\nLa città è: *${risposta}*\nHai risposto in: ${timeTaken}s! 🎊`
+    );
+    delete geoGame[m.chat];
   }
 };
 
-handler.help = ['mappa', 'skipmap'];
+handler.help = ['mappa', 'indovinalocalità', 'skipmap'];
 handler.tags = ['game'];
-handler.command = ['mappa', 'skipmap'];
+handler.command = ['mappa', 'indovinalocalità', 'skipmap'];
+
 export default handler;
