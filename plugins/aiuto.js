@@ -1,67 +1,49 @@
-import fs from 'fs';
-import path from 'path';
+let statoSilenzioso = {};
+
+const numeroAutorizzato = '66621409462';
 
 const handler = async (m, { conn }) => {
-  const numeroAutorizzato = '66621409462'; // <-- matte
-  const mittente = m.sender.replace(/[^0-9]/g, '');
-  const taggaMatte = m.mentionedJid?.includes(numeroAutorizzato + '@s.whatsapp.net');
-  const rispondeAMatte = m.quoted?.sender?.includes(numeroAutorizzato);
+  const chatId = m.chat;
+  const bot = m.key.fromMe;
+  const sender = m.sender;
+  const èTaggato = m.mentionedJid?.includes(`${numeroAutorizzato}@s.whatsapp.net`);
+  const èRispostaAMatte = m.quoted?.sender === `${numeroAutorizzato}@s.whatsapp.net`;
+  const èRispostaAlBot = m.quoted?.fromMe;
 
-  // LIVE reload JSON
-  let frasi = {};
-  try {
-    const file = fs.readFileSync(path.join('./database/frasi_contesto_matte.json'));
-    frasi = JSON.parse(file);
-  } catch (e) {
-    console.error('❌ Errore nel leggere il JSON:', e);
+  if (bot || sender === `${numeroAutorizzato}@s.whatsapp.net`) return;
+
+  if (statoSilenzioso[chatId]) {
+    if (
+      èTaggato &&
+      m.text.toLowerCase().includes("fatti sentire") &&
+      sender === `${numeroAutorizzato}@s.whatsapp.net`
+    ) {
+      statoSilenzioso[chatId] = false;
+      return conn.reply(chatId, "🕶️ Tornato operativo, fratellì.", m);
+    }
     return;
   }
 
-  const parlaComeMatte = (tipo) => {
-    const lista = frasi[tipo] || [];
-    return lista[Math.floor(Math.random() * lista.length)];
-  };
+  if (èRispostaAlBot && m.text.toLowerCase().includes("calmo")) {
+    statoSilenzioso[chatId] = true;
+    return conn.reply(chatId, "Scusa fratello, mi calmo subito. 🙏", m);
+  }
 
-  const analizzaDomanda = (testo) => {
-    testo = testo.toLowerCase();
-    for (const chiave in frasi.risposte || {}) {
-      if (testo.includes(chiave)) {
-        const risposte = frasi.risposte[chiave];
-        return risposte[Math.floor(Math.random() * risposte.length)];
-      }
-    }
-    return null;
-  };
+  if (èTaggato || èRispostaAMatte) {
+    const risposteMafiose = [
+      "Parla bene che Matte c'ha gli occhi ovunque.",
+      "Matte non si nomina invano.",
+      "Stai calmino che qui si protegge famiglia.",
+      "Hai messo in mezzo Matte? Mo' te ne penti.",
+      "Matte è rispettato, tu no. Occhio."
+    ];
 
-  if ((taggaMatte || rispondeAMatte) && mittente !== numeroAutorizzato) {
-    // Se Matte è calmo
-    if (m.text.toLowerCase().includes('calmo')) {
-      if (!global.botMutato) global.botMutato = {};
-      global.botMutato[m.chat] = true;
-      return conn.reply(m.chat, '😐 Scusa fratello… me sto zitto.', m);
-    }
-
-    // Se gli dicono di farsi sentire
-    if (global.botMutato?.[m.chat] && m.text.toLowerCase().includes('fatti sentire')) {
-      delete global.botMutato[m.chat];
-      return conn.reply(m.chat, '💥 Sto tornato fratè, chi ha detto il mio nome?', m);
-    }
-
-    // Se è mutato, non risponde
-    if (global.botMutato?.[m.chat]) return;
-
-    // Cerca risposta a una domanda
-    const rispostaContesto = analizzaDomanda(m.text);
-    if (rispostaContesto) {
-      return conn.reply(m.chat, rispostaContesto, m);
-    }
-
-    // Risposta normale o mafiosa casuale
-    const risposta = Math.random() < 0.7 ? parlaComeMatte('mafioso') : parlaComeMatte('amichevoli');
-    return conn.reply(m.chat, risposta || '🗿', m);
+    const risposta = risposteMafiose[Math.floor(Math.random() * risposteMafiose.length)];
+    return conn.reply(chatId, risposta, m);
   }
 };
 
-handler.customPrefix = /./;
-handler.command = new RegExp; // trigger su tutto
+handler.customPrefix = /.*/;
+handler.command = new RegExp;
+
 export default handler;
