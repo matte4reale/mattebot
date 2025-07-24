@@ -7,18 +7,24 @@ let handler = async (m, { args, conn }) => {
   const query = args.join(' ').toLowerCase();
 
   try {
-    // Chiamata API Sneaks
-    const res = await fetch(`https://api.sneaks.app/v1/threads?limit=1&search=${encodeURIComponent(query)}`);
-    if (!res.ok) throw new Error('Errore nella chiamata API');
+    const url = `https://api.sneaks.app/v1/threads?limit=1&search=${encodeURIComponent(query)}`;
+    console.log('Chiamata API a:', url);
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.log('Risposta non ok:', res.status, res.statusText);
+      throw new Error('Errore nella chiamata API');
+    }
 
     const data = await res.json();
-    if (!data.results || data.results.length === 0) 
+    console.log('Risposta API:', JSON.stringify(data, null, 2));
+
+    if (!data.results || data.results.length === 0) {
       return m.reply('🔍 Modello non trovato.');
+    }
 
     const shoe = data.results[0];
-    // shoe contiene info tipo: shoe.name, shoe.image, shoe.marketplace_prices
 
-    // Prendiamo il prezzo più basso da StockX se disponibile
     let price = 'Prezzo non disponibile';
     if (shoe.marketplace_prices && shoe.marketplace_prices.stockx && shoe.marketplace_prices.stockx.lowest_ask) {
       price = `${shoe.marketplace_prices.stockx.lowest_ask} $ (StockX)`;
@@ -35,7 +41,7 @@ let handler = async (m, { args, conn }) => {
     );
 
   } catch (error) {
-    console.error(error);
+    console.error('Errore nel handler listino:', error);
     return m.reply('❌ Si è verificato un errore durante la ricerca.');
   }
 };
