@@ -1,53 +1,29 @@
 import fetch from 'node-fetch';
 
-let handler = async (m, { args, conn }) => {
-  if (!args.length)
-    return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino nike dunk low`');
+const API_BASE = 'https://api.sneakersapi.dev';
 
-  const query = args.join(' ').toLowerCase();
+let handler = async (m, { args, conn }) => {
+  if (!args.length) return m.reply('❗ Scrivi il nome di una scarpa...');
+  const query = args.join(' ');
 
   try {
-    const url = `https://api.sneaks.app/v1/threads?limit=1&search=${encodeURIComponent(query)}`;
-    console.log('Chiamata API a:', url);
-
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.log('Risposta non ok:', res.status, res.statusText);
-      throw new Error('Errore nella chiamata API');
-    }
-
+    const res = await fetch(`${API_BASE}/search?query=${encodeURIComponent(query)}&limit=1`);
+    if (!res.ok) throw new Error(`API error ${res.status}`);
     const data = await res.json();
-    console.log('Risposta API:', JSON.stringify(data, null, 2));
-
-    if (!data.results || data.results.length === 0) {
+    if (!data.results || data.results.length === 0) 
       return m.reply('🔍 Modello non trovato.');
-    }
 
     const shoe = data.results[0];
+    const price = shoe.market_data?.market_average_eur
+      ? `${shoe.market_data.market_average_eur} €`
+      : (shoe.retail_usd ? `${shoe.retail_usd} $ (retail)` : 'Prezzo non disponibile');
 
-    let price = 'Prezzo non disponibile';
-    if (shoe.marketplace_prices && shoe.marketplace_prices.stockx && shoe.marketplace_prices.stockx.lowest_ask) {
-      price = `${shoe.marketplace_prices.stockx.lowest_ask} $ (StockX)`;
-    } else if (shoe.retailPrice) {
-      price = `${shoe.retailPrice} $ (Prezzo retail)`;
-    }
+    const mess = `👟 *${shoe.product_info.name.toUpperCase()}*\n💸 Prezzo indicativo: *${price}*\n🔗 [Dettagli](${shoe.market_data.market_url})`;
 
-    const mess = `👟 *${shoe.name.toUpperCase()}*\n💸 Prezzo indicativo: *${price}*\n🔗 [Dettagli](${shoe.url})`;
-
-    await conn.sendMessage(
-      m.chat,
-      { image: { url: shoe.image }, caption: mess },
-      { quoted: m }
-    );
-
-  } catch (error) {
-    console.error('Errore nel handler listino:', error);
-    return m.reply('❌ Si è verificato un errore durante la ricerca.');
+    await conn.sendMessage(m.chat, { image: { url: shoe.market_data.market_image }, caption: mess }, { quoted: m });
+  } catch (err) {
+    console.error(err);
+    m.reply('❌ Errore nella ricerca con SneakersAPI');
   }
 };
-
 handler.command = /^listino$/i;
-handler.help = ['listino <modello>'];
-handler.tags = ['shop', 'tools'];
-
-export default handler;
