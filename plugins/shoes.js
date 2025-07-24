@@ -1,29 +1,50 @@
 import fetch from 'node-fetch';
 
-const API_BASE = 'https://api.sneakersapi.dev';
-
 let handler = async (m, { args, conn }) => {
-  if (!args.length) return m.reply('❗ Scrivi il nome di una scarpa...');
+  if (!args.length)
+    return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino nike dunk low`');
+
   const query = args.join(' ');
 
   try {
-    const res = await fetch(`${API_BASE}/search?query=${encodeURIComponent(query)}&limit=1`);
-    if (!res.ok) throw new Error(`API error ${res.status}`);
+    const url = `https://api.sneakersapi.dev/search?query=${encodeURIComponent(query)}&limit=1`;
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      console.error('❌ Errore API sneakersapi.dev:', res.status);
+      return m.reply('⚠️ Errore nella richiesta a SneakersAPI.');
+    }
+
     const data = await res.json();
-    if (!data.results || data.results.length === 0) 
+
+    if (!data.results || data.results.length === 0)
       return m.reply('🔍 Modello non trovato.');
 
     const shoe = data.results[0];
+
+    const name = shoe.product_info?.name || 'Modello sconosciuto';
+    const image = shoe.market_data?.market_image || shoe.image_url;
+    const urlDettaglio = shoe.market_data?.market_url || 'https://stockx.com/';
     const price = shoe.market_data?.market_average_eur
       ? `${shoe.market_data.market_average_eur} €`
       : (shoe.retail_usd ? `${shoe.retail_usd} $ (retail)` : 'Prezzo non disponibile');
 
-    const mess = `👟 *${shoe.product_info.name.toUpperCase()}*\n💸 Prezzo indicativo: *${price}*\n🔗 [Dettagli](${shoe.market_data.market_url})`;
+    const mess = `👟 *${name.toUpperCase()}*\n💸 Prezzo indicativo: *${price}*\n🔗 [Dettagli](${urlDettaglio})`;
 
-    await conn.sendMessage(m.chat, { image: { url: shoe.market_data.market_image }, caption: mess }, { quoted: m });
-  } catch (err) {
-    console.error(err);
-    m.reply('❌ Errore nella ricerca con SneakersAPI');
+    await conn.sendMessage(
+      m.chat,
+      { image: { url: image }, caption: mess },
+      { quoted: m }
+    );
+
+  } catch (error) {
+    console.error('❌ Errore handler listino:', error);
+    return m.reply('❌ Errore durante la ricerca della scarpa.');
   }
 };
+
 handler.command = /^listino$/i;
+handler.help = ['listino <modello>'];
+handler.tags = ['shop', 'tools'];
+
+export default handler;
