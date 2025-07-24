@@ -7,59 +7,65 @@ let handler = async (m, { args, conn }) => {
   // Dizionario locale: modello → {prezzo, fonte, img}
   const scarpe = {
     "nike air force 1": {
-      prezzo: "110 €",
+      prezzo: "110 €",
       fonte: "Nike.com",
       img: "https://images.pexels.com/photos/245438/pexels-photo-245438.jpeg"
     },
     "nike dunk low": {
-      prezzo: "120 €",
+      prezzo: "120 €",
       fonte: "FootLocker.it",
       img: "https://images.pexels.com/photos/5702101/pexels-photo-5702101.jpeg"
     },
     "air jordan 1": {
-      prezzo: "180 €",
+      prezzo: "180 €",
       fonte: "Nike.com",
       img: "https://images.pexels.com/photos/6311609/pexels-photo-6311609.jpeg"
     },
     "yeezy 350": {
-      prezzo: "220 €",
+      prezzo: "220 €",
       fonte: "Adidas.com",
       img: "https://images.pexels.com/photos/8454342/pexels-photo-8454342.jpeg"
     },
     "converse chuck taylor": {
-      prezzo: "75 €",
+      prezzo: "75 €",
       fonte: "Converse.com",
       img: "https://images.pexels.com/photos/19090/pexels-photo-19090.jpeg"
     },
     "new balance 550": {
-      prezzo: "130 €",
+      prezzo: "130 €",
       fonte: "NewBalance.it",
       img: "https://images.pexels.com/photos/8930280/pexels-photo-8930280.jpeg"
     },
     "adidas samba": {
-      prezzo: "100 €",
+      prezzo: "100 €",
       fonte: "Adidas.it",
       img: "https://images.pexels.com/photos/12408966/pexels-photo-12408966.jpeg"
     },
     "puma suede": {
-      prezzo: "80 €",
+      prezzo: "80 €",
       fonte: "Puma.com",
       img: "https://images.pexels.com/photos/3293149/pexels-photo-3293149.jpeg"
     }
   };
 
-  // Trova il modello che contiene le parole digitate (es. “jordan 1”)
+  // Trova il modello più adatto: cercare corrispondenze parziali o esatte
   const chiave = Object.keys(scarpe).find(k => query.includes(k));
+
   if (!chiave) return m.reply('🔍 Modello non presente nel listino.');
 
   const s = scarpe[chiave];
   const mess = `👟 *${chiave.toUpperCase()}*\n💸 Prezzo indicativo: *${s.prezzo}*\n🔗 Fonte: ${s.fonte}`;
 
-  return conn.sendMessage(
-    m.chat,
-    { image: { url: s.img }, caption: mess },
-    { quoted: m }
-  );
+  try {
+    await conn.sendMessage(
+      m.chat,
+      { image: { url: s.img }, caption: mess },
+      { quoted: m }
+    );
+  } catch (err) {
+    console.error('Errore nell\'invio del messaggio:', err);
+    return m.reply('❌ Si è verificato un errore durante l\'invio del messaggio.');
+  }
 };
 
 handler.command = /^listino$/i;
