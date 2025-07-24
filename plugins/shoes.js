@@ -4,53 +4,50 @@ let handler = async (m, { args, conn }) => {
 
   const query = args.join(' ').toLowerCase();
 
-  // Dizionario locale: modello → {prezzo, fonte, img}
   const scarpe = {
     "nike air force 1": {
       prezzo: "110 €",
       fonte: "Nike.com",
-      img: "https://images.pexels.com/photos/245438/pexels-photo-245438.jpeg"
+      img: "https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg"
     },
     "nike dunk low": {
       prezzo: "120 €",
       fonte: "FootLocker.it",
-      img: "https://images.pexels.com/photos/5702101/pexels-photo-5702101.jpeg"
+      img: "https://images.pexels.com/photos/2529147/pexels-photo-2529147.jpeg"
     },
     "air jordan 1": {
       prezzo: "180 €",
       fonte: "Nike.com",
-      img: "https://images.pexels.com/photos/6311609/pexels-photo-6311609.jpeg"
+      img: "https://images.pexels.com/photos/2529150/pexels-photo-2529150.jpeg"
     },
     "yeezy 350": {
       prezzo: "220 €",
       fonte: "Adidas.com",
-      img: "https://images.pexels.com/photos/8454342/pexels-photo-8454342.jpeg"
+      img: "https://images.pexels.com/photos/2529154/pexels-photo-2529154.jpeg"
     },
     "converse chuck taylor": {
       prezzo: "75 €",
       fonte: "Converse.com",
-      img: "https://images.pexels.com/photos/19090/pexels-photo-19090.jpeg"
+      img: "https://images.pexels.com/photos/2529156/pexels-photo-2529156.jpeg"
     },
     "new balance 550": {
       prezzo: "130 €",
       fonte: "NewBalance.it",
-      img: "https://images.pexels.com/photos/8930280/pexels-photo-8930280.jpeg"
+      img: "https://images.pexels.com/photos/2529160/pexels-photo-2529160.jpeg"
     },
     "adidas samba": {
       prezzo: "100 €",
       fonte: "Adidas.it",
-      img: "https://images.pexels.com/photos/12408966/pexels-photo-12408966.jpeg"
+      img: "https://images.pexels.com/photos/2529162/pexels-photo-2529162.jpeg"
     },
     "puma suede": {
       prezzo: "80 €",
       fonte: "Puma.com",
-      img: "https://images.pexels.com/photos/3293149/pexels-photo-3293149.jpeg"
+      img: "https://images.pexels.com/photos/2529166/pexels-photo-2529166.jpeg"
     }
   };
 
-  // Trova il modello più adatto: cercare corrispondenze parziali o esatte
   const chiave = Object.keys(scarpe).find(k => query.includes(k));
-
   if (!chiave) return m.reply('🔍 Modello non presente nel listino.');
 
   const s = scarpe[chiave];
