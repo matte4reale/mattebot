@@ -1,35 +1,38 @@
-let handler = async (m, { args, conn }) => {
-  if (!args.length) {
-    return m.reply('📌 Scrivi il nome di una scarpa!\n\nEsempio: `.listino Nike Dunk Low Panda`');
-  }
+import fetch from 'node-fetch';
 
-  const query = encodeURIComponent(args.join(" "));
-  const url = `https://sneaks-api.onrender.com/search/${query}`;
+let handler = async (m, { args }) => {
+  const query = args.join(' ');
+  if (!query) return m.reply('❗ Scrivi il nome di un modello di scarpa, es: `.listino nike dunk low`');
 
   try {
-    let res = await fetch(url);
-    if (!res.ok) throw 'Errore fetch';
-    let data = await res.json();
+    const apiUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query + ' scarpa')}&format=json&no_redirect=1&no_html=1&skip_disambig=1`;
+    const res = await fetch(apiUrl);
+    const data = await res.json();
 
-    if (!data.length) return m.reply("❌ Nessun prodotto trovato!");
+    const titolo = data.Heading || query;
+    const desc = data.Abstract || 'Nessuna descrizione disponibile.';
+    const img = data.Image || null;
+    const fonte = data.AbstractURL || 'https://duckduckgo.com';
 
-    const shoe = data[0];
-    const prezzo = shoe.retailPrice ? `💸 Prezzo Retail: €${shoe.retailPrice}` : '💸 Prezzo non disponibile';
+    const testo = `👟 *${titolo}*\n\n📄 ${desc}\n\n🔗 Fonte: ${fonte}`;
 
-    const messaggio = `👟 *${shoe.shoeName}*\n${prezzo}\n🔗 ${shoe.link}`;
-
-    await conn.sendMessage(m.chat, {
-      image: { url: shoe.thumbnail },
-      caption: messaggio
-    }, { quoted: m });
+    if (img && img.startsWith('http')) {
+      await conn.sendMessage(m.chat, {
+        image: { url: img },
+        caption: testo
+      }, { quoted: m });
+    } else {
+      await m.reply(testo);
+    }
 
   } catch (e) {
     console.error(e);
-    m.reply("⚠️ Errore nel recupero dei dati. Riprova.");
+    m.reply('⚠️ Errore nel recupero dei dati. Riprova più tardi.');
   }
 };
 
-handler.command = /^listino$/i;
-handler.help = ['listino <nome scarpa>'];
-handler.tags = ['shop', 'utility'];
+handler.command = ['listino'];
+handler.help = ['listino <modello>'];
+handler.tags = ['tools'];
+
 export default handler;
