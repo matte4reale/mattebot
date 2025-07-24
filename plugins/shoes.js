@@ -1,95 +1,63 @@
-import fetch from 'node-fetch';
-
-const FALLBACK_SCARPE = {
-  "nike dunk low": {
-    prezzo: "120 €",
-    fonte: "Fallback locale",
-    img: "https://images.pexels.com/photos/5702101/pexels-photo-5702101.jpeg"
-  },
-  "air jordan 1": {
-    prezzo: "180 €",
-    fonte: "Fallback locale",
-    img: "https://images.pexels.com/photos/6311609/pexels-photo-6311609.jpeg"
-  }
-};
-
-async function trySneakersAPI(query) {
-  try {
-    const res = await fetch(`https://api.sneakersapi.dev/search?query=${encodeURIComponent(query)}&limit=1`);
-    const data = await res.json();
-    if (data.results?.length > 0) {
-      const shoe = data.results[0];
-      return {
-        nome: shoe.product_info.name,
-        prezzo: shoe.market_data?.market_average_eur
-          ? `${shoe.market_data.market_average_eur} €`
-          : (shoe.retail_usd ? `${shoe.retail_usd} $ (retail)` : 'Prezzo non disponibile'),
-        fonte: "SneakersAPI.dev",
-        img: shoe.market_data?.market_image || shoe.image_url,
-        url: shoe.market_data?.market_url
-      };
-    }
-  } catch (e) {
-    console.warn('❌ SneakersAPI fallita');
-  }
-  return null;
-}
-
-async function tryStockXRapidAPI(query) {
-  const url = `https://stockx.p.rapidapi.com/search?query=${encodeURIComponent(query)}&page=1&limit=1`;
-  const headers = {
-    'X-RapidAPI-Key': 'INSERISCI_TUA_KEY',
-    'X-RapidAPI-Host': 'stockx.p.rapidapi.com'
-  };
-
-  try {
-    const res = await fetch(url, { headers });
-    const json = await res.json();
-    if (json?.hits?.length > 0) {
-      const product = json.hits[0];
-      return {
-        nome: product.title || product.name,
-        prezzo: product.retail_price ? `${product.retail_price} €` : 'Prezzo non disponibile',
-        fonte: 'StockX via RapidAPI',
-        img: product.image_url,
-        url: `https://stockx.com/${product.url_key}`
-      };
-    }
-  } catch (e) {
-    console.warn('❌ StockX API fallita');
-  }
-  return null;
-}
-
-async function tryFallback(query) {
-  const chiave = Object.keys(FALLBACK_SCARPE).find(k => query.includes(k));
-  if (!chiave) return null;
-  const s = FALLBACK_SCARPE[chiave];
-  return {
-    nome: chiave,
-    prezzo: s.prezzo,
-    fonte: s.fonte,
-    img: s.img,
-    url: ''
-  };
-}
-
 let handler = async (m, { args, conn }) => {
-  if (!args.length) return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino nike dunk low`');
+  if (!args.length)
+    return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino nike dunk low`');
 
   const query = args.join(' ').toLowerCase();
-  let risultato = await trySneakersAPI(query);
 
-  if (!risultato) risultato = await tryStockXRapidAPI(query);
-  if (!risultato) risultato = await tryFallback(query);
+  // Dizionario locale: modello → {prezzo, fonte, immagine}
+  const scarpe = {
+    "nike air force 1": {
+      prezzo: "110 €",
+      fonte: "Listino Ufficiale Nike",
+      img: "https://images.stockx.com/images/Nike-Air-Force-1-07-Triple-White-Product.jpg"
+    },
+    "nike dunk low": {
+      prezzo: "120 €",
+      fonte: "Listino Ufficiale",
+      img: "https://images.stockx.com/images/Nike-Dunk-Low-Retro-White-Black-2021-Product.jpg"
+    },
+    "air jordan 1": {
+      prezzo: "180 €",
+      fonte: "Listino Jordan",
+      img: "https://images.stockx.com/images/Air-Jordan-1-Retro-High-OG-University-Blue-Product.jpg"
+    },
+    "yeezy 350": {
+      prezzo: "220 €",
+      fonte: "Yeezy by Adidas",
+      img: "https://images.stockx.com/images/adidas-Yeezy-Boost-350-V2-Black-Red-Product.jpg"
+    },
+    "converse chuck taylor": {
+      prezzo: "75 €",
+      fonte: "Converse.com",
+      img: "https://images.stockx.com/images/Converse-Chuck-Taylor-All-Star-70-Hi-Black-Product.jpg"
+    },
+    "new balance 550": {
+      prezzo: "130 €",
+      fonte: "NewBalance.it",
+      img: "https://images.stockx.com/images/New-Balance-550-White-Grey-Product.jpg"
+    },
+    "adidas samba": {
+      prezzo: "100 €",
+      fonte: "Adidas.it",
+      img: "https://images.stockx.com/images/adidas-Samba-OG-Cloud-White-Core-Black-Product.jpg"
+    },
+    "puma suede": {
+      prezzo: "80 €",
+      fonte: "Puma.com",
+      img: "https://images.stockx.com/images/Puma-Suede-Classic-Red-White-Product.jpg"
+    }
+  };
 
-  if (!risultato) return m.reply('❌ Nessun risultato trovato da nessuna fonte.');
+  // Trova il modello che contiene le parole digitate
+  const chiave = Object.keys(scarpe).find(k => query.includes(k));
+  if (!chiave) return m.reply('🔍 Modello non presente nel listino.');
 
-  const messaggio = `👟 *${risultato.nome.toUpperCase()}*\n💸 Prezzo: *${risultato.prezzo}*\n🌐 Fonte: ${risultato.fonte}${risultato.url ? `\n🔗 [Link](${risultato.url})` : ''}`;
+  const s = scarpe[chiave];
+  const mess = `👟 *${chiave.toUpperCase()}*\n💸 Prezzo indicativo: *${s.prezzo}*\n🔗 Fonte: ${s.fonte}`;
 
   return conn.sendMessage(
     m.chat,
-    { image: { url: risultato.img }, caption: messaggio },
+    { image: { url: s.img }, caption: mess },
     { quoted: m }
   );
 };
