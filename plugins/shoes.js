@@ -1,38 +1,69 @@
-import fetch from 'node-fetch';
+let handler = async (m, { args, conn }) => {
+  if (!args.length)
+    return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino nike dunk low`');
 
-let handler = async (m, { args }) => {
-  const query = args.join(' ');
-  if (!query) return m.reply('❗ Scrivi il nome di un modello di scarpa, es: `.listino nike dunk low`');
+  const query = args.join(' ').toLowerCase();
 
-  try {
-    const apiUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query + ' scarpa')}&format=json&no_redirect=1&no_html=1&skip_disambig=1`;
-    const res = await fetch(apiUrl);
-    const data = await res.json();
-
-    const titolo = data.Heading || query;
-    const desc = data.Abstract || 'Nessuna descrizione disponibile.';
-    const img = data.Image || null;
-    const fonte = data.AbstractURL || 'https://duckduckgo.com';
-
-    const testo = `👟 *${titolo}*\n\n📄 ${desc}\n\n🔗 Fonte: ${fonte}`;
-
-    if (img && img.startsWith('http')) {
-      await conn.sendMessage(m.chat, {
-        image: { url: img },
-        caption: testo
-      }, { quoted: m });
-    } else {
-      await m.reply(testo);
+  // Dizionario locale: modello → {prezzo, fonte, img}
+  const scarpe = {
+    "nike air force 1": {
+      prezzo: "110 €",
+      fonte: "Nike.com",
+      img: "https://images.pexels.com/photos/245438/pexels-photo-245438.jpeg"
+    },
+    "nike dunk low": {
+      prezzo: "120 €",
+      fonte: "FootLocker.it",
+      img: "https://images.pexels.com/photos/5702101/pexels-photo-5702101.jpeg"
+    },
+    "air jordan 1": {
+      prezzo: "180 €",
+      fonte: "Nike.com",
+      img: "https://images.pexels.com/photos/6311609/pexels-photo-6311609.jpeg"
+    },
+    "yeezy 350": {
+      prezzo: "220 €",
+      fonte: "Adidas.com",
+      img: "https://images.pexels.com/photos/8454342/pexels-photo-8454342.jpeg"
+    },
+    "converse chuck taylor": {
+      prezzo: "75 €",
+      fonte: "Converse.com",
+      img: "https://images.pexels.com/photos/19090/pexels-photo-19090.jpeg"
+    },
+    "new balance 550": {
+      prezzo: "130 €",
+      fonte: "NewBalance.it",
+      img: "https://images.pexels.com/photos/8930280/pexels-photo-8930280.jpeg"
+    },
+    "adidas samba": {
+      prezzo: "100 €",
+      fonte: "Adidas.it",
+      img: "https://images.pexels.com/photos/12408966/pexels-photo-12408966.jpeg"
+    },
+    "puma suede": {
+      prezzo: "80 €",
+      fonte: "Puma.com",
+      img: "https://images.pexels.com/photos/3293149/pexels-photo-3293149.jpeg"
     }
+  };
 
-  } catch (e) {
-    console.error(e);
-    m.reply('⚠️ Errore nel recupero dei dati. Riprova più tardi.');
-  }
+  // Trova il modello che contiene le parole digitate (es. “jordan 1”)
+  const chiave = Object.keys(scarpe).find(k => query.includes(k));
+  if (!chiave) return m.reply('🔍 Modello non presente nel listino.');
+
+  const s = scarpe[chiave];
+  const mess = `👟 *${chiave.toUpperCase()}*\n💸 Prezzo indicativo: *${s.prezzo}*\n🔗 Fonte: ${s.fonte}`;
+
+  return conn.sendMessage(
+    m.chat,
+    { image: { url: s.img }, caption: mess },
+    { quoted: m }
+  );
 };
 
-handler.command = ['listino'];
+handler.command = /^listino$/i;
 handler.help = ['listino <modello>'];
-handler.tags = ['tools'];
+handler.tags = ['shop', 'tools'];
 
 export default handler;
