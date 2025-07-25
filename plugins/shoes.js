@@ -1,34 +1,54 @@
-import fs from 'fs';
+let handler = async (m, { args, conn }) => {
+  if (!args.length) return m.reply('Scrivi il nome della scarpa.\nEsempio: `.listino jordan 4 thunder`');
 
-let scarpe = [];
+  const query = args.join(' ').toLowerCase();
 
-try { const raw = fs.readFileSync('./plugins/scarpe_dataset_10000.json'); scarpe = JSON.parse(raw); console.log('✅ Scarpe caricate. Esempi:', scarpe.slice(0, 5).map(s => s.nome)); } catch (e) { console.error('❌ Errore caricamento JSON:', e.message); }
+  // 🔽 Dataset statico integrato
+  const scarpe = [
+    {
+      modello: "jordan 4 thunder",
+      nome: "Air Jordan 4 Retro Thunder (2023)",
+      sku: "DH6927-017",
+      prezzo: "280",
+      immagine: "https://images.stockx.com/images/Air-Jordan-4-Retro-Thunder-2023-Product.jpg",
+      link: "https://stockx.com/air-jordan-4-retro-thunder-2023"
+    },
+    {
+      modello: "nike dunk low panda",
+      nome: "Nike Dunk Low Retro White Black Panda",
+      sku: "DD1391-100",
+      prezzo: "160",
+      immagine: "https://images.stockx.com/images/Nike-Dunk-Low-Retro-White-Black-Panda-Product.jpg",
+      link: "https://stockx.com/nike-dunk-low-retro-white-black-2021"
+    },
+    {
+      modello: "yeezy 350 zebra",
+      nome: "adidas Yeezy Boost 350 V2 Zebra",
+      sku: "CP9654",
+      prezzo: "290",
+      immagine: "https://images.stockx.com/images/adidas-Yeezy-Boost-350-V2-Zebra-Product.jpg",
+      link: "https://stockx.com/adidas-yeezy-boost-350-v2-zebra"
+    }
+  ];
 
-const normalize = str => (str || '') .toLowerCase() .replace(/#\d+/g, '') .replace(/[^a-z0-9 ]/g, '') .trim();
+  const scarpa = scarpe.find(s => query.includes(s.modello));
 
-let handler = async (m, { args, conn, command }) => { if (command === 'listinoall') { if (!scarpe.length) return m.reply('⚠️ Nessun modello disponibile. Controlla il file JSON.');
+  if (!scarpa) return m.reply('❌ Scarpa non trovata nel listino interno.');
 
-const lista = scarpe.slice(0, 100).map((s, i) => `${i + 1}. ${s.nome}`).join('\n');
+  const messaggio = `👟 *${scarpa.nome}*\n🆔 SKU: ${scarpa.sku}\n💸 Prezzo medio: ${scarpa.prezzo} $\n🔗 ${scarpa.link}`;
 
-const messaggio = `📦 *Lista modelli cercabili (prime 100):*\n\n${lista}\n\n✅ Totale nel listino: ${scarpe.length} modelli\n🔎 Cerca con: .listino <nome da sopra>`;
+  await conn.sendMessage(
+    m.chat,
+    {
+      image: { url: scarpa.immagine },
+      caption: messaggio
+    },
+    { quoted: m }
+  );
+};
 
-return conn.sendMessage(m.chat, { text: messaggio }, { quoted: m });
-
-}
-
-if (!args.length) return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: .listino adidas campus');
-
-const queryWords = normalize(args.join(' ')).split(' ');
-
-const scarpa = scarpe.find(s => { const nome = normalize(s.nome); const sku = (s.sku || '').toLowerCase(); return queryWords.every(word => nome.includes(word)) || sku.includes(queryWords.join('')); });
-
-if (!scarpa) { return m.reply('🔍 Nessuna scarpa trovata nel listino.\nPuoi usare .listinoall per vedere i nomi disponibili.'); }
-
-const messaggio = 👟 *${scarpa.nome}*\n🆔 SKU: ${scarpa.sku || 'N/A'}\n💸 Prezzo: ${scarpa.prezzo || 'N/A'} $\n🔗 Link: ${scarpa.link || 'Nessun link'};
-
-if (scarpa.immagine && scarpa.immagine.startsWith('http')) { return conn.sendMessage( m.chat, { image: { url: scarpa.immagine }, caption: messaggio }, { quoted: m } ); } else { return m.reply(messaggio); } };
-
-handler.command = /^(listino|listinoall)$/i; handler.help = ['listino <modello>', 'listinoall']; handler.tags = ['shop'];
+handler.command = /^listino$/i;
+handler.help = ['listino <modello>'];
+handler.tags = ['shop'];
 
 export default handler;
-
