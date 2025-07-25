@@ -10,6 +10,12 @@ try {
   console.error('❌ Errore caricamento JSON:', e.message);
 }
 
+const normalize = str => (str || '')
+  .toLowerCase()
+  .replace(/#\d+/g, '')
+  .replace(/[^\w\s]/g, '')
+  .trim();
+
 let handler = async (m, { args, conn, command }) => {
   if (command === 'listinoall') {
     if (!scarpe.length) return m.reply('⚠️ Nessun modello disponibile. Controlla il file JSON.');
@@ -24,12 +30,12 @@ let handler = async (m, { args, conn, command }) => {
   if (!args.length)
     return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino nike air max`');
 
-  const query = args.join(' ').toLowerCase();
+  const query = normalize(args.join(' '));
 
   const scarpa = scarpe.find(s => {
-    const nome = s.nome?.toLowerCase() || '';
-    const modello = s.modello?.toLowerCase() || '';
-    const sku = s.sku?.toLowerCase() || '';
+    const nome = normalize(s.nome);
+    const modello = normalize(s.modello);
+    const sku = (s.sku || '').toLowerCase();
     return nome.includes(query) || modello.includes(query) || sku.includes(query);
   });
 
