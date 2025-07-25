@@ -4,7 +4,7 @@ let handler = async (m, { args, conn }) => {
   if (!args.length) return m.reply('❗ Usa: `.listino <modello>`');
 
   const query = args.join(' ');
-  const apiKey = 'YOUR_LUCKDATA_KEY';  // inserisci la tua chiave gratuita qui
+  const apiKey = '769f6632dc4007c00c32457208251ac8';  // inserisci la tua chiave gratuita qui
 
   try {
     const res = await fetch(`https://luckdata.io/api/sneaker-API/get?query=${encodeURIComponent(query)}`, {
