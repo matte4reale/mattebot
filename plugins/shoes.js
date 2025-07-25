@@ -1,57 +1,55 @@
 import fetch from 'node-fetch';
 
-const API_BASE = 'https://api.sneaksapp.info'; // Cambia con l'URL reale dove ospi Sneaks‑API se self‑hosted
+const COOLDOWN_MS = 5000; // 5 secondi cooldown
+const lastCall = new Map();
 
-async function cercaSneaker(query) {
-  const res = await fetch(`${API_BASE}/search?query=${encodeURIComponent(query)}&limit=1`);
-  if (!res.ok) throw new Error('API error ' + res.status);
+async function cercaScarpaStockX(query) {
+  const url = `https://stockx.com/api/browse?_search=${encodeURIComponent(query)}&page=1&resultsPerPage=1`;
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Accept': 'application/json',
+    },
+  });
+  if (!res.ok) throw new Error('Errore StockX');
   const data = await res.json();
-  if (!data.results || data.results.length === 0) return null;
-  return data.results[0];
-}
 
-async function getPrezziPerTaglia(styleID) {
-  const res = await fetch(`${API_BASE}/prices/${encodeURIComponent(styleID)}`);
-  if (!res.ok) throw new Error('API price error ' + res.status);
-  const data = await res.json();
-  return data.price_map; // mappa taglia → prezzo
+  if (!data.Products || data.Products.length === 0) return null;
+
+  const p = data.Products[0];
+  return {
+    name: p.name,
+    retailPrice: p.retailPrice,
+    media: p.media,
+    url: `https://stockx.com/${p.urlKey}`,
+  };
 }
 
 let handler = async (m, { args, conn }) => {
-  if (args.length < 2) 
-    return m.reply('❗ Usa `.listino <modello> <taglia>` es. `.listino nike jordan 1 42`');
+  if (!args.length) return m.reply('❗ Usa: `.listino <nome scarpa>`');
 
-  const taglia = args.pop();
+  const now = Date.now();
+  if (lastCall.has(m.sender) && now - lastCall.get(m.sender) < COOLDOWN_MS) {
+    return m.reply('⏳ Attendi qualche secondo prima di fare un’altra ricerca.');
+  }
+  lastCall.set(m.sender, now);
+
   const query = args.join(' ');
-
-  if (isNaN(taglia) || taglia < 36 || taglia > 44) 
-    return m.reply('❗ Taglia valida da 36 a 44.');
-
   try {
-    const shoe = await cercaSneaker(query);
-    if (!shoe) return m.reply('🔍 Modello non trovato.');
+    const scarpa = await cercaScarpaStockX(query);
+    if (!scarpa) return m.reply('🔍 Nessuna scarpa trovata su StockX.');
 
-    const prezziMap = await getPrezziPerTaglia(shoe.styleID);
-    const prezzo = prezziMap && prezziMap[taglia] ? `${prezziMap[taglia]} €` : 'Prezzo non disponibile';
-
-    const caption = 
-      `👟 *${shoe.name}*\n` +
-      `👞 Taglia: *${taglia}*\n` +
-      `💸 Prezzo: *${prezzo}*\n` +
-      `🔗 Link: ${shoe.url}`;
-
+    const caption = `👟 *${scarpa.name}*\n💸 Prezzo retail: ${scarpa.retailPrice} USD\n🔗 Link: ${scarpa.url}`;
     await conn.sendMessage(
       m.chat,
-      { image: { url: shoe.image }, caption },
+      { image: { url: scarpa.media.smallImageUrl || scarpa.media.thumbUrl }, caption },
       { quoted: m }
     );
-  } catch (err) {
-    console.error(err);
-    return m.reply('❌ Errore durante la ricerca con Sneaks‑API.');
+  } catch (e) {
+    console.error(e);
+    return m.reply('❌ Errore durante la ricerca su StockX. Riprova più tardi.');
   }
 };
 
 handler.command = /^listino$/i;
-handler.help = ['listino <modello> <taglia>'];
-handler.tags = ['shop'];
 export default handler;
