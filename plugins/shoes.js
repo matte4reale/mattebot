@@ -1,10 +1,8 @@
 let handler = async (m, { args, conn, command }) => {
-  if (!args.length)
-    return m.reply('Scrivi il nome della scarpa.\nEsempio: `.listino jordan 4 thunder`');
+  if (!args.length) {
+    return m.reply('Scrivi il nome della scarpa.\nEsempio: `.listino jordan 4 thunder`\nOppure `.listino immagine <SKU>` per vedere la foto.');
+  }
 
-  const query = args.join(' ').toLowerCase();
-
-  // 🔽 Dataset integrato con 100 scarpe (solo la prima con immagine reale)
   const scarpe = [
     {
       modello: "jordan 4 thunder",
@@ -14,13 +12,12 @@ let handler = async (m, { args, conn, command }) => {
       immagine: "https://images.stockx.com/images/Air-Jordan-4-Retro-Thunder-2023-Product.jpg",
       link: "https://stockx.com/air-jordan-4-retro-thunder-2023"
     },
-    // Le altre scarpe: esempio
     {
       modello: "nike dunk low panda",
       nome: "Nike Dunk Low Retro White Black Panda",
       sku: "DD1391-100",
       prezzo: "160",
-      immagine: "https://images.stockx.com/images/placeholder.png",
+      immagine: "https://images.stockx.com/images/Nike-Dunk-Low-Retro-White-Black-Panda-Product.jpg",
       link: "https://stockx.com/nike-dunk-low-retro-white-black-2021"
     },
     {
@@ -28,14 +25,27 @@ let handler = async (m, { args, conn, command }) => {
       nome: "adidas Yeezy Boost 350 V2 Zebra",
       sku: "CP9654",
       prezzo: "290",
-      immagine: "https://images.stockx.com/images/placeholder.png",
+      immagine: "https://images.stockx.com/images/adidas-Yeezy-Boost-350-V2-Zebra-Product.jpg",
       link: "https://stockx.com/adidas-yeezy-boost-350-v2-zebra"
     },
-    // ...altri 97 modelli con stessa logica
+    // ... altre scarpe
   ];
 
-  const scarpa = scarpe.find(s => query.includes(s.modello));
+  // ➤ Caso: .listino immagine <SKU>
+  if (args[0].toLowerCase() === 'immagine' && args[1]) {
+    const sku = args[1].toUpperCase();
+    const scarpa = scarpe.find(s => s.sku === sku);
+    if (!scarpa) return m.reply('❌ Immagine non trovata per questo SKU.');
 
+    return conn.sendMessage(m.chat, {
+      image: { url: scarpa.immagine },
+      caption: `📷 *Immagine scarpa SKU ${sku}*`
+    }, { quoted: m });
+  }
+
+  // ➤ Caso: .listino <modello>
+  const query = args.join(' ').toLowerCase();
+  const scarpa = scarpe.find(s => query.includes(s.modello));
   if (!scarpa) return m.reply('❌ Scarpa non trovata nel listino.');
 
   const messaggio = `👟 *${scarpa.nome}*\n🆔 SKU: ${scarpa.sku}\n💸 Prezzo medio: ${scarpa.prezzo} $\n🔗 ${scarpa.link}`;
@@ -44,7 +54,7 @@ let handler = async (m, { args, conn, command }) => {
     text: messaggio,
     buttons: [
       {
-        buttonId: `.immagine ${scarpa.sku}`,
+        buttonId: `.listino immagine ${scarpa.sku}`,
         buttonText: { displayText: '📷 Vedi Immagine' },
         type: 1
       }
@@ -54,42 +64,8 @@ let handler = async (m, { args, conn, command }) => {
   }, { quoted: m });
 };
 
-// Handler per il bottone immagine
-let handlerImg = async (m, { args, conn }) => {
-  const sku = args[0]?.toUpperCase();
-  if (!sku) return m.reply('❌ SKU non valido.');
-
-  const scarpe = [
-    {
-      sku: "DH6927-017",
-      immagine: "https://images.stockx.com/images/Air-Jordan-4-Retro-Thunder-2023-Product.jpg"
-    },
-    {
-      sku: "DD1391-100",
-      immagine: "https://images.stockx.com/images/placeholder.png"
-    },
-    {
-      sku: "CP9654",
-      immagine: "https://images.stockx.com/images/placeholder.png"
-    },
-    // ...altri
-  ];
-
-  const scarpa = scarpe.find(s => s.sku === sku);
-  if (!scarpa) return m.reply('❌ Immagine non trovata per questo SKU.');
-
-  return conn.sendMessage(m.chat, {
-    image: { url: scarpa.immagine },
-    caption: `📷 *Immagine scarpa SKU ${sku}*`
-  }, { quoted: m });
-};
-
 handler.command = /^listino$/i;
-handler.help = ['listino <modello>'];
+handler.help = ['listino <modello>', 'listino immagine <sku>'];
 handler.tags = ['shop'];
 
-handlerImg.command = /^immagine$/i;
-handlerImg.tags = ['shop'];
-handlerImg.help = ['immagine <sku>'];
-
-export default [handler, handlerImg];
+export default handler;
