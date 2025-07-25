@@ -3,7 +3,7 @@ import fs from 'fs';
 let scarpe = [];
 
 try {
-  const raw = fs.readFileSync('./plugins/scarpe_dataset_50000.json');
+  const raw = fs.readFileSync('./plugins/scarpe_dataset_50000.zip.json');
   scarpe = JSON.parse(raw);
   console.log('✅ Scarpe caricate per listinoall.');
 } catch (e) {
