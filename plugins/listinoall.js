@@ -6,7 +6,7 @@ let handler = async (m, { conn }) => {
 
   const lista = scarpe.slice(0, 100).map((s, i) => `${i + 1}. ${s.nome}`).join('\n');
 
-  const messaggio = `📦 *Lista modelli disponibili (prime 100):*\n\n${lista}\n\n✅ Totale nel listino: ${scarpe.length} modelli\n🔎 Cerca con: .listino <nome>`;
+  const messaggio = `📦 *Lista modelli cercabili (prime 100):*\n\n${lista}\n\n✅ Totale nel listino: ${scarpe.length} modelli\n🔎 Cerca con: .listino <nome esatto da sopra>`;
 
   await conn.sendMessage(m.chat, { text: messaggio }, { quoted: m });
 };
