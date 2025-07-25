@@ -1,69 +1,57 @@
+import fetch from 'node-fetch';
+
+const API_BASE = 'https://api.sneaksapp.info'; // Cambia con l'URL reale dove ospi Sneaks‑API se self‑hosted
+
+async function cercaSneaker(query) {
+  const res = await fetch(`${API_BASE}/search?query=${encodeURIComponent(query)}&limit=1`);
+  if (!res.ok) throw new Error('API error ' + res.status);
+  const data = await res.json();
+  if (!data.results || data.results.length === 0) return null;
+  return data.results[0];
+}
+
+async function getPrezziPerTaglia(styleID) {
+  const res = await fetch(`${API_BASE}/prices/${encodeURIComponent(styleID)}`);
+  if (!res.ok) throw new Error('API price error ' + res.status);
+  const data = await res.json();
+  return data.price_map; // mappa taglia → prezzo
+}
+
 let handler = async (m, { args, conn }) => {
-  if (!args.length)
-    return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino nike dunk low`');
+  if (args.length < 2) 
+    return m.reply('❗ Usa `.listino <modello> <taglia>` es. `.listino nike jordan 1 42`');
 
-  const query = args.join(' ').toLowerCase();
+  const taglia = args.pop();
+  const query = args.join(' ');
 
-  // Dizionario locale: modello → {prezzo, fonte, immagine}
-  const scarpe = {
-    "nike air force 1": {
-      prezzo: "110 €",
-      fonte: "Listino Ufficiale Nike",
-      img: "https://images.stockx.com/images/Nike-Air-Force-1-07-Triple-White-Product.jpg"
-    },
-    "nike dunk low": {
-      prezzo: "120 €",
-      fonte: "Listino Ufficiale",
-      img: "https://images.stockx.com/images/Nike-Dunk-Low-Retro-White-Black-2021-Product.jpg"
-    },
-    "air jordan 1": {
-      prezzo: "180 €",
-      fonte: "Listino Jordan",
-      img: "https://images.stockx.com/images/Air-Jordan-1-Retro-High-OG-University-Blue-Product.jpg"
-    },
-    "yeezy 350": {
-      prezzo: "220 €",
-      fonte: "Yeezy by Adidas",
-      img: "https://images.stockx.com/images/adidas-Yeezy-Boost-350-V2-Black-Red-Product.jpg"
-    },
-    "converse chuck taylor": {
-      prezzo: "75 €",
-      fonte: "Converse.com",
-      img: "https://images.stockx.com/images/Converse-Chuck-Taylor-All-Star-70-Hi-Black-Product.jpg"
-    },
-    "new balance 550": {
-      prezzo: "130 €",
-      fonte: "NewBalance.it",
-      img: "https://images.stockx.com/images/New-Balance-550-White-Grey-Product.jpg"
-    },
-    "adidas samba": {
-      prezzo: "100 €",
-      fonte: "Adidas.it",
-      img: "https://images.stockx.com/images/adidas-Samba-OG-Cloud-White-Core-Black-Product.jpg"
-    },
-    "puma suede": {
-      prezzo: "80 €",
-      fonte: "Puma.com",
-      img: "https://images.stockx.com/images/Puma-Suede-Classic-Red-White-Product.jpg"
-    }
-  };
+  if (isNaN(taglia) || taglia < 36 || taglia > 44) 
+    return m.reply('❗ Taglia valida da 36 a 44.');
 
-  // Trova il modello che contiene le parole digitate
-  const chiave = Object.keys(scarpe).find(k => query.includes(k));
-  if (!chiave) return m.reply('🔍 Modello non presente nel listino.');
+  try {
+    const shoe = await cercaSneaker(query);
+    if (!shoe) return m.reply('🔍 Modello non trovato.');
 
-  const s = scarpe[chiave];
-  const mess = `👟 *${chiave.toUpperCase()}*\n💸 Prezzo indicativo: *${s.prezzo}*\n🔗 Fonte: ${s.fonte}`;
+    const prezziMap = await getPrezziPerTaglia(shoe.styleID);
+    const prezzo = prezziMap && prezziMap[taglia] ? `${prezziMap[taglia]} €` : 'Prezzo non disponibile';
 
-  return conn.sendMessage(
-    m.chat,
-    { image: { url: s.img }, caption: mess },
-    { quoted: m }
-  );
+    const caption = 
+      `👟 *${shoe.name}*\n` +
+      `👞 Taglia: *${taglia}*\n` +
+      `💸 Prezzo: *${prezzo}*\n` +
+      `🔗 Link: ${shoe.url}`;
+
+    await conn.sendMessage(
+      m.chat,
+      { image: { url: shoe.image }, caption },
+      { quoted: m }
+    );
+  } catch (err) {
+    console.error(err);
+    return m.reply('❌ Errore durante la ricerca con Sneaks‑API.');
+  }
 };
 
 handler.command = /^listino$/i;
-handler.help = ['listino <modello>'];
-handler.tags = ['shop', 'tools'];
-
+handler.help = ['listino <modello> <taglia>'];
+handler.tags = ['shop'];
 export default handler;
