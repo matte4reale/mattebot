@@ -28,15 +28,14 @@ let handler = async (m, { args, conn, command }) => {
   }
 
   if (!args.length)
-    return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino nike air max`');
+    return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino adidas campus`');
 
   const query = normalize(args.join(' '));
 
   const scarpa = scarpe.find(s => {
     const nome = normalize(s.nome);
-    const modello = normalize(s.modello);
     const sku = (s.sku || '').toLowerCase();
-    return nome.includes(query) || modello.includes(query) || sku.includes(query);
+    return nome.includes(query) || sku.includes(query);
   });
 
   if (!scarpa) {
