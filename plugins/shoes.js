@@ -1,47 +1,38 @@
-const API_KEY = 'sd_XjZvL6MhwRJrgpLLrGCHidCSU90cFrHu'; // <-- Inserisci la tua vera API key
-
-const API_BASE = 'https://api.kicks.dev/v3/stockx/products';
-
-async function cercaScarpa(query) {
-  try {
-    const res = await fetch(`${API_BASE}?search=${encodeURIComponent(query)}`, {
-      headers: {
-        Authorization: API_KEY
-      }
-    });
-
-    if (!res.ok) {
-      throw new Error(`Errore HTTP ${res.status}`);
-    }
-
-    const data = await res.json();
-    if (!data.products || data.products.length === 0) return null;
-
-    return data.products[0]; // restituisce la prima scarpa trovata
-  } catch (err) {
-    console.error('Errore API:', err);
-    throw err;
-  }
-}
-
 let handler = async (m, { args, conn }) => {
-  if (!args.length) return m.reply('❗ Usa: `.listino <scarpa>`');
+  const fs = require('fs');
+  const path = './scarpe_1000.json';
 
-  const query = args.join(' ');
-  try {
-    const scarpa = await cercaScarpa(query);
-    if (!scarpa) return m.reply('🔍 Nessuna scarpa trovata.');
-
-    const caption = `👟 *${scarpa.name}*\n💸 Retail: ${scarpa.retailPrice} ${scarpa.currency}\n🔗 ${scarpa.url}`;
-    await conn.sendMessage(m.chat, {
-      image: { url: scarpa.image.original },
-      caption
-    }, { quoted: m });
-
-  } catch (e) {
-    m.reply('❌ Errore nella ricerca con KicksDB API.');
+  if (!args.length) {
+    return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino nike air max`');
   }
+
+  let data;
+  try {
+    data = JSON.parse(fs.readFileSync(path));
+  } catch (e) {
+    return m.reply('⚠️ Errore nel caricamento del listino.');
+  }
+
+  const query = args.join(' ').toLowerCase();
+  const match = data.find(item => item.name.toLowerCase().includes(query));
+
+  if (!match) return m.reply('🔍 Nessuna scarpa trovata.');
+
+  const prezzi = Object.entries(match.sizes)
+    .map(([taglia, prezzo]) => `- ${taglia}: ${prezzo} €`)
+    .join('\n');
+
+  const messaggio = `👟 *${match.name.toUpperCase()}*\n💸 *Prezzi per taglie:*\n${prezzi}`;
+
+  return conn.sendMessage(
+    m.chat,
+    { image: { url: match.image }, caption: messaggio },
+    { quoted: m }
+  );
 };
 
 handler.command = /^listino$/i;
+handler.help = ['listino <modello>'];
+handler.tags = ['shop', 'tools'];
+
 export default handler;
