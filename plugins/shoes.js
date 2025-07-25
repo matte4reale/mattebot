@@ -1,4 +1,3 @@
-// Importa il dataset JSON dalla cartella plugin
 import scarpe from './plugins/scarpe_dataset_10000.json' assert { type: 'json' };
 
 let handler = async (m, { args, conn }) => {
