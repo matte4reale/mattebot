@@ -5,7 +5,6 @@ let handler = async (m, { args, conn }) => {
   if (!args.length) {
     return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino nike air max`');
   }
-
   let data;
   try {
     data = JSON.parse(fs.readFileSync(path));
