@@ -1,55 +1,37 @@
 import fetch from 'node-fetch';
 
-const COOLDOWN_MS = 5000; // 5 secondi cooldown
-const lastCall = new Map();
+const API_BASE = 'https://api.sneakersapi.dev';
 
-async function cercaScarpaStockX(query) {
-  const url = `https://stockx.com/api/browse?_search=${encodeURIComponent(query)}&page=1&resultsPerPage=1`;
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0',
-      'Accept': 'application/json',
-    },
-  });
-  if (!res.ok) throw new Error('Errore StockX');
+async function cercaScarpa(query) {
+  const res = await fetch(`${API_BASE}/v1/products/search?query=${encodeURIComponent(query)}&limit=1`);
+  if (!res.ok) throw new Error('Errore API');
   const data = await res.json();
-
-  if (!data.Products || data.Products.length === 0) return null;
-
-  const p = data.Products[0];
-  return {
-    name: p.name,
-    retailPrice: p.retailPrice,
-    media: p.media,
-    url: `https://stockx.com/${p.urlKey}`,
-  };
+  if (!data.results || data.results.length === 0) return null;
+  return data.results[0];
 }
 
 let handler = async (m, { args, conn }) => {
   if (!args.length) return m.reply('❗ Usa: `.listino <nome scarpa>`');
-
-  const now = Date.now();
-  if (lastCall.has(m.sender) && now - lastCall.get(m.sender) < COOLDOWN_MS) {
-    return m.reply('⏳ Attendi qualche secondo prima di fare un’altra ricerca.');
-  }
-  lastCall.set(m.sender, now);
-
   const query = args.join(' ');
   try {
-    const scarpa = await cercaScarpaStockX(query);
-    if (!scarpa) return m.reply('🔍 Nessuna scarpa trovata su StockX.');
+    const shoe = await cercaScarpa(query);
+    if (!shoe) return m.reply('🔍 Nessuna scarpa trovata.');
 
-    const caption = `👟 *${scarpa.name}*\n💸 Prezzo retail: ${scarpa.retailPrice} USD\n🔗 Link: ${scarpa.url}`;
+    const caption = `👟 *${shoe.product_name}*\n📅 Release: ${shoe.release_date || 'N/D'}\n` +
+                    `💸 Prezzo netto: ${shoe.retail_price || 'N/D'}€\n🔗 Link: ${shoe.product_url}`;
+
     await conn.sendMessage(
       m.chat,
-      { image: { url: scarpa.media.smallImageUrl || scarpa.media.thumbUrl }, caption },
+      { image: { url: shoe.image_url }, caption },
       { quoted: m }
     );
   } catch (e) {
     console.error(e);
-    return m.reply('❌ Errore durante la ricerca su StockX. Riprova più tardi.');
+    return m.reply('❌ Errore durante la ricerca con SneakersAPI.dev.');
   }
 };
 
 handler.command = /^listino$/i;
+handler.help = ['listino <modello>'];
+handler.tags = ['tools'];
 export default handler;
