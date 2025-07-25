@@ -10,7 +10,17 @@ try {
   console.error('❌ Errore caricamento JSON:', e.message);
 }
 
-let handler = async (m, { args, conn }) => {
+let handler = async (m, { args, conn, command }) => {
+  if (command === 'listinoall') {
+    if (!scarpe.length) return m.reply('⚠️ Nessun modello disponibile. Controlla il file JSON.');
+
+    const lista = scarpe.slice(0, 100).map((s, i) => `${i + 1}. ${s.nome}`).join('\n');
+
+    const messaggio = `📦 *Lista modelli cercabili (prime 100):*\n\n${lista}\n\n✅ Totale nel listino: ${scarpe.length} modelli\n🔎 Cerca con: .listino <nome da sopra>`;
+
+    return conn.sendMessage(m.chat, { text: messaggio }, { quoted: m });
+  }
+
   if (!args.length)
     return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino nike air max`');
 
@@ -43,8 +53,8 @@ let handler = async (m, { args, conn }) => {
   }
 };
 
-handler.command = /^listino$/i;
-handler.help = ['listino <modello>'];
+handler.command = /^(listino|listinoall)$/i;
+handler.help = ['listino <modello>', 'listinoall'];
 handler.tags = ['shop'];
 
 export default handler;
