@@ -1,20 +1,28 @@
 import fetch from 'node-fetch';
 
 let handler = async (m, { args, conn }) => {
-  if (!args.length) return m.reply('❗ Scrivi il nome della scarpa. Esempio: `.listino jordan 1`');
+  if (!args.length)
+    return m.reply('❗ Scrivi il nome della scarpa.\nEsempio: `.listino jordan 4`');
 
   const query = args.join(' ');
+  const apiKey = 'sd_XjZvL6MhwRJrgpLLrGCHidCSU90cFrHu'; // <-- inserisci qui la tua chiave
+
   try {
-    const res = await fetch(`https://api.sneakersapi.dev/search?query=${encodeURIComponent(query)}`);
+    const res = await fetch(`https://api.kicks.dev/v1/sneakers?query=${encodeURIComponent(query)}&limit=1`, {
+      headers: {
+        'Authorization': apiKey
+      }
+    });
+
     const json = await res.json();
+    const result = json?.results?.[0];
 
-    if (!json.data || !json.data.length) return m.reply('❌ Nessuna scarpa trovata.');
+    if (!result) return m.reply('❌ Nessuna scarpa trovata.');
 
-    const s = json.data[0]; // primo risultato
-    const caption = `👟 *${s.title}*\n💸 Prezzo retail: $${s.retail_price || 'N/A'}\n📅 Uscita: ${s.release_date || 'N/A'}\n🔗 Link: ${s.link}`;
+    const caption = `👟 *${result.name}*\n🆔 SKU: ${result.style_id || 'N/A'}\n💸 Prezzo: $${result.retail_price || 'N/A'}\n📅 Uscita: ${result.release_date || 'N/A'}\n🔗 ${result.resell_links?.stockx || 'Nessun link'}`;
 
-    await conn.sendMessage(m.chat, {
-      image: { url: s.image },
+    return conn.sendMessage(m.chat, {
+      image: { url: result.thumbnail },
       caption
     }, { quoted: m });
 
