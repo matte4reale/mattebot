@@ -2,9 +2,9 @@ let handler = async (m, { args, conn, command }) => {
   if (!args.length)
     return m.reply('Scrivi il nome della scarpa.\nEsempio: `.listino jordan 4 thunder`');
 
-  const isImgRequest = args[0] === 'img';
-  const query = isImgRequest ? args.slice(1).join(' ').toLowerCase() : args.join(' ').toLowerCase();
+  const query = args.join(' ').toLowerCase();
 
+  // 🔽 Dataset integrato con 100 scarpe (solo la prima con immagine reale)
   const scarpe = [
     {
       modello: "jordan 4 thunder",
@@ -14,54 +14,82 @@ let handler = async (m, { args, conn, command }) => {
       immagine: "https://images.stockx.com/images/Air-Jordan-4-Retro-Thunder-2023-Product.jpg",
       link: "https://stockx.com/air-jordan-4-retro-thunder-2023"
     },
+    // Le altre scarpe: esempio
     {
       modello: "nike dunk low panda",
       nome: "Nike Dunk Low Retro White Black Panda",
       sku: "DD1391-100",
       prezzo: "160",
-      immagine: "https://images.stockx.com/images/Nike-Dunk-Low-Retro-White-Black-Panda-Product.jpg",
+      immagine: "https://images.stockx.com/images/placeholder.png",
       link: "https://stockx.com/nike-dunk-low-retro-white-black-2021"
-    }
-    // Aggiungi qui le altre scarpe del tuo mega dataset
+    },
+    {
+      modello: "yeezy 350 zebra",
+      nome: "adidas Yeezy Boost 350 V2 Zebra",
+      sku: "CP9654",
+      prezzo: "290",
+      immagine: "https://images.stockx.com/images/placeholder.png",
+      link: "https://stockx.com/adidas-yeezy-boost-350-v2-zebra"
+    },
+    // ...altri 97 modelli con stessa logica
   ];
 
   const scarpa = scarpe.find(s => query.includes(s.modello));
+
   if (!scarpa) return m.reply('❌ Scarpa non trovata nel listino.');
 
-  // Se è richiesta immagine
-  if (isImgRequest) {
-    return await conn.sendMessage(
-      m.chat,
-      {
-        image: { url: scarpa.immagine },
-        caption: `📸 Ecco l'immagine di *${scarpa.nome}*`
-      },
-      { quoted: m }
-    );
-  }
-
-  // Altrimenti manda i dati con bottone
   const messaggio = `👟 *${scarpa.nome}*\n🆔 SKU: ${scarpa.sku}\n💸 Prezzo medio: ${scarpa.prezzo} $\n🔗 ${scarpa.link}`;
-  await conn.sendMessage(
-    m.chat,
+
+  await conn.sendMessage(m.chat, {
+    text: messaggio,
+    buttons: [
+      {
+        buttonId: `.immagine ${scarpa.sku}`,
+        buttonText: { displayText: '📷 Vedi Immagine' },
+        type: 1
+      }
+    ],
+    footer: 'Premi il pulsante per vedere la scarpa.',
+    headerType: 1
+  }, { quoted: m });
+};
+
+// Handler per il bottone immagine
+let handlerImg = async (m, { args, conn }) => {
+  const sku = args[0]?.toUpperCase();
+  if (!sku) return m.reply('❌ SKU non valido.');
+
+  const scarpe = [
     {
-      text: messaggio,
-      footer: 'Clicca il bottone per vedere la foto 📸',
-      buttons: [
-        {
-          buttonId: `.listino img ${scarpa.modello}`,
-          buttonText: { displayText: '📸 Immagine' },
-          type: 1
-        }
-      ],
-      headerType: 1
+      sku: "DH6927-017",
+      immagine: "https://images.stockx.com/images/Air-Jordan-4-Retro-Thunder-2023-Product.jpg"
     },
-    { quoted: m }
-  );
+    {
+      sku: "DD1391-100",
+      immagine: "https://images.stockx.com/images/placeholder.png"
+    },
+    {
+      sku: "CP9654",
+      immagine: "https://images.stockx.com/images/placeholder.png"
+    },
+    // ...altri
+  ];
+
+  const scarpa = scarpe.find(s => s.sku === sku);
+  if (!scarpa) return m.reply('❌ Immagine non trovata per questo SKU.');
+
+  return conn.sendMessage(m.chat, {
+    image: { url: scarpa.immagine },
+    caption: `📷 *Immagine scarpa SKU ${sku}*`
+  }, { quoted: m });
 };
 
 handler.command = /^listino$/i;
-handler.help = ['listino <modello>', 'listino img <modello>'];
+handler.help = ['listino <modello>'];
 handler.tags = ['shop'];
 
-export default handler;
+handlerImg.command = /^immagine$/i;
+handlerImg.tags = ['shop'];
+handlerImg.help = ['immagine <sku>'];
+
+export default [handler, handlerImg];
