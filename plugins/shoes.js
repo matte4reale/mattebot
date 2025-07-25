@@ -1,6 +1,6 @@
 let handler = async (m, { args, conn }) => {
   const fs = require('fs');
-  const path = './scarpe_1000.json';
+  const path = './plugins/scarpe_1000.json';
 
   if (!args.length) {
     return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino nike air max`');
