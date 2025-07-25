@@ -4,7 +4,7 @@ let scarpe = [];
 
 try { const raw = fs.readFileSync('./plugins/scarpe_dataset_10000.json'); scarpe = JSON.parse(raw); console.log('✅ Scarpe caricate. Esempi:', scarpe.slice(0, 5).map(s => s.nome)); } catch (e) { console.error('❌ Errore caricamento JSON:', e.message); }
 
-const normalize = str => (str || '') .toLowerCase() .replace(/#\d+/g, '') .replace(/[^\w\s]/g, '') .trim();
+const normalize = str => (str || '') .toLowerCase() .replace(/#\d+/g, '') .replace(/[^a-z0-9 ]/g, '') .trim();
 
 let handler = async (m, { args, conn, command }) => { if (command === 'listinoall') { if (!scarpe.length) return m.reply('⚠️ Nessun modello disponibile. Controlla il file JSON.');
 
