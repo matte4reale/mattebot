@@ -1,19 +1,46 @@
-let handler = async (m, { args, conn }) => {
-  const fs = require('fs');
-  const path = './plugins/scarpe_1000.json';
+// JSON interno al plugin
+const scarpe = [
+  {
+    name: "Nike Blaze Fury",
+    brand: "Nike",
+    image: "https://source.unsplash.com/featured/?Nike,shoes",
+    sizes: {
+      36: 112.55,
+      37: 118.20,
+      38: 125.45,
+      39: 119.99,
+      40: 124.10,
+      41: 130.00,
+      42: 129.50,
+      43: 132.75,
+      44: 135.00
+    }
+  },
+  {
+    name: "Adidas Zoom Quest",
+    brand: "Adidas",
+    image: "https://source.unsplash.com/featured/?Adidas,shoes",
+    sizes: {
+      36: 102.99,
+      37: 108.40,
+      38: 112.85,
+      39: 115.30,
+      40: 119.00,
+      41: 121.50,
+      42: 125.00,
+      43: 126.00,
+      44: 130.00
+    }
+  }
+  // Puoi aggiungere qui tutte le altre scarpe
+];
 
-  if (!args.length) {
+let handler = async (m, { args, conn }) => {
+  if (!args.length)
     return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino nike air max`');
-  }
-  let data;
-  try {
-    data = JSON.parse(fs.readFileSync(path));
-  } catch (e) {
-    return m.reply('⚠️ Errore nel caricamento del listino.');
-  }
 
   const query = args.join(' ').toLowerCase();
-  const match = data.find(item => item.name.toLowerCase().includes(query));
+  const match = scarpe.find(s => s.name.toLowerCase().includes(query));
 
   if (!match) return m.reply('🔍 Nessuna scarpa trovata.');
 
@@ -21,11 +48,11 @@ let handler = async (m, { args, conn }) => {
     .map(([taglia, prezzo]) => `- ${taglia}: ${prezzo} €`)
     .join('\n');
 
-  const messaggio = `👟 *${match.name.toUpperCase()}*\n💸 *Prezzi per taglie:*\n${prezzi}`;
+  const mess = `👟 *${match.name.toUpperCase()}*\n💸 Prezzi per taglie:\n${prezzi}`;
 
   return conn.sendMessage(
     m.chat,
-    { image: { url: match.image }, caption: messaggio },
+    { image: { url: match.image }, caption: mess },
     { quoted: m }
   );
 };
