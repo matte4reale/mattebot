@@ -13,30 +13,6 @@ let handler = async (m, { args, conn, command }) => {
       link: "https://stockx.com/air-jordan-4-retro-thunder-2023"
     },
     {
-      modello: "nike dunk low panda",
-      nome: "Nike Dunk Low Retro White Black Panda",
-      sku: "DD1391-100",
-      prezzo: "160",
-      immagine: "https://images.stockx.com/images/Nike-Dunk-Low-Retro-White-Black-Panda-Product.jpg",
-      link: "https://stockx.com/nike-dunk-low-retro-white-black-2021"
-    },
-    {
-      modello: "yeezy 350 zebra",
-      nome: "adidas Yeezy Boost 350 V2 Zebra",
-      sku: "CP9654",
-      prezzo: "290",
-      immagine: "https://images.stockx.com/images/adidas-Yeezy-Boost-350-V2-Zebra-Product.jpg",
-      link: "https://stockx.com/adidas-yeezy-boost-350-v2-zebra"
-    },
-    {
-      modello: "jordan 1 chicago",
-      nome: "Air Jordan 1 Retro High OG Chicago Lost & Found",
-      sku: "DZ5485-612",
-      prezzo: "400",
-      immagine: "https://images.stockx.com/images/Air-Jordan-1-Retro-High-OG-Chicago-Lost-and-Found-Product.jpg",
-      link: "https://stockx.com/air-jordan-1-retro-high-og-chicago-lost-and-found"
-    },
-    {
       modello: "travis scott 1 low",
       nome: "Jordan 1 Retro Low OG SP Travis Scott Reverse Mocha",
       sku: "DM7866-162",
@@ -45,167 +21,176 @@ let handler = async (m, { args, conn, command }) => {
       link: "https://stockx.com/jordan-1-retro-low-og-sp-travis-scott-reverse-mocha"
     },
     {
-      modello: "yeezy superstar high",
-      nome: "Yeezy Superstar High",
-      sku: "YESUHI0001",
-      prezzo: "101",
-      immagine: "https://images.stockx.com/images/sneaker-1.jpg",
-      link: "https://stockx.com/yeezy-superstar-high-1"
+      modello: "yeezy foam runner onyx",
+      nome: "adidas Yeezy Foam RNNR Onyx",
+      sku: "HP8739",
+      prezzo: "160",
+      immagine: "https://images.stockx.com/images/adidas-Yeezy-Foam-RNNR-Onyx-Product.jpg",
+      link: "https://stockx.com/adidas-yeezy-foam-rnnr-onyx"
     },
     {
-      modello: "new balance classic runner",
-      nome: "New Balance Classic Runner",
-      sku: "NECLRU0002",
-      prezzo: "102",
-      immagine: "https://images.stockx.com/images/sneaker-2.jpg",
-      link: "https://stockx.com/new-balance-classic-runner-2"
+      modello: "nike sb dunk low born x raised",
+      nome: "Nike SB Dunk Low Born x Raised One Block at a Time",
+      sku: "FN7819-400",
+      prezzo: "370",
+      immagine: "https://images.stockx.com/images/Nike-SB-Dunk-Low-Born-x-Raised-One-Block-At-A-Time-Product.jpg",
+      link: "https://stockx.com/nike-sb-dunk-low-born-x-raised-one-block-at-a-time"
     },
     {
-      modello: "jordan gel-lyte retro",
-      nome: "Jordan Gel-Lyte Retro",
-      sku: "JOGERE0003",
-      prezzo: "103",
-      immagine: "https://images.stockx.com/images/sneaker-3.jpg",
-      link: "https://stockx.com/jordan-gel-lyte-retro-3"
+      modello: "jordan 1 high og lucky green",
+      nome: "Air Jordan 1 Retro High OG Lucky Green",
+      sku: "DZ5485-031",
+      prezzo: "220",
+      immagine: "https://images.stockx.com/images/Air-Jordan-1-Retro-High-OG-Lucky-Green-2023-Product.jpg",
+      link: "https://stockx.com/air-jordan-1-retro-high-og-lucky-green-2023"
     },
     {
-      modello: "puma classic high",
-      nome: "Puma Classic High",
-      sku: "PUCLHI0004",
-      prezzo: "104",
-      immagine: "https://images.stockx.com/images/sneaker-4.jpg",
-      link: "https://stockx.com/puma-classic-high-4"
+      modello: "nike dunk low university red",
+      nome: "Nike Dunk Low University Red",
+      sku: "CU1727-100",
+      prezzo: "190",
+      immagine: "https://images.stockx.com/images/Nike-Dunk-Low-SP-University-Red-Product.jpg",
+      link: "https://stockx.com/nike-dunk-low-sp-university-red"
     },
     {
-      modello: "new balance air max slide",
-      nome: "New Balance Air Max Slide",
-      sku: "NEAISL0005",
-      prezzo: "105",
-      immagine: "https://images.stockx.com/images/sneaker-5.jpg",
-      link: "https://stockx.com/new-balance-air-max-slide-5"
+      modello: "adidas samba og black white",
+      nome: "adidas Samba OG Cloud White Core Black",
+      sku: "B75807",
+      prezzo: "100",
+      immagine: "https://images.stockx.com/images/adidas-Samba-OG-Cloud-White-Core-Black-Product.jpg",
+      link: "https://stockx.com/adidas-samba-og-cloud-white-core-black"
     },
     {
-      modello: "puma react slide",
-      nome: "Puma React Slide",
-      sku: "PURESL0006",
-      prezzo: "106",
-      immagine: "https://images.stockx.com/images/sneaker-6.jpg",
-      link: "https://stockx.com/puma-react-slide-6"
+      modello: "new balance 550 white grey",
+      nome: "New Balance 550 White Grey",
+      sku: "BB550PB1",
+      prezzo: "140",
+      immagine: "https://images.stockx.com/images/New-Balance-550-White-Grey-Product.jpg",
+      link: "https://stockx.com/new-balance-550-white-grey"
     },
     {
-      modello: "jordan skate runner",
-      nome: "Jordan Skate Runner",
-      sku: "JOSKRU0007",
-      prezzo: "107",
-      immagine: "https://images.stockx.com/images/sneaker-7.jpg",
-      link: "https://stockx.com/jordan-skate-runner-7"
+      modello: "nike air max 1 patta waves monarch",
+      nome: "Nike Air Max 1 Patta Waves Monarch",
+      sku: "DH1348-001",
+      prezzo: "260",
+      immagine: "https://images.stockx.com/images/Nike-Air-Max-1-Patta-Waves-Monarch-Product.jpg",
+      link: "https://stockx.com/nike-air-max-1-patta-waves-monarch"
     },
     {
-      modello: "jordan gel-lyte runner",
-      nome: "Jordan Gel-Lyte Runner",
-      sku: "JOGERU0008",
-      prezzo: "108",
-      immagine: "https://images.stockx.com/images/sneaker-8.jpg",
-      link: "https://stockx.com/jordan-gel-lyte-runner-8"
+      modello: "jordan 3 white cement reimagined",
+      nome: "Air Jordan 3 White Cement Reimagined",
+      sku: "DN3707-100",
+      prezzo: "280",
+      immagine: "https://images.stockx.com/images/Air-Jordan-3-Retro-White-Cement-Reimagined-Product.jpg",
+      link: "https://stockx.com/air-jordan-3-retro-white-cement-reimagined"
     },
     {
-      modello: "adidas forum canvas",
-      nome: "Adidas Forum Canvas",
-      sku: "ADFOCA0009",
-      prezzo: "109",
-      immagine: "https://images.stockx.com/images/sneaker-9.jpg",
-      link: "https://stockx.com/adidas-forum-canvas-9"
-    },
-    {
-      modello: "yeezy classic high",
-      nome: "Yeezy Classic High",
-      sku: "YECLHI0010",
+      modello: "nike air force 1 low white",
+      nome: "Nike Air Force 1 '07 White",
+      sku: "CW2288-111",
       prezzo: "110",
-      immagine: "https://images.stockx.com/images/sneaker-10.jpg",
-      link: "https://stockx.com/yeezy-classic-high-10"
+      immagine: "https://images.stockx.com/images/Nike-Air-Force-1-07-White-Product.jpg",
+      link: "https://stockx.com/nike-air-force-1-07-white"
     },
     {
-      modello: "new balance skate high",
-      nome: "New Balance Skate High",
-      sku: "NESKHI0011",
-      prezzo: "111",
-      immagine: "https://images.stockx.com/images/sneaker-11.jpg",
-      link: "https://stockx.com/new-balance-skate-high-11"
+      modello: "adidas campus 00s grey white",
+      nome: "adidas Campus 00s Grey White",
+      sku: "HQ8708",
+      prezzo: "110",
+      immagine: "https://images.stockx.com/images/adidas-Campus-00s-Grey-White-Product.jpg",
+      link: "https://stockx.com/adidas-campus-00s-grey-white"
     },
     {
-      modello: "nike forum high",
-      nome: "Nike Forum High",
-      sku: "NIFOHI0012",
-      prezzo: "112",
-      immagine: "https://images.stockx.com/images/sneaker-12.jpg",
-      link: "https://stockx.com/nike-forum-high-12"
+      modello: "jordan 11 cherry",
+      nome: "Air Jordan 11 Retro Cherry (2022)",
+      sku: "CT8012-116",
+      prezzo: "280",
+      immagine: "https://images.stockx.com/images/Air-Jordan-11-Retro-Cherry-2022-Product.jpg",
+      link: "https://stockx.com/air-jordan-11-retro-cherry-2022"
     },
     {
-      modello: "yeezy classic low",
-      nome: "Yeezy Classic Low",
-      sku: "YECLLO0013",
-      prezzo: "113",
-      immagine: "https://images.stockx.com/images/sneaker-13.jpg",
-      link: "https://stockx.com/yeezy-classic-low-13"
+      modello: "nike sb dunk low marty mcfly",
+      nome: "Nike SB Dunk Low Marty McFly",
+      sku: "313170-022",
+      prezzo: "500",
+      immagine: "https://images.stockx.com/images/Nike-SB-Dunk-Low-Marty-McFly-Product.jpg",
+      link: "https://stockx.com/nike-sb-dunk-low-marty-mcfly"
     },
     {
-      modello: "asics superstar boost",
-      nome: "Asics Superstar Boost",
-      sku: "ASSUBO0014",
-      prezzo: "114",
-      immagine: "https://images.stockx.com/images/sneaker-14.jpg",
-      link: "https://stockx.com/asics-superstar-boost-14"
+      modello: "nike air max 97 silver bullet",
+      nome: "Nike Air Max 97 Silver Bullet",
+      sku: "884421-001",
+      prezzo: "180",
+      immagine: "https://images.stockx.com/images/Nike-Air-Max-97-Silver-Bullet-Product.jpg",
+      link: "https://stockx.com/nike-air-max-97-silver-bullet"
     },
     {
-      modello: "asics classic canvas",
-      nome: "Asics Classic Canvas",
-      sku: "ASCLCA0015",
-      prezzo: "115",
-      immagine: "https://images.stockx.com/images/sneaker-15.jpg",
-      link: "https://stockx.com/asics-classic-canvas-15"
+      modello: "nike air max plus triple black",
+      nome: "Nike Air Max Plus Triple Black",
+      sku: "604133-050",
+      prezzo: "190",
+      immagine: "https://images.stockx.com/images/Nike-Air-Max-Plus-Triple-Black-Product.jpg",
+      link: "https://stockx.com/nike-air-max-plus-triple-black"
     },
     {
-      modello: "reebok gel-lyte slide",
-      nome: "Reebok Gel-Lyte Slide",
-      sku: "REGESL0016",
-      prezzo: "116",
-      immagine: "https://images.stockx.com/images/sneaker-16.jpg",
-      link: "https://stockx.com/reebok-gel-lyte-slide-16"
+      modello: "nike air max 95 og neon",
+      nome: "Nike Air Max 95 OG Neon (2020)",
+      sku: "CT1689-001",
+      prezzo: "200",
+      immagine: "https://images.stockx.com/images/Nike-Air-Max-95-OG-Neon-2020-Product.jpg",
+      link: "https://stockx.com/nike-air-max-95-og-neon-2020"
     },
     {
-      modello: "adidas superstar runner",
-      nome: "Adidas Superstar Runner",
-      sku: "ADSURU0017",
-      prezzo: "117",
-      immagine: "https://images.stockx.com/images/sneaker-17.jpg",
-      link: "https://stockx.com/adidas-superstar-runner-17"
+      modello: "adidas yeezy boost 350 v2 beluga",
+      nome: "adidas Yeezy Boost 350 V2 Beluga Reflective",
+      sku: "GW1229",
+      prezzo: "310",
+      immagine: "https://images.stockx.com/images/adidas-Yeezy-Boost-350-V2-Beluga-Reflective-Product.jpg",
+      link: "https://stockx.com/adidas-yeezy-boost-350-v2-beluga-reflective"
     },
     {
-      modello: "yeezy dunk boost",
-      nome: "Yeezy Dunk Boost",
-      sku: "YEDUBO0018",
-      prezzo: "118",
-      immagine: "https://images.stockx.com/images/sneaker-18.jpg",
-      link: "https://stockx.com/yeezy-dunk-boost-18"
+      modello: "new balance 9060 sea salt",
+      nome: "New Balance 9060 Sea Salt",
+      sku: "U9060ECA",
+      prezzo: "150",
+      immagine: "https://images.stockx.com/images/New-Balance-9060-Sea-Salt-Product.jpg",
+      link: "https://stockx.com/new-balance-9060-sea-salt"
     },
     {
-      modello: "yeezy club c zoom",
-      nome: "Yeezy Club C Zoom",
-      sku: "YECLZO0019",
-      prezzo: "119",
-      immagine: "https://images.stockx.com/images/sneaker-19.jpg",
-      link: "https://stockx.com/yeezy-club-c-zoom-19"
+      modello: "jordan 6 carmine",
+      nome: "Air Jordan 6 Retro Carmine (2021)",
+      sku: "CT8529-106",
+      prezzo: "240",
+      immagine: "https://images.stockx.com/images/Air-Jordan-6-Retro-Carmine-2021-Product.jpg",
+      link: "https://stockx.com/air-jordan-6-retro-carmine-2021"
     },
     {
-      modello: "reebok forum flyknit",
-      nome: "Reebok Forum Flyknit",
-      sku: "REFOFL0020",
-      prezzo: "120",
-      immagine: "https://images.stockx.com/images/sneaker-20.jpg",
-      link: "https://stockx.com/reebok-forum-flyknit-20"
+      modello: "nike dunk low photon dust",
+      nome: "Nike Dunk Low Photon Dust (Women's)",
+      sku: "DD1503-103",
+      prezzo: "150",
+      immagine: "https://images.stockx.com/images/Nike-Dunk-Low-Photon-Dust-W-Product.jpg",
+      link: "https://stockx.com/nike-dunk-low-photon-dust-w"
+    },
+    {
+      modello: "new balance 2002r protection pack grey",
+      nome: "New Balance 2002R Protection Pack Rain Cloud",
+      sku: "M2002RDA",
+      prezzo: "230",
+      immagine: "https://images.stockx.com/images/New-Balance-2002R-Protection-Pack-Rain-Cloud-Product.jpg",
+      link: "https://stockx.com/new-balance-2002r-protection-pack-rain-cloud"
+    },
+    {
+      modello: "adidas ultraboost 1.0 dna",
+      nome: "adidas UltraBoost 1.0 DNA Cloud White",
+      sku: "GY9125",
+      prezzo: "180",
+      immagine: "https://images.stockx.com/images/adidas-Ultraboost-1-0-DNA-Cloud-White-Product.jpg",
+      link: "https://stockx.com/adidas-ultraboost-1-0-dna-cloud-white"
     }
   ];
 
+  // ➤ Caso immagine
   if (args[0].toLowerCase() === 'immagine' && args[1]) {
     const sku = args[1].toUpperCase();
     const scarpa = scarpe.find(s => s.sku === sku);
@@ -217,6 +202,7 @@ let handler = async (m, { args, conn, command }) => {
     }, { quoted: m });
   }
 
+  // ➤ Caso listino
   const query = args.join(' ').toLowerCase();
   const scarpa = scarpe.find(s => query.includes(s.modello));
   if (!scarpa) return m.reply('❌ Scarpa non trovata nel listino.');
