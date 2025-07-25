@@ -1,4 +1,3 @@
-// JSON interno al plugin
 const scarpe = [
   {
     name: "Nike Blaze Fury",
@@ -31,21 +30,45 @@ const scarpe = [
       43: 126.00,
       44: 130.00
     }
+  },
+  {
+    name: "Puma Suede Classic",
+    brand: "Puma",
+    image: "https://source.unsplash.com/featured/?Puma,shoes",
+    sizes: {
+      36: 80.00,
+      37: 82.50,
+      38: 85.00,
+      39: 87.50,
+      40: 90.00,
+      41: 92.50,
+      42: 95.00,
+      43: 97.50,
+      44: 100.00
+    }
   }
-  // Puoi aggiungere qui tutte le altre scarpe
+  // Aggiungi altre scarpe qui...
 ];
 
 let handler = async (m, { args, conn }) => {
   if (!args.length)
-    return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino nike air max`');
+    return m.reply('❗ Scrivi il nome di una scarpa.\nEsempio: `.listino nike blaze`');
 
   const query = args.join(' ').toLowerCase();
-  const match = scarpe.find(s => s.name.toLowerCase().includes(query));
+
+  // Debug: stampa in console la query e i nomi delle scarpe
+  console.log('Query:', query);
+  console.log('Scarpe disponibili:', scarpe.map(s => s.name));
+
+  // Cerca nel nome o nel brand (più flessibile)
+  const match = scarpe.find(
+    s => s.name.toLowerCase().includes(query) || s.brand.toLowerCase().includes(query)
+  );
 
   if (!match) return m.reply('🔍 Nessuna scarpa trovata.');
 
   const prezzi = Object.entries(match.sizes)
-    .map(([taglia, prezzo]) => `- ${taglia}: ${prezzo} €`)
+    .map(([taglia, prezzo]) => `- ${taglia}: ${prezzo.toFixed(2)} €`)
     .join('\n');
 
   const mess = `👟 *${match.name.toUpperCase()}*\n💸 Prezzi per taglie:\n${prezzi}`;
