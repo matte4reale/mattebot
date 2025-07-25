@@ -1,37 +1,32 @@
 import fetch from 'node-fetch';
 
-const API_BASE = 'https://api.sneakersapi.dev';
+const API_KEY = 'sd_XjZvL6MhwRJrgpLLrGCHidCSU90cFrHu';
+const API_BASE = 'https://api.kicks.dev/v1';
 
 async function cercaScarpa(query) {
-  const res = await fetch(`${API_BASE}/v1/products/search?query=${encodeURIComponent(query)}&limit=1`);
-  if (!res.ok) throw new Error('Errore API');
+  const res = await fetch(`${API_BASE}/sneakers?search=${encodeURIComponent(query)}`, {
+    headers: { Authorization: `Bearer ${API_KEY}` }
+  });
+  if (!res.ok) throw new Error('Errore API: ' + res.status);
   const data = await res.json();
-  if (!data.results || data.results.length === 0) return null;
-  return data.results[0];
+  if (!data.sneakers || data.sneakers.length === 0) return null;
+  return data.sneakers[0];
 }
 
 let handler = async (m, { args, conn }) => {
-  if (!args.length) return m.reply('❗ Usa: `.listino <nome scarpa>`');
+  if (!args.length) return m.reply('❗ Usa: `.listino <scarpa>`');
   const query = args.join(' ');
   try {
-    const shoe = await cercaScarpa(query);
-    if (!shoe) return m.reply('🔍 Nessuna scarpa trovata.');
+    const scarpa = await cercaScarpa(query);
+    if (!scarpa) return m.reply('🔍 Nessuna trovata.');
 
-    const caption = `👟 *${shoe.product_name}*\n📅 Release: ${shoe.release_date || 'N/D'}\n` +
-                    `💸 Prezzo netto: ${shoe.retail_price || 'N/D'}€\n🔗 Link: ${shoe.product_url}`;
-
-    await conn.sendMessage(
-      m.chat,
-      { image: { url: shoe.image_url }, caption },
-      { quoted: m }
-    );
+    const caption = `👟 *${scarpa.name}*\n💸 Retail: ${scarpa.retailPrice} ${scarpa.currency || 'USD'}\n🔗 Link: ${scarpa.url}`;
+    await conn.sendMessage(m.chat, { image: { url: scarpa.media.imageUrl }, caption }, { quoted: m });
   } catch (e) {
     console.error(e);
-    return m.reply('❌ Errore durante la ricerca con SneakersAPI.dev.');
+    m.reply('❌ Errore nella ricerca con KicksDB API.');
   }
 };
 
 handler.command = /^listino$/i;
-handler.help = ['listino <modello>'];
-handler.tags = ['tools'];
 export default handler;
