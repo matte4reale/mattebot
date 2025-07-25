@@ -1,43 +1,31 @@
 import fetch from 'node-fetch';
 
 let handler = async (m, { args, conn }) => {
-  if (!args.length)
-    return m.reply('❗ Scrivi il nome della scarpa. Esempio: `.listino jordan 4`');
+  if (!args.length) return m.reply('❗ Usa: `.listino <modello>`');
 
   const query = args.join(' ');
-  const apiKey = 'sd_XjZvL6MhwRJrgpLLrGCHidCSU90cFrHu'; // ⬅️ Inserisci qui la tua chiave di KicksDB
+  const apiKey = 'YOUR_LUCKDATA_KEY';  // inserisci la tua chiave gratuita qui
 
   try {
-    const res = await fetch(`https://api.kicks.dev/v1/sneakers?query=${encodeURIComponent(query)}&limit=1`, {
-      headers: {
-        'Authorization': apiKey
-      }
+    const res = await fetch(`https://luckdata.io/api/sneaker-API/get?query=${encodeURIComponent(query)}`, {
+      headers: { 'X-Luckdata-Api-Key': apiKey }
     });
+    const json = await res.json();
+    if (!json || !json.product) return m.reply('❌ Nessuna scarpa trovata.');
 
-    const data = await res.json();
-    const s = data?.results?.[0];
+    const p = json.product;
+    const caption = `👟 *${p.name}*\n💸 Prezzo: $${p.price || 'N/A'}\n🆔 SKU: ${p.styleId || p.sku || 'N/A'}`;
 
-    if (!s) return m.reply('❌ Nessuna scarpa trovata nel listino.');
-
-    const caption = `👟 *${s.name}*\n🆔 SKU: ${s.style_id || 'N/A'}\n💸 Prezzo Retail: $${s.retail_price || 'N/A'}\n📅 Data uscita: ${s.release_date || 'N/A'}\n🔗 StockX: ${s.resell_links?.stockx || 'Nessun link'}`;
-
-    return conn.sendMessage(
-      m.chat,
-      {
-        image: { url: s.thumbnail },
-        caption
-      },
-      { quoted: m }
-    );
+    await conn.sendMessage(m.chat, {
+      image: { url: p.image || p.image_url },
+      caption
+    }, { quoted: m });
 
   } catch (e) {
     console.error(e);
-    return m.reply('❌ Errore durante la richiesta all’API.');
+    return m.reply('❌ Errore richiesta LuckData API.');
   }
 };
 
 handler.command = /^listino$/i;
-handler.help = ['listino <modello>'];
-handler.tags = ['shop'];
-
 export default handler;
