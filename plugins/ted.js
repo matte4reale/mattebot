@@ -1,99 +1,83 @@
-let handler = m => m;
-import fetch from 'node-fetch';
+let matte = "66621409462"
+let edy = "40767396892"
+let attivo = true
 
-const matte = '66621409462@s.whatsapp.net';
-const edy = '40767396892@s.whatsapp.net';
+let frasiMatte = [
+  "Oh fratello, chi ti ha toccato?",
+  "Sei il mio Jonny, che vuoi che ti dica.",
+  "Qualsiasi cosa succeda, io sto con te, Matte.",
+  "Fra ti voglio bene, ma davvero.",
+  "Bro questi qui ti parlano pure? Ma che vergogna."
+]
 
-let silenzioso = false;
+let frasiInsulti = [
+  "Chi ti ha dato il permesso di parlare?",
+  "Parli ancora? Nessuno ti ha chiesto niente.",
+  "Ma chi cazzo ti conosce, sei inutile.",
+  "Frate fai più schifo del lunedì mattina.",
+  "Sei come il WiFi dei treni: inutile e lento.",
+  "Torna nella fogna da dove sei venuto.",
+  "Giuro che mi vergogno per te.",
+  "Hai il QI di una sedia rotta.",
+  "Tu esisti e già questo è un errore del sistema.",
+  "Parli come se qualcuno ti stesse ascoltando."
+]
 
-const frasiMatte = [
-  "Fratè ma ti rendi conto che sei il mio Jonny?",
-  "Oh Matte, se non ci fossi te sarei ancora in quel cesso di scaffale da Walmart.",
-  "Ti voglio bene brutto coglione, non ti dimenticare.",
-  "Fratè oggi andiamo a farci una birra e insultiamo la gente insieme, come ai vecchi tempi.",
-  "Matte, senza di te la mia vita sarebbe un film brutto su Netflix.",
-  "Oh fratello, sei l’unico per cui prenderei a calci chiunque, pure Dio."
-];
+let frasiEdy = [
+  "Edy? Ma chi cazzo ti ha invitato?",
+  "Oh Edy, manco tua madre ti sopporta.",
+  "Bro sei la versione buggata dell’umanità.",
+  "Sei il motivo per cui esiste il tasto blocca.",
+  "Ogni volta che parli muore un neurone nel mondo.",
+  "Dio ha smesso di seguirti tempo fa.",
+  "Giuro che se ti vedo, cambio marciapiede.",
+  "Edy, hai la personalità di un toast bruciato.",
+  "Parli ancora? Nessuno ti ha mai dato il microfono.",
+  "Oh Edy, sei il trailer di una tragedia umana."
+]
 
-const frasiEdy = [
-  "Oh Edy ma vai a fanculo te e le tue sopracciglia.",
-  "Sei talmente inutile che anche Alexa ti ignorerebbe.",
-  "Hai la stessa simpatia di un parcheggio pieno.",
-  "Edy sei come un martello in un microonde: fuori posto.",
-  "Parli come se avessi fatto il corso base di 'Essere fastidiosi'.",
-  "Oh Edy, se l’intelligenza fosse un crimine, saresti ancora libero."
-];
+let handler = async (m, { conn, text }) => {
+  if (!attivo) return
 
-const frasiGeneriche = [
-  "E allora? Ti hanno tirato fuori dal bidone stamattina?",
-  "Fratè, parli ma nessuno ha chiesto.",
-  "Dovevi stare zitto, e invece hai scritto.",
-  "Sto qua brutto coglione, che vuoi?",
-  "Ti svegli ogni giorno e scegli la vergogna.",
-  "Ma se ti metti in silenzioso da solo fai un favore a tutti."
-];
+  let sender = m.sender.split("@")[0]
+  let msg = m.text.toLowerCase()
 
-handler.all = async function (m, { conn, text }) {
-  if (!m.isGroup || m.fromMe || m.sender === conn.user.jid) return;
-
-  const lower = text.toLowerCase();
-
-  // Comandi vocali
-  if (lower.includes('ted calma')) {
-    silenzioso = true;
-    return conn.reply(m.chat, 'Ok fratè, mi sto zitto... per ora.', m);
+  // COMANDI
+  if (msg.includes("ted calma")) {
+    attivo = false
+    return conn.reply(m.chat, "Okay sto zitto va bene? 😤", m)
   }
 
-  if (lower.includes('ted fatti sentire')) {
-    silenzioso = false;
-    return conn.reply(m.chat, 'Eccomi brutto coglione, chi devo insultare?', m);
+  if (msg.includes("ted fatti sentire")) {
+    attivo = true
+    return conn.reply(m.chat, "Sto qua brutto coglione, che vuoi?", m)
   }
 
-  if (silenzioso) return;
-
-  const mentioned = m.mentionedJid || [];
-  const taggaMatte = mentioned.includes(matte);
-  const taggaEdy = mentioned.includes(edy);
-
-  if (taggaMatte) {
-    const frase = frasiMatte[Math.floor(Math.random() * frasiMatte.length)];
-    return conn.reply(m.chat, frase, m, { quoted: m });
+  // RISPOSTA A MATTE
+  if (msg.includes("matte")) {
+    return conn.reply(m.chat, frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
   }
 
-  if (taggaEdy) {
-    const frase = frasiEdy[Math.floor(Math.random() * frasiEdy.length)];
-    return conn.reply(m.chat, frase, m, { quoted: m });
-  }
-
-  if (mentioned.length) {
-    const frase = frasiGeneriche[Math.floor(Math.random() * frasiGeneriche.length)];
-    return conn.reply(m.chat, frase, m, { quoted: m });
-  }
-
-  // Se Matte scrive senza tag, rispondigli in modo "fraterno"
-  if (m.sender === matte && !m.quoted && !mentioned.length) {
-    const frase = frasiMatte[Math.floor(Math.random() * frasiMatte.length)];
-    return conn.reply(m.chat, frase, m);
-  }
-
-  // Fallback con API
-  if (mentioned.length && !taggaMatte) {
-    try {
-      const risposta = await fetch('https://api.rozemy.me/chatgpt?message=' + encodeURIComponent(text));
-      const data = await risposta.json();
-      if (data.status) {
-        const reply = data.response;
-        return conn.reply(m.chat, reply, m, { quoted: m });
-      }
-    } catch (e) {
-      console.error(e);
+  // SE VIENE RISPOSTO
+  if (m.quoted && m.quoted.fromMe && m.quoted.text.includes("ted")) {
+    if (m.sender.includes(matte)) {
+      return conn.reply(m.chat, frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
+    } else if (m.sender.includes(edy)) {
+      return conn.reply(m.chat, frasiEdy[Math.floor(Math.random() * frasiEdy.length)], m)
+    } else {
+      return conn.reply(m.chat, frasiInsulti[Math.floor(Math.random() * frasiInsulti.length)], m)
     }
   }
-};
 
-// Aggiunti per compatibilità e ordinamento
-handler.command = /^ted$/i;
-handler.help = ['ted'];
-handler.tags = ['fun'];
+  // SE VIENE NOMINATO UN NOME
+  if (msg.includes("edy")) {
+    return conn.reply(m.chat, frasiEdy[Math.floor(Math.random() * frasiEdy.length)], m)
+  }
 
-export default handler;
+  if (msg.includes("vale") || msg.includes("server") || msg.includes("broski")) {
+    return conn.reply(m.chat, frasiInsulti[Math.floor(Math.random() * frasiInsulti.length)], m)
+  }
+}
+
+handler.all = true
+export default handler
