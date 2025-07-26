@@ -1,4 +1,3 @@
-"
 let handler = async (m, { args, conn, command }) => {
   if (!args.length) {
     return m.reply('â— Scrivi il nome della scarpa.\nEsempio: `.listino jordan 4 thunder`\nOppure `.listino immagine <SKU>` per vedere la foto.');
