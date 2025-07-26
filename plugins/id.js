@@ -3,5 +3,5 @@ let handler = async (m, { conn }) => {
     return conn.reply(m.chat, m.sender, m)
   }
 }
-handler.command = /^\.id$/
+handler.command = /^\.ids$/
 export default handler
