@@ -5,42 +5,29 @@ const edyID = '40767396892@s.whatsapp.net';
 let tedAttivo = true;
 
 const frasiTed = [
-  "Sto qua brutto coglione, che vuoi?",
-  "Oh fratè, ancora tu? Ma non eri morto?",
-  "Mi hai rotto i coglioni come le pubblicità su YouTube.",
-  "Parla veloce che ho una birra che si sta scaldando.",
-  "Minchia se parli ancora svengo.",
-  "Che vuoi? Sto pisciando e mi chiami?",
-  "Non mi rompere che sto guardando porno.",
-  "Pure oggi a scassare? Siete instancabili.",
-  "Sembri mia zia quando mi chiama a Natale.",
+  "Oh cazzo fratello, sei serio?",
+  "Tua madre viene con te, anaffettivo!",
+  "Zitto palla di pelo? Non sono mica il tuo peluche!",
+  "Edy, ogni volta che parli muore un neurone.",
+  "Matte è il mio fratello, attento a come parli!",
+  "Chi ha svegliato il genio? Ah no, sei solo tu.",
+  "Fratè, sembri uscito da un tutorial su come non vivere.",
+  "Sei più inutile di una matita senza mina.",
+  "Edy, la tua esistenza è un errore 404.",
+  "Non toccare Matte, è come un fratello per me.",
+  "Occhio a quello che dici su Matte, coglione."
 ];
 
-const insultiEdy = [
-  "Edy sei la causa del riscaldamento globale.",
-  "Cambia faccia Edy, fa crashare i server.",
-  "Edy hai meno carisma di un cartone del latte.",
-  "La tua voce Edy è come uno screamer muto.",
-  "Ogni volta che parli Edy, un neurone muore.",
-  "Edy esisti ancora? Che delusione.",
-  "Tu Edy sei l'aggiornamento che nessuno voleva.",
-];
-
-const risposteMatte = [
-  "Ti voglio bene fratello.",
-  "Tu sei Jonny e io sono Ted, fine.",
-  "Solo tu puoi sopportarmi fratellì.",
-  "Fratè giuro che sei l'unico vero.",
-  "Mi manchi anche se ci stai parlando ora.",
-  "Sei il mio socio, il mio orso, il mio tutto.",
-];
-
-async function usaChatGPT(prompt) {
+async function usaChatGPT(prompt, tonoAmichevole = false) {
   try {
+    const istruzioni = tonoAmichevole
+      ? 'Rispondi come se fossi Ted nel film, parlando con il suo migliore amico John. Sii sarcastico ma affettuoso e divertente.'
+      : 'Rispondi come se fossi Ted nel film, in modo provocatorio, volgare e arrogante. Insulta pure se serve.';
+
     const response = await fetch('https://chatgpt.apine.dev/api/conversation', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: prompt })
+      body: JSON.stringify({ message: `${istruzioni}\n${prompt}` })
     });
     const data = await response.json();
     return data.message;
@@ -72,26 +59,25 @@ handler.all = async function (m, { conn }) {
   const mentionsMatte = mentions.includes(matteID) || text.includes('matte');
   const mentionsEdy = mentions.includes(edyID) || text.includes('edy');
 
-  if (isMatte) {
-    if (m.quoted && m.quoted.fromMe) {
-      let frase = risposteMatte[Math.floor(Math.random() * risposteMatte.length)];
+  if (mentionsMatte && !isMatte) {
+    let difese = frasiTed.filter(f => f.toLowerCase().includes('matte'));
+    if (difese.length > 0) {
+      let frase = difese[Math.floor(Math.random() * difese.length)];
       return conn.reply(m.chat, frase, m);
     }
-    return;
-  }
-
-  if (mentionsMatte) {
-    let frase = frasiTed[Math.floor(Math.random() * frasiTed.length)];
-    return conn.reply(m.chat, frase, m);
   }
 
   if (mentionsEdy) {
-    let frase = insultiEdy[Math.floor(Math.random() * insultiEdy.length)];
-    return conn.reply(m.chat, frase, m);
+    let insulti = frasiTed.filter(f => f.toLowerCase().includes('edy'));
+    if (insulti.length > 0) {
+      let frase = insulti[Math.floor(Math.random() * insulti.length)];
+      return conn.reply(m.chat, frase, m);
+    }
   }
 
   if (m.quoted && m.quoted.fromMe) {
-    let risposta = await usaChatGPT(m.text);
+    let tonoAmichevole = sender === matteID;
+    let risposta = await usaChatGPT(m.text, tonoAmichevole);
     if (risposta) {
       return conn.reply(m.chat, risposta, m);
     }
@@ -99,5 +85,9 @@ handler.all = async function (m, { conn }) {
 
   return;
 };
+
+handler.customPrefix = /./;
+handler.command = new RegExp;
+handler.disabled = false;
 
 export default handler;
