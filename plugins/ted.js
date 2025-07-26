@@ -1,80 +1,49 @@
-// Numero target: difendiamo matte
-const targets = {
-    "66621409462@s.whatsapp.net": "matte"
-};
+// ✴️ Plugin Ted - Risponde come un orso volgare e difende utenti taggati
+const matte = "66621409462@s.whatsapp.net"; // JID matte
 
-// Frasi di difesa per matte
-const defenseQuotes = (targetName, senderName) => [
-    `Occhio a come parli con ${targetName}, ${senderName}. Hai finito le vite?`,
-    `${senderName}, ti consiglio di smettere prima che ${targetName} perda la pazienza.`,
-    `Oh ${senderName}, ti sei svegliato coraggioso oggi eh? Parli pure di ${targetName}?`,
-    `${targetName} non ha bisogno di difendersi... ma io sì. Quindi occhio, ${senderName}.`,
-    `${senderName}, se tocchi ancora ${targetName}, ti mando nei gruppi di famiglia.`,
-    `Rispetta ${targetName}, ${senderName}. Non sei pronto per l'umiliazione.`,
-    `Hai scelto la persona sbagliata da taggare, ${senderName}. ${targetName} è intoccabile.`,
-    `Taggare ${targetName}? Sembra che ${senderName} oggi voglia il disastro.`,
-    `${senderName}, se ${targetName} fosse un boss, tu saresti il tutorial.`
+const difeseMatte = (nome) => [
+    `Ehi ${nome}, guarda che @matte ti prende pure senza usare le mani.`,
+    `${nome} hai 3 neuroni in sciopero. Lascia stare @matte.`,
+    `Oh ${nome}, non ti vergogni a taggare uno che ti batte a mani legate?`,
+    `Ma ti sei guardato allo specchio prima di scrivere a @matte? Imbarazzo vivente.`,
+    `@matte non ti ha risposto perché ha pietà di te, ${nome}. Io no.`,
+    `${nome}, quando parli a @matte metti prima un casco. Che poi ti rompi facile.`,
 ];
 
-// Frasi se qualcuno risponde a Ted
-const replyQuotes = (senderName) => [
-    `Oh ${senderName}, sei tornato? Pensavo avessi lasciato il cervello in modalità silenziosa.`,
-    `Hai la profondità di una pozzanghera, ${senderName}.`,
-    `Ogni tuo messaggio è come un audio di 8 minuti: evitabile.`,
-    `${senderName}, non sei cringe... sei direttamente patrimonio dell’errore umano.`,
-    `${senderName}, ogni volta che parli, i pixel del mio cervello si staccano.`,
-    `Wow ${senderName}, anche i bot provano imbarazzo leggendo te.`,
-    `Ma ${senderName}, la tastiera ti ha chiesto pietà.`,
-    `Sei riuscito a far vergognare anche il Wi-Fi, ${senderName}.`,
-    `${senderName}, ma taci che Ted si sta spegnendo da solo.`
+const risposteBot = (nome) => [
+    `${nome}, tu esisti solo per far ridere i piccioni.`,
+    `Che noia ${nome}. Vuoi attenzione? Prendi un cane.`,
+    `${nome}, hai il QI di una ciabatta bagnata.`,
+    `Il tuo messaggio è stato sponsorizzato da 'nessuno ti ha chiesto nulla', ${nome}.`,
+    `Sei il motivo per cui lo spelling è importante, ${nome}.`,
+    `Hai appena perso il premio 'inutilità dell’anno', ${nome}.`,
 ];
 
-module.exports = async function tedHandler(message, sock) {
-    const chatId = message.key.remoteJid;
-    const senderJid = message.key.participant || message.key.remoteJid;
-    const senderName = message.pushName || "qualcuno";
+var handler = async (m, { conn }) => {
+    const sender = m.sender;
+    const pushName = m.pushName || 'amico';
+    const mentions = m.mentionedJid || [];
 
-    // Tag ricevuti
-    const mentionedJids =
-        message.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+    const replied = m.quoted && m.quoted.sender;
+    const botJid = conn.user.id.split(":")[0] + "@s.whatsapp.net";
 
-    // Se stanno rispondendo a un messaggio
-    const quoted = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-    const quotedSender = message.message?.extendedTextMessage?.contextInfo?.participant;
-
-    // È una risposta a Ted?
-    const isReplyToBot =
-        quotedSender && sock.user && quotedSender.includes(sock.user.id.split(":")[0]);
-
-    // Caso 1: qualcuno tagga Matte
-    for (const [targetJid, targetName] of Object.entries(targets)) {
-        if (mentionedJids.includes(targetJid)) {
-            const quote =
-                defenseQuotes(targetName, senderName)[
-                    Math.floor(Math.random() * defenseQuotes(targetName, senderName).length)
-                ];
-
-            await sock.sendMessage(
-                chatId,
-                { text: `🧸 Ted interviene: "${quote}"` },
-                { quoted: message }
-            );
-            return;
-        }
+    // ➤ Se taggano Matte
+    if (mentions.includes(matte)) {
+        const frase = difeseMatte(pushName)[Math.floor(Math.random() * difeseMatte(pushName).length)];
+        await conn.reply(m.chat, `🧸 Ted dice: ${frase}`, m, { mentions: [matte] });
+        return;
     }
 
-    // Caso 2: risposta a un messaggio di Ted
-    if (isReplyToBot) {
-        const quote =
-            replyQuotes(senderName)[
-                Math.floor(Math.random() * replyQuotes(senderName).length)
-            ];
-
-        await sock.sendMessage(
-            chatId,
-            { text: `🧸 Ted risponde: "${quote}"` },
-            { quoted: message }
-        );
+    // ➤ Se rispondono a Ted (il bot)
+    if (replied && replied === botJid) {
+        const frase = risposteBot(pushName)[Math.floor(Math.random() * risposteBot(pushName).length)];
+        await conn.reply(m.chat, `🧸 Ted risponde: ${frase}`, m);
         return;
     }
 };
+
+handler.customPrefix = /@|./i;
+handler.command = new RegExp; // Trigger automatico
+handler.group = true;
+
+export default handler;
