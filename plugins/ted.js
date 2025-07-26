@@ -1,5 +1,5 @@
-// ✴️ Plugin Ted - Risponde come un orso volgare e difende utenti taggati
-const matte = "66621409462@s.whatsapp.net"; // JID matte
+// ✴️ Plugin Ted migliorato - Risponde in stile Ted senza duplicazioni
+const matte = "621409462@s.whatsapp.net"; // JID Matte
 
 const difeseMatte = (nome) => [
     `Ehi ${nome}, guarda che @matte ti prende pure senza usare le mani.`,
@@ -23,27 +23,28 @@ var handler = async (m, { conn }) => {
     const sender = m.sender;
     const pushName = m.pushName || 'amico';
     const mentions = m.mentionedJid || [];
+    const replied = m.quoted?.sender;
+    const botJid = conn.user.jid || conn.user.id;
 
-    const replied = m.quoted && m.quoted.sender;
-    const botJid = conn.user.id.split(":")[0] + "@s.whatsapp.net";
+    // Previene esecuzione multipla
+    if (!m.isGroup) return;
 
-    // ➤ Se taggano Matte
-    if (mentions.includes(matte)) {
+    // ➤ Se taggano solo matte
+    if (mentions.includes(matte) && !m.quoted) {
         const frase = difeseMatte(pushName)[Math.floor(Math.random() * difeseMatte(pushName).length)];
         await conn.reply(m.chat, `🧸 Ted dice: ${frase}`, m, { mentions: [matte] });
         return;
     }
 
-    // ➤ Se rispondono a Ted (il bot)
-    if (replied && replied === botJid) {
+    // ➤ Se rispondono al messaggio del bot
+    if (m.quoted && m.quoted.sender === botJid) {
         const frase = risposteBot(pushName)[Math.floor(Math.random() * risposteBot(pushName).length)];
         await conn.reply(m.chat, `🧸 Ted risponde: ${frase}`, m);
         return;
     }
 };
 
-handler.customPrefix = /@|./i;
-handler.command = new RegExp; // Trigger automatico
+handler.command = /^$/; // Nessun comando, trigger silenzioso
 handler.group = true;
 
 export default handler;
