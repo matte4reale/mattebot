@@ -1,5 +1,3 @@
-// Plugin WhatsApp Bot stile Ted — con modalità happy e API fallback
-
 import fetch from 'node-fetch';
 
 let happy = false; const matte = "66621409462"; const edy = "40767396892";
@@ -16,7 +14,7 @@ try { const res = await fetch( https://apis-starlights-team.koyeb.app/starlight/
 
 let handler = async function (m, { conn, text, command }) { const msg = m.text.toLowerCase();
 
-// Comandi manuali if (command === 'happy') { happy = true; return m.reply('Modalità Happy attiva 🧸✨'); } if (command === 'normal') { happy = false; return m.reply('Modalità normale attiva ☠️'); } if (msg.includes('ted calma')) { happy = false; return m.reply('Okay mi zittisco... per ora 😒'); } if (msg.includes('ted fatti sentire')) { happy = true; return m.reply('TED è tornato, bitches 🐻💥'); } };
+if (command === 'happy') { happy = true; return m.reply('Modalità Happy attiva 🧸✨'); } if (command === 'normal') { happy = false; return m.reply('Modalità normale attiva ☠️'); } if (msg.includes('ted calma')) { happy = false; return m.reply('Okay mi zittisco... per ora 😒'); } if (msg.includes('ted fatti sentire')) { happy = true; return m.reply('TED è tornato, bitches 🐻💥'); } };
 
 handler.all = async function (m, { conn }) { if (m.fromMe || m.sender === conn.user.jid) return;
 
@@ -26,7 +24,7 @@ if (menzionati.includes(matte) && m.sender !== conn.user.jid) { const frase = ha
 
 if (menzionati.includes(edy)) { const frase = frasiControEdy[Math.floor(Math.random() * frasiControEdy.length)]; return conn.reply(m.chat, frase, m); }
 
-// Fallback con API if ((menzionati.includes(matte) || msg.includes('matte')) && m.sender !== conn.user.jid) { const rispostaAPI = await usaAPI(msg, happy); if (rispostaAPI) return conn.reply(m.chat, rispostaAPI, m); } };
+if ((menzionati.includes(matte) || msg.includes('matte')) && m.sender !== conn.user.jid) { const rispostaAPI = await usaAPI(msg, happy); if (rispostaAPI) return conn.reply(m.chat, rispostaAPI, m); } };
 
 handler.command = ['happy', 'normal']; handler.tags = ['fun']; handler.help = ['happy', 'normal']; export default handler;
 
