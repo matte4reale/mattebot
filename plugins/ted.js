@@ -1,5 +1,5 @@
 // ✴️ Plugin Ted migliorato - Risponde in stile Ted senza duplicazioni
-const matte = "621409462@s.whatsapp.net"; // JID Matte
+const matte = "66621409462@s.whatsapp.net"; // JID Matte
 
 const difeseMatte = (nome) => [
     `Ehi ${nome}, guarda che @matte ti prende pure senza usare le mani.`,
