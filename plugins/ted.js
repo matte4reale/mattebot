@@ -1,6 +1,6 @@
 // Mappa: JID → nome personalizzato
 const targets = {
-    "1234567890@s.whatsapp.net": "matte" // <- matte è il difeso
+    "66621409462@s.whatsapp.net": "matte" // <- matte è il difeso
 };
 
 // Frasi in difesa di "matte"
