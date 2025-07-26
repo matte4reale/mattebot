@@ -1,93 +1,99 @@
 let handler = m => m;
+import fetch from 'node-fetch';
 
-const matteID = '66621409462@s.whatsapp.net';
-const edyID = '40767396892@s.whatsapp.net';
-let tedAttivo = true;
+const matte = '66621409462@s.whatsapp.net';
+const edy = '40767396892@s.whatsapp.net';
 
-const frasiTed = [
-  "Oh cazzo fratello, sei serio?",
-  "Tua madre viene con te, anaffettivo!",
-  "Zitto palla di pelo? Non sono mica il tuo peluche!",
-  "Edy, ogni volta che parli muore un neurone.",
-  "Matte è il mio fratello, attento a come parli!",
-  "Chi ha svegliato il genio? Ah no, sei solo tu.",
-  "Fratè, sembri uscito da un tutorial su come non vivere.",
-  "Sei più inutile di una matita senza mina.",
-  "Edy, la tua esistenza è un errore 404.",
-  "Non toccare Matte, è come un fratello per me.",
-  "Occhio a quello che dici su Matte, coglione."
+let silenzioso = false;
+
+const frasiMatte = [
+  "Fratè ma ti rendi conto che sei il mio Jonny?",
+  "Oh Matte, se non ci fossi te sarei ancora in quel cesso di scaffale da Walmart.",
+  "Ti voglio bene brutto coglione, non ti dimenticare.",
+  "Fratè oggi andiamo a farci una birra e insultiamo la gente insieme, come ai vecchi tempi.",
+  "Matte, senza di te la mia vita sarebbe un film brutto su Netflix.",
+  "Oh fratello, sei l’unico per cui prenderei a calci chiunque, pure Dio."
 ];
 
-async function usaChatGPT(prompt, tonoAmichevole = false) {
-  try {
-    const istruzioni = tonoAmichevole
-      ? 'Rispondi come se fossi Ted nel film, parlando con il suo migliore amico John. Sii sarcastico ma affettuoso e divertente.'
-      : 'Rispondi come se fossi Ted nel film, in modo provocatorio, volgare e arrogante. Insulta pure se serve.';
+const frasiEdy = [
+  "Oh Edy ma vai a fanculo te e le tue sopracciglia.",
+  "Sei talmente inutile che anche Alexa ti ignorerebbe.",
+  "Hai la stessa simpatia di un parcheggio pieno.",
+  "Edy sei come un martello in un microonde: fuori posto.",
+  "Parli come se avessi fatto il corso base di 'Essere fastidiosi'.",
+  "Oh Edy, se l’intelligenza fosse un crimine, saresti ancora libero."
+];
 
-    const response = await fetch('https://chatgpt.apine.dev/api/conversation', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: `${istruzioni}\n${prompt}` })
-    });
-    const data = await response.json();
-    return data.message;
-  } catch {
-    return null;
-  }
-}
+const frasiGeneriche = [
+  "E allora? Ti hanno tirato fuori dal bidone stamattina?",
+  "Fratè, parli ma nessuno ha chiesto.",
+  "Dovevi stare zitto, e invece hai scritto.",
+  "Sto qua brutto coglione, che vuoi?",
+  "Ti svegli ogni giorno e scegli la vergogna.",
+  "Ma se ti metti in silenzioso da solo fai un favore a tutti."
+];
 
-handler.all = async function (m, { conn }) {
-  if (!m.text) return;
+handler.all = async function (m, { conn, text }) {
+  if (!m.isGroup || m.fromMe || m.sender === conn.user.jid) return;
 
-  const text = m.text.toLowerCase();
+  const lower = text.toLowerCase();
 
-  if (text.includes('ted calma')) {
-    tedAttivo = false;
-    return conn.reply(m.chat, 'Ok fratè, sto muto.', m);
-  }
-
-  if (text.includes('ted fatti sentire')) {
-    tedAttivo = true;
-    return conn.reply(m.chat, 'Sto qua brutto coglione, che vuoi?', m);
+  // Comandi vocali
+  if (lower.includes('ted calma')) {
+    silenzioso = true;
+    return conn.reply(m.chat, 'Ok fratè, mi sto zitto... per ora.', m);
   }
 
-  if (!tedAttivo) return;
+  if (lower.includes('ted fatti sentire')) {
+    silenzioso = false;
+    return conn.reply(m.chat, 'Eccomi brutto coglione, chi devo insultare?', m);
+  }
 
-  const sender = m.sender;
-  const isMatte = sender === matteID;
-  const mentions = m.mentionedJid || [];
-  const mentionsMatte = mentions.includes(matteID) || text.includes('matte');
-  const mentionsEdy = mentions.includes(edyID) || text.includes('edy');
+  if (silenzioso) return;
 
-  if (mentionsMatte && !isMatte) {
-    let difese = frasiTed.filter(f => f.toLowerCase().includes('matte'));
-    if (difese.length > 0) {
-      let frase = difese[Math.floor(Math.random() * difese.length)];
-      return conn.reply(m.chat, frase, m);
+  const mentioned = m.mentionedJid || [];
+  const taggaMatte = mentioned.includes(matte);
+  const taggaEdy = mentioned.includes(edy);
+
+  if (taggaMatte) {
+    const frase = frasiMatte[Math.floor(Math.random() * frasiMatte.length)];
+    return conn.reply(m.chat, frase, m, { quoted: m });
+  }
+
+  if (taggaEdy) {
+    const frase = frasiEdy[Math.floor(Math.random() * frasiEdy.length)];
+    return conn.reply(m.chat, frase, m, { quoted: m });
+  }
+
+  if (mentioned.length) {
+    const frase = frasiGeneriche[Math.floor(Math.random() * frasiGeneriche.length)];
+    return conn.reply(m.chat, frase, m, { quoted: m });
+  }
+
+  // Se Matte scrive senza tag, rispondigli in modo "fraterno"
+  if (m.sender === matte && !m.quoted && !mentioned.length) {
+    const frase = frasiMatte[Math.floor(Math.random() * frasiMatte.length)];
+    return conn.reply(m.chat, frase, m);
+  }
+
+  // Fallback con API
+  if (mentioned.length && !taggaMatte) {
+    try {
+      const risposta = await fetch('https://api.rozemy.me/chatgpt?message=' + encodeURIComponent(text));
+      const data = await risposta.json();
+      if (data.status) {
+        const reply = data.response;
+        return conn.reply(m.chat, reply, m, { quoted: m });
+      }
+    } catch (e) {
+      console.error(e);
     }
   }
-
-  if (mentionsEdy) {
-    let insulti = frasiTed.filter(f => f.toLowerCase().includes('edy'));
-    if (insulti.length > 0) {
-      let frase = insulti[Math.floor(Math.random() * insulti.length)];
-      return conn.reply(m.chat, frase, m);
-    }
-  }
-
-  if (m.quoted && m.quoted.fromMe) {
-    let tonoAmichevole = sender === matteID;
-    let risposta = await usaChatGPT(m.text, tonoAmichevole);
-    if (risposta) {
-      return conn.reply(m.chat, risposta, m);
-    }
-  }
-
-  return;
 };
 
-handler.customPrefix = /./;
-handler.command = new RegExp;
-handler.disabled = false;
+// Aggiunti per compatibilità e ordinamento
+handler.command = /^ted$/i;
+handler.help = ['ted'];
+handler.tags = ['fun'];
 
 export default handler;
