@@ -1,5 +1,3 @@
-// Plugin by ChatGPT + Riad + TedStyle 🤖🐻
-
 import fetch from 'node-fetch';
 
 let handler = m => m;
@@ -56,7 +54,6 @@ handler.all = async function (m) {
     return;
   }
 
-  // Se nessuna condizione è soddisfatta, usa l’API gratuita
   try {
     const tedPrompt = `Rispondi come l'orso TED del film. Sii volgare, sarcastico, irriverente e diretto. Questa è la frase: "${m.text}"`;
 
@@ -64,7 +61,7 @@ handler.all = async function (m) {
     let json = await apiRes.json();
 
     if (json?.result) {
-      await conn.reply(m.chat, json.result + '\n\n> 🐻 Plugin Ted by ChatGPT + Riad', m, { quoted: m });
+      await conn.reply(m.chat, json.result + '\n\n> 🐻 Plugin Ted by matte', m, { quoted: m });
     }
   } catch (err) {
     console.error('Errore GPT fallback:', err);
