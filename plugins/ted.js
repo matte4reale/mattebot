@@ -1,50 +1,53 @@
-// ✴️ Plugin Ted migliorato - Risponde in stile Ted senza duplicazioni
-const matte = "66621409462@s.whatsapp.net"; // JID Matte
-
-const difeseMatte = (nome) => [
-    `Ehi ${nome}, guarda che @matte ti prende pure senza usare le mani.`,
-    `${nome} hai 3 neuroni in sciopero. Lascia stare @matte.`,
-    `Oh ${nome}, non ti vergogni a taggare uno che ti batte a mani legate?`,
-    `Ma ti sei guardato allo specchio prima di scrivere a @matte? Imbarazzo vivente.`,
-    `@matte non ti ha risposto perché ha pietà di te, ${nome}. Io no.`,
-    `${nome}, quando parli a @matte metti prima un casco. Che poi ti rompi facile.`,
+let matte = "66621409462@s.whatsapp.net";
+let tedReplies = [
+  "Ma ti sei guardato allo specchio prima di scrivere a matte? Imbarazzo vivente.",
+  "matte non ti ha risposto perché ha pietà di te, amico. Io no.",
+  "Ehi amico, guarda che matte ti prende pure senza usare le mani.",
+  "Amico hai 3 neuroni in sciopero. Lascia stare matte.",
+  "matte ha già vinto discutendo con uno come te. Fine del gioco.",
+  "Scrivere contro matte è come usare un cucchiaio per tagliare il cemento. Patetico.",
+  "Fratello, hai perso contro matte ancora prima di iniziare. Game over.",
+  "Stai parlando con matte come se fossi all’altezza. Buffone.",
+  "Ted dice: torna a scuola prima di sfidare matte.",
+  "matte ti ha risparmiato. Io no. 💀"
 ];
 
-const risposteBot = (nome) => [
-    `${nome}, tu esisti solo per far ridere i piccioni.`,
-    `Che noia ${nome}. Vuoi attenzione? Prendi un cane.`,
-    `${nome}, hai il QI di una ciabatta bagnata.`,
-    `Il tuo messaggio è stato sponsorizzato da 'nessuno ti ha chiesto nulla', ${nome}.`,
-    `Sei il motivo per cui lo spelling è importante, ${nome}.`,
-    `Hai appena perso il premio 'inutilità dell’anno', ${nome}.`,
+let replyReplies = [
+  "Ah quindi ora parli anche? Il miracolo di Lourdes.",
+  "Chi ti ha dato la parola, un sorteggio?",
+  "Più scrivi, più matte ride. Continua.",
+  "Neanche un clown riuscirebbe a rispondere peggio.",
+  "Hai toccato il fondo e stai scavando. Impressionante.",
+  "Ted dice: ho visto scimmie con più dialettica.",
+  "Scrivere male è un talento, tu sei un fenomeno.",
+  "Vieni pure, che ti massacro a parole. Vai, prossimo turno.",
+  "Ogni tua parola è un regalo al cringe. Grazie.",
+  "Dovrei farti un monumento alla figura di 💩."
 ];
 
 var handler = async (m, { conn }) => {
-    const sender = m.sender;
-    const pushName = m.pushName || 'amico';
-    const mentions = m.mentionedJid || [];
-    const replied = m.quoted?.sender;
-    const botJid = conn.user.jid || conn.user.id;
+  const mentioned = m?.mentionedJid || [];
+  const isReplyToTed = m.quoted?.sender === conn.user.jid;
 
-    // Previene esecuzione multipla
-    if (!m.isGroup) return;
+  if (mentioned.includes(matte)) {
+    let frase = tedReplies[Math.floor(Math.random() * tedReplies.length)];
+    await conn.sendMessage(m.chat, {
+      text: `🧸 *Ted dice:* ${frase}`
+    }, { quoted: m });
+    return;
+  }
 
-    // ➤ Se taggano solo matte
-    if (mentions.includes(matte) && !m.quoted) {
-        const frase = difeseMatte(pushName)[Math.floor(Math.random() * difeseMatte(pushName).length)];
-        await conn.reply(m.chat, `🧸 Ted dice: ${frase}`, m, { mentions: [matte] });
-        return;
-    }
-
-    // ➤ Se rispondono al messaggio del bot
-    if (m.quoted && m.quoted.sender === botJid) {
-        const frase = risposteBot(pushName)[Math.floor(Math.random() * risposteBot(pushName).length)];
-        await conn.reply(m.chat, `🧸 Ted risponde: ${frase}`, m);
-        return;
-    }
+  if (isReplyToTed) {
+    let frase = replyReplies[Math.floor(Math.random() * replyReplies.length)];
+    await conn.sendMessage(m.chat, {
+      text: `🧸 *Ted risponde:* ${frase}`
+    }, { quoted: m });
+    return;
+  }
 };
 
-handler.command = /^$/; // Nessun comando, trigger silenzioso
+handler.customPrefix = /^$/; // solo eventi naturali
+handler.command = new RegExp; // nessun comando
 handler.group = true;
 
 export default handler;
