@@ -1,70 +1,80 @@
-// Mappa: JID → nome personalizzato
+// Numero target: difendiamo matte
 const targets = {
-    "66621409462@s.whatsapp.net": "matte" // <- matte è il difeso
+    "66621409462@s.whatsapp.net": "matte"
 };
 
-// Frasi in difesa di "matte"
-const defenseQuotes = (name, authorName) => [
-    `Occhio a come parli con ${name}, ${authorName}. Hai finito le vite?`,
-    `${name} non si tocca. Rispetta la leggenda, ${authorName}.`,
-    `${authorName}, ti serve un abbraccio? Perché l'umiliazione arriva a raffica.`,
-    `Oh ${authorName}, vuoi fare il duro? Sei tenero come un biscotto bagnato.`,
-    `Parlare male di ${name}? È come sfidare un orso ubriaco. Pensaci.`,
-    `${name} sta zitto, ma io no. E tu, ${authorName}, hai appena perso una dignità.`,
-    `Metti giù il telefono, ${authorName}. Stai per farti umiliare da un peluche.`,
-    `${name} non dice niente, ma io sì: taci, ${authorName}, prima di peggiorare la tua reputazione.`
+// Frasi di difesa per matte
+const defenseQuotes = (targetName, senderName) => [
+    `Occhio a come parli con ${targetName}, ${senderName}. Hai finito le vite?`,
+    `${senderName}, ti consiglio di smettere prima che ${targetName} perda la pazienza.`,
+    `Oh ${senderName}, ti sei svegliato coraggioso oggi eh? Parli pure di ${targetName}?`,
+    `${targetName} non ha bisogno di difendersi... ma io sì. Quindi occhio, ${senderName}.`,
+    `${senderName}, se tocchi ancora ${targetName}, ti mando nei gruppi di famiglia.`,
+    `Rispetta ${targetName}, ${senderName}. Non sei pronto per l'umiliazione.`,
+    `Hai scelto la persona sbagliata da taggare, ${senderName}. ${targetName} è intoccabile.`,
+    `Taggare ${targetName}? Sembra che ${senderName} oggi voglia il disastro.`,
+    `${senderName}, se ${targetName} fosse un boss, tu saresti il tutorial.`
 ];
 
-// Frasi sarcastiche in reply a chi risponde al bot
-const replyQuotes = (name) => [
-    `Oh ${name}, sei tornato? Pensavo ti avessero bannato dalla logica.`,
-    `Parli ancora, ${name}? Il silenzio ti donava.`,
-    `Hai la profondità di una pozzanghera, ${name}.`,
-    `${name}, ogni tuo messaggio mi fa rivalutare il medioevo.`,
-    `Il tuo contributo, ${name}, è come il Wi-Fi nei boschi: inutile.`,
-    `${name}, stai scrivendo da un frigorifero o è solo il tuo cervello offline?`,
+// Frasi se qualcuno risponde a Ted
+const replyQuotes = (senderName) => [
+    `Oh ${senderName}, sei tornato? Pensavo avessi lasciato il cervello in modalità silenziosa.`,
+    `Hai la profondità di una pozzanghera, ${senderName}.`,
     `Ogni tuo messaggio è come un audio di 8 minuti: evitabile.`,
-    `${name}, se continui così ti blocco anche io, e sono un bot.`,
-    `Wow, ${name}, sei riuscito a peggiorare una situazione già tragica.`,
-    `${name}, sembri un bug di The Sims senza pathfinding.`
+    `${senderName}, non sei cringe... sei direttamente patrimonio dell’errore umano.`,
+    `${senderName}, ogni volta che parli, i pixel del mio cervello si staccano.`,
+    `Wow ${senderName}, anche i bot provano imbarazzo leggendo te.`,
+    `Ma ${senderName}, la tastiera ti ha chiesto pietà.`,
+    `Sei riuscito a far vergognare anche il Wi-Fi, ${senderName}.`,
+    `${senderName}, ma taci che Ted si sta spegnendo da solo.`
 ];
 
 module.exports = async function tedHandler(message, sock) {
     const chatId = message.key.remoteJid;
     const senderJid = message.key.participant || message.key.remoteJid;
-    const senderName = message.pushName || "tu";
+    const senderName = message.pushName || "qualcuno";
 
-    const text = message.message?.conversation ||
-        message.message?.extendedTextMessage?.text || "";
-
-    const mentioned =
+    // Tag ricevuti
+    const mentionedJids =
         message.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
 
-    const quotedMsg = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    // Se stanno rispondendo a un messaggio
+    const quoted = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const quotedSender = message.message?.extendedTextMessage?.contextInfo?.participant;
 
-    const quotedParticipant = message.message?.extendedTextMessage?.contextInfo?.participant;
+    // È una risposta a Ted?
+    const isReplyToBot =
+        quotedSender && sock.user && quotedSender.includes(sock.user.id.split(":")[0]);
 
-    // ✅ Caso 1: qualcuno tagga "matte"
-    for (const [jid, name] of Object.entries(targets)) {
-        if (mentioned.includes(jid)) {
-            const defense = defenseQuotes(name, senderName)[Math.floor(Math.random() * defenseQuotes(name, senderName).length)];
+    // Caso 1: qualcuno tagga Matte
+    for (const [targetJid, targetName] of Object.entries(targets)) {
+        if (mentionedJids.includes(targetJid)) {
+            const quote =
+                defenseQuotes(targetName, senderName)[
+                    Math.floor(Math.random() * defenseQuotes(targetName, senderName).length)
+                ];
 
-            await sock.sendMessage(chatId, {
-                text: `🧸 Ted interviene: "${defense}"`
-            }, { quoted: message });
-
+            await sock.sendMessage(
+                chatId,
+                { text: `🧸 Ted interviene: "${quote}"` },
+                { quoted: message }
+            );
             return;
         }
     }
 
-    // ✅ Caso 2: qualcuno risponde a un messaggio del bot (Ted)
-    if (quotedMsg && quotedParticipant?.includes(sock.user.id.split(":")[0])) {
-        const reply = replyQuotes(senderName)[Math.floor(Math.random() * replyQuotes(senderName).length)];
+    // Caso 2: risposta a un messaggio di Ted
+    if (isReplyToBot) {
+        const quote =
+            replyQuotes(senderName)[
+                Math.floor(Math.random() * replyQuotes(senderName).length)
+            ];
 
-        await sock.sendMessage(chatId, {
-            text: `🧸 Ted risponde: "${reply}"`
-        }, { quoted: message });
-
+        await sock.sendMessage(
+            chatId,
+            { text: `🧸 Ted risponde: "${quote}"` },
+            { quoted: message }
+        );
         return;
     }
 };
