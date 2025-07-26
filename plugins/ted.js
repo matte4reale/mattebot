@@ -89,7 +89,6 @@ handler.all = async function (m, { conn }) {
     return conn.reply(m.chat, frase, m);
   }
 
-  // Fallback con API se si parla di Matte
   if ((menzionati.includes(matte) || msg.includes('matte')) && m.sender !== conn.user.jid) {
     const rispostaAPI = await usaAPI(msg, happy);
     if (rispostaAPI) return conn.reply(m.chat, rispostaAPI, m);
