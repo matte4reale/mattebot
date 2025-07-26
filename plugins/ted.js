@@ -1,65 +1,76 @@
-let tedAttivo = true;
-let modalitàInsulti = false;
-let bersaglioInsulti = null;
+// Plugin by ChatGPT + Riad + TedStyle 🤖🐻
 
-const edyJID = "40767396892@s.whatsapp.net";
-const matteJID = "66621409462@s.whatsapp.net";
+import fetch from 'node-fetch';
 
-const insultiEdy = [
-  "🐻 Ted dice: Edy, l’unico virus sei tu.",
-  "🐻 Ted dice: Edy, persino ChatGPT si rifiuta di parlare con te.",
-  "🐻 Ted dice: Edy, tua madre ti ha chiamato errore di sistema.",
-  "🐻 Ted dice: Edy, ogni volta che scrivi, Dio piange.",
-];
+let handler = m => m;
 
-const difeseMatte = [
-  "🐻 Ted dice: Matte ti umilia anche solo esistendo.",
-  "🐻 Ted dice: Guardati, Matte ti ha già demolito senza rispondere.",
-  "🐻 Ted dice: Lascia stare Matte, non sei pronto.",
-  "🐻 Ted dice: Matte ha pietà di te. Io no.",
-];
+handler.all = async function (m) {
+  if (!m.text || m.fromMe || m.sender === conn.user.jid) return;
 
-const frasiRandom = [
-  "🐻 Ted dice: tua madre viene con te, anaffettivo.",
-  "🐻 Ted dice: hai 3 neuroni in sciopero.",
-  "🐻 Ted dice: ma ti sei guardato allo specchio prima di parlare?",
-  "🐻 Ted dice: sei l'equivalente umano di un buffering eterno.",
-];
+  const text = m.text.toLowerCase();
+  const mentioned = m.mentionedJid || [];
+  const edy = '40767396892@s.whatsapp.net'; // numero Edy
+  const matte = 'matte';
 
-export const handler = {
-  command: /^(zitto palla di pelo|cazzo fratello stai sentendo questo)$/i,
-  async handler(m, { conn, command }) {
-    if (command.toLowerCase() === "zitto palla di pelo") {
-      tedAttivo = false;
-      await conn.sendMessage(m.chat, { text: "🐻 Ted si zittisce... per ora." }, { quoted: m });
-    } else if (command.toLowerCase() === "cazzo fratello stai sentendo questo") {
-      modalitàInsulti = true;
-      if (m.quoted) {
-        bersaglioInsulti = m.quoted.sender;
-        await conn.sendMessage(m.chat, { text: "🐻 Ted dice: Adesso si fa sul serio." }, { quoted: m });
-      } else {
-        await conn.sendMessage(m.chat, { text: "🐻 Ted dice: Devi rispondere al messaggio di chi devo insultare, genio." }, { quoted: m });
-      }
-    }
-  },
-};
+  // Risposte per "matte"
+  const matteResponses = [
+    '🐻 Ted: Oh oh, hai nominato Matte? Meglio che ti sciacqui la bocca.',
+    '🐻 Ted: Matte è come Gesù, lo nomini invano e ti becchi un ceffone.',
+    '🐻 Ted: Sei troppo scarso per scrivere anche solo "matte", vergognati.',
+    '🐻 Ted: Ehi, lascia stare Matte o ti infilo un razzo nel naso.'
+  ];
 
-export async function before(m, { conn }) {
-  if (!tedAttivo || !m.text) return;
+  // Insulti pesanti per Edy
+  const edyInsults = [
+    '🤡 Edy ha vinto il premio "faccia da schiaffi" 3 anni di fila.',
+    '🧠 Edy ha un QI negativo, è un buco nero intellettuale.',
+    '💩 Taggare Edy? È come parlare con un mocio Vileda.',
+    '🚽 Edy è utile quanto una forchetta nel brodo.'
+  ];
 
-  const contieneMatte = /matte/i.test(m.text);
-  const isEdy = m.sender === edyJID;
+  // Altri insulti base (se taggano altri)
+  const generalResponses = [
+    '😒 Non taggare a caso, sembri Edy quando prova a parlare.',
+    '😑 Ma che vuoi? Scrivi come un piccione zoppo.',
+    '🙄 Sembri un personaggio generato da un bug di GTA.'
+  ];
 
-  if (modalitàInsulti && bersaglioInsulti && m.sender === bersaglioInsulti) {
-    const frase = insultiEdy[Math.floor(Math.random() * insultiEdy.length)];
-    await conn.sendMessage(m.chat, { text: frase }, { quoted: m });
+  // Se scrive "matte", rispondi
+  if (text.includes(matte)) {
+    let reply = matteResponses[Math.floor(Math.random() * matteResponses.length)];
+    await conn.reply(m.chat, reply, m, { quoted: m });
     return;
   }
 
-  if (contieneMatte) {
-    const frase = isEdy
-      ? insultiEdy[Math.floor(Math.random() * insultiEdy.length)]
-      : difeseMatte[Math.floor(Math.random() * difeseMatte.length)];
-    await conn.sendMessage(m.chat, { text: frase }, { quoted: m });
+  // Se tagga Edy
+  if (mentioned.includes(edy)) {
+    let reply = edyInsults[Math.floor(Math.random() * edyInsults.length)];
+    await conn.reply(m.chat, reply, m, { quoted: m });
+    return;
   }
-}
+
+  // Se tagga altri
+  if (mentioned.length > 0) {
+    let reply = generalResponses[Math.floor(Math.random() * generalResponses.length)];
+    await conn.reply(m.chat, reply, m, { quoted: m });
+    return;
+  }
+
+  // Se nessuna condizione è soddisfatta, usa l’API gratuita
+  try {
+    const tedPrompt = `Rispondi come l'orso TED del film. Sii volgare, sarcastico, irriverente e diretto. Questa è la frase: "${m.text}"`;
+
+    let apiRes = await fetch(`https://apis-starlights-team.koyeb.app/starlight/gemini?text=${encodeURIComponent(tedPrompt)}`);
+    let json = await apiRes.json();
+
+    if (json?.result) {
+      await conn.reply(m.chat, json.result + '\n\n> 🐻 Plugin Ted by ChatGPT + Riad', m, { quoted: m });
+    }
+  } catch (err) {
+    console.error('Errore GPT fallback:', err);
+  }
+
+  return !0;
+};
+
+export default handler;
