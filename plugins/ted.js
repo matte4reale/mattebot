@@ -1,94 +1,103 @@
-import fetch from 'node-fetch';
-
 let handler = m => m;
 
-global.tedSilenced = global.tedSilenced || false;
+const matteID = '66621409462@s.whatsapp.net';
+const edyID = '40767396892@s.whatsapp.net';
+let tedAttivo = true;
 
-handler.all = async function (m) {
-  if (!m.text || m.fromMe || m.sender === conn.user.jid) return;
+const frasiTed = [
+  "Sto qua brutto coglione, che vuoi?",
+  "Oh fratè, ancora tu? Ma non eri morto?",
+  "Mi hai rotto i coglioni come le pubblicità su YouTube.",
+  "Parla veloce che ho una birra che si sta scaldando.",
+  "Minchia se parli ancora svengo.",
+  "Che vuoi? Sto pisciando e mi chiami?",
+  "Non mi rompere che sto guardando porno.",
+  "Pure oggi a scassare? Siete instancabili.",
+  "Sembri mia zia quando mi chiama a Natale.",
+];
+
+const insultiEdy = [
+  "Edy sei la causa del riscaldamento globale.",
+  "Cambia faccia Edy, fa crashare i server.",
+  "Edy hai meno carisma di un cartone del latte.",
+  "La tua voce Edy è come uno screamer muto.",
+  "Ogni volta che parli Edy, un neurone muore.",
+  "Edy esisti ancora? Che delusione.",
+  "Tu Edy sei l'aggiornamento che nessuno voleva.",
+];
+
+const risposteMatte = [
+  "Ti voglio bene fratello.",
+  "Tu sei Jonny e io sono Ted, fine.",
+  "Solo tu puoi sopportarmi fratellì.",
+  "Fratè giuro che sei l'unico vero.",
+  "Mi manchi anche se ci stai parlando ora.",
+  "Sei il mio socio, il mio orso, il mio tutto.",
+];
+
+async function usaChatGPT(prompt) {
+  try {
+    const response = await fetch('https://chatgpt.apine.dev/api/conversation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: prompt })
+    });
+    const data = await response.json();
+    return data.message;
+  } catch {
+    return null;
+  }
+}
+
+handler.all = async function (m, { conn }) {
+  if (!m.text) return;
 
   const text = m.text.toLowerCase();
-  const mentioned = m.mentionedJid || [];
-
-  const edyJid = '40767396892@s.whatsapp.net';
-  const matteJid = '66621409462@s.whatsapp.net';
 
   if (text.includes('ted calma')) {
-    global.tedSilenced = true;
-    await conn.reply(m.chat, 'Ok mi zittisco… ma ricordati chi comanda.', m);
-    return;
+    tedAttivo = false;
+    return conn.reply(m.chat, 'Ok fratè, sto muto.', m);
   }
 
   if (text.includes('ted fatti sentire')) {
-    global.tedSilenced = false;
-    await conn.reply(m.chat, 'Sto qua brutto coglione, che vuoi?', m);
+    tedAttivo = true;
+    return conn.reply(m.chat, 'Sto qua brutto coglione, che vuoi?', m);
+  }
+
+  if (!tedAttivo) return;
+
+  const sender = m.sender;
+  const isMatte = sender === matteID;
+  const mentions = m.mentionedJid || [];
+  const mentionsMatte = mentions.includes(matteID) || text.includes('matte');
+  const mentionsEdy = mentions.includes(edyID) || text.includes('edy');
+
+  if (isMatte) {
+    if (m.quoted && m.quoted.fromMe) {
+      let frase = risposteMatte[Math.floor(Math.random() * risposteMatte.length)];
+      return conn.reply(m.chat, frase, m);
+    }
     return;
   }
 
-  if (global.tedSilenced) return;
-
-  const matteTriggers = ['matte'];
-  const matteReplies = [
-    'Oh, parli di Matte? Mettiti in ginocchio prima di nominarlo.',
-    'Matte è off-limits. Sta più in alto di te nella catena alimentare.',
-    'Solo chi ha un minimo di cervello rispetta Matte. Tu no.',
-    'Lascia stare Matte o ti insegno l’educazione a calci.',
-    'Giù le mani da Matte, non è roba per te.',
-    'Nomini Matte e ti autodistruggi. Hai scelto male.',
-    'Matte è l’unico essere umano che sopporto. Tu no.'
-  ];
-
-  const edyInsults = [
-    'Edy è il motivo per cui la parola "fallimento" esiste.',
-    'Parlare con Edy è come urlare in un pozzo di letame.',
-    'Edy? Ma è ancora tra noi? Pensavo fosse un bug.',
-    'Ogni volta che Edy scrive, un neurone muore.',
-    'Edy è come un captcha mal riuscito: nessuno lo capisce e dà solo fastidio.',
-    'Taggare Edy è un insulto alla tua dignità. Bravo.',
-    'Edy ha il fascino di una stampante rotta.'
-  ];
-
-  const genericReplies = [
-    'Scrivi meglio, sembri Edy dopo una lobotomia.',
-    'Non so se sei ironico o solo stupido.',
-    'Hai detto qualcosa? Il mio cervello l’ha censurato per pietà.',
-    'Sembri il trailer di un film brutto: rumoroso e inutile.',
-    'La tua presenza abbassa il QI del gruppo.',
-    'Hai appena perso l’occasione per stare zitto.'
-  ];
-
-  if (matteTriggers.some(trigger => text.includes(trigger))) {
-    const reply = matteReplies[Math.floor(Math.random() * matteReplies.length)];
-    await conn.reply(m.chat, reply, m, { quoted: m });
-    return;
+  if (mentionsMatte) {
+    let frase = frasiTed[Math.floor(Math.random() * frasiTed.length)];
+    return conn.reply(m.chat, frase, m);
   }
 
-  if (mentioned.includes(edyJid) || text.includes('edy')) {
-    const insult = edyInsults[Math.floor(Math.random() * edyInsults.length)];
-    await conn.reply(m.chat, insult, m, { quoted: m });
-    return;
+  if (mentionsEdy) {
+    let frase = insultiEdy[Math.floor(Math.random() * insultiEdy.length)];
+    return conn.reply(m.chat, frase, m);
   }
 
-  if (mentioned.includes(matteJid) || m.sender === matteJid) {
-    try {
-      const prompt = `Sei Ted, l'orso sboccato e sarcastico, e stai parlando con il tuo miglior amico John (Matte). Rispondi in tono affettuoso ma volgare. Frase: "${m.text}"`;
-      const gpt = await fetch(`https://apis-starlights-team.koyeb.app/starlight/gemini?text=${encodeURIComponent(prompt)}`);
-      const res = await gpt.json();
-      if (res?.result) await conn.reply(m.chat, res.result, m, { quoted: m });
-    } catch {}
-    return;
+  if (m.quoted && m.quoted.fromMe) {
+    let risposta = await usaChatGPT(m.text);
+    if (risposta) {
+      return conn.reply(m.chat, risposta, m);
+    }
   }
 
-  if (mentioned.length > 0 || text.length > 5) {
-    try {
-      const prompt = `Sei Ted, l'orso volgare e sarcastico del film. Rispondi in modo diretto, offensivo e irriverente alla frase: "${m.text}"`;
-      const gpt = await fetch(`https://apis-starlights-team.koyeb.app/starlight/gemini?text=${encodeURIComponent(prompt)}`);
-      const res = await gpt.json();
-      if (res?.result) await conn.reply(m.chat, res.result, m, { quoted: m });
-    } catch {}
-  }
-
-  return !0;
+  return;
 };
 
 export default handler;
