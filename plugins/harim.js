@@ -1,27 +1,60 @@
 let handler = async (m, { conn }) => {
-  const frames = [
-    "🔵 BOT SYSTEM STARTING...",
-    "🟢 SYSTEM CHECKING: OK",
-    "🟡 LOADING MODULES...",
-    "🟣 CONNECTING TO NODES...",
-    "🌐 SYNCING...",
-    "🔴 FINALIZING...",
-    "🌍  CHATUNITY BOT 🌍"
+  const animazioni = [
+`       333 bot-         
+         -Origin-Bot    
+    Vare-Bot-            
+         -Onix-Bot       
+ Turbo-Bot-         
+         -Bixby-Bot`,
+
+`       333 bot-         
+         -Origin-Bot    
+    Vare-Bot-            
+         -Onix-Bot       
+     Turbo-Bot-         
+         -Bixby-Bot`,
+
+`       333 bot-         
+    Origin-Bot-        
+    Vare-Bot           
+      -Onix-Bot-       
+     Turbo-Bot         
+        -Bixby-Bot`,
+
+`     333 bot-      
+ Origin-Bot-     
+   Vare-Bot         
+ -Onix-Bot-      
+  Turbo-Bot         
+   Bixby-Bot`,
+
+`   333 bot-    
+ Origin-Bot    
+Vare-Bot    
+  Onix-Bot    
+Turbo-Bot    
+  Bixby-Bot`,
+
+`   
+   
+    🌐 CHATUNITY BOT 🌐
+   
+
+`
   ];
 
-  let msg = await conn.sendMessage(m.chat, { text: frames[0] }, { quoted: m });
+  let msg = await conn.sendMessage(m.chat, { text: animazioni[0] }, { quoted: m });
 
-  for (let i = 1; i < frames.length; i++) {
+  for (let i = 1; i < animazioni.length; i++) {
     await new Promise(res => setTimeout(res, 1000));
     try {
       await conn.sendMessage(m.chat, {
-        text: frames[i],
-        edit: msg.key // ← solo se il tuo bot supporta questo!
+        text: animazioni[i],
+        edit: msg.key
       });
     } catch (e) {
-      // fallback: elimina e reinvia (opzionale se non supporta edit)
       await conn.sendMessage(m.chat, { delete: msg.key });
-      msg = await conn.sendMessage(m.chat, { text: frames[i] });
+      msg = await conn.sendMessage(m.chat, { text: animazioni[i] });
     }
   }
 };
