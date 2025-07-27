@@ -1,13 +1,13 @@
 let handler = async (m, { conn }) => {
   const frames = [
-    `        Origin‑Bot       Vare‑Bot       Onix‑Bot       Turbo‑Bot       Bixby‑Bot        `,
-    `     Origin‑Bot  •  Vare‑Bot  •  Onix‑Bot  •  Turbo‑Bot  •  Bixby‑Bot     `,
-    `  [Origin‑Bot] [Vare‑Bot] [Onix‑Bot] [Turbo‑Bot] [Bixby‑Bot]  `,
-    `—=≡ Origin‑Bot ≡=— —=≡ Vare‑Bot ≡=— —=≡ Onix‑Bot ≡=— —=≡ Turbo‑Bot ≡=— —=≡ Bixby‑Bot ≡=—`,
-    `     * Origin‑Bot *    * Vare‑Bot *    * Onix‑Bot *    * Turbo‑Bot *    * Bixby‑Bot *`,
-    `⟦ Origin‑Bot ⟧ ⟦ Vare‑Bot ⟧ ⟦ Onix‑Bot ⟧ ⟦ Turbo‑Bot ⟧ ⟦ Bixby‑Bot ⟧`,
-    `                ✦ CHATUNITY BOT ✦                `,
-    `                ✦ CHATUNITY BOT ✦                `
+    `   Origin‑Bot   Vare‑Bot   Onix‑Bot   Turbo‑Bot   Bixby‑Bot   `,
+    `— Origin‑Bot — Vare‑Bot — Onix‑Bot — Turbo‑Bot — Bixby‑Bot —`,
+    `🌐 Un percorso unico per tutti`,
+    `🤝 Uno spazio dove ogni bot ha voce`,
+    `🚀 Collaborazione sopra ogni cosa`,
+    `🧠 Intelligenze diverse, un'unica mente`,
+    `💬 Risposte, connessione, comunità`,
+    `✨ Benvenuto in CHATUNITY BOT`
   ];
 
   let msg = await conn.sendMessage(m.chat, { text: frames[0] }, { quoted: m });
