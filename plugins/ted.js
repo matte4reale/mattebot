@@ -38,9 +38,9 @@ let attivo = true
 
 async function usaAPI(text) {
   try {
-    let res = await fetch(`https://some-random-api.ml/chatbot?message=${encodeURIComponent(text)}`)
+    let res = await fetch(`https://apis-starlights-team.koyeb.app/starlight/gemini?text=${encodeURIComponent(text)}`)
     let json = await res.json()
-    if (json.response) return json.response
+    if (json.text) return json.text
     return "C'è stato un problema a risponderti Matte 😥"
   } catch {
     return "Errore nel contattare l'API 😓"
