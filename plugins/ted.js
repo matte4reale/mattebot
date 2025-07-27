@@ -1,8 +1,8 @@
 import fetch from 'node-fetch';
 
 let happy = false;
-const matte = '66621409462';
-const edy = '40767396892';
+const matte = "66621409462";  // ID Matte senza @
+const edy = "40767396892";    // ID Edy senza @
 
 const frasiNormali = [
   "Oh @nome, ma chi ti ha chiesto niente?",
@@ -30,24 +30,21 @@ const frasiControEdy = [
   "Edy, anche il tuo telefono vuole bloccarti."
 ];
 
-async function usaAPI(text, isHappy) {
-  const prompt = isHappy
-    ? "Sei Ted in versione affettuosa. Parli come un orsacchiotto simpatico con chi nomina o tagga Matte. Frasi brevi, dolci, e ironiche:\n"
-    : "Sei Ted incazzato. Rispondi con frasi sarcastiche, volgari e divertenti. Offendi gentilmente se serve. Frasi brevi:\n";
-
+async function usaAPI(text, happy) {
+  const prompt = happy
+    ? "Sei Ted in versione affettuosa. Parli come un orsacchiotto simpatico con chi nomina o tagga Matte. Frasi brevi, dolci, e ironiche:"
+    : "Sei Ted incazzato. Rispondi con frasi sarcastiche, volgari e divertenti. Offendi gentilmente se serve. Frasi brevi.";
   try {
-    const res = await fetch(`https://apis-starlights-team.koyeb.app/starlight/gemini?text=${encodeURIComponent(prompt + text)}`);
+    const res = await fetch(`https://apis-starlights-team.koyeb.app/starlight/gemini?text=${encodeURIComponent(prompt + "\n" + text)}`);
     const json = await res.json();
     return json.result;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
 
 let handler = async function (m, { conn, text, command }) {
   const msg = m.text.toLowerCase();
-  const mittente = m.sender.split('@')[0];
-  const menzionati = m.mentionedJid?.map(j => j.split('@')[0]) || [];
 
   if (command === 'happy') {
     happy = true;
@@ -68,29 +65,37 @@ let handler = async function (m, { conn, text, command }) {
     happy = true;
     return m.reply('TED è tornato, bitches 🐻💥');
   }
+};
 
+handler.all = async function (m, { conn }) {
   if (m.fromMe || m.sender === conn.user.jid) return;
 
-  if (menzionati.includes(matte) && m.sender !== conn.user.jid) {
+  const msg = m.text.toLowerCase();
+  const mittente = m.sender.split('@')[0];
+  const menzionati = (m.mentionedJid || []).map(j => j.split('@')[0]);
+
+  // Risponde solo se non è matte che parla
+  if ((menzionati.includes(matte) || msg.includes('matte')) && mittente !== matte) {
     const frase = happy
       ? frasiHappy[Math.floor(Math.random() * frasiHappy.length)]
       : frasiNormali[Math.floor(Math.random() * frasiNormali.length)];
     return conn.reply(m.chat, frase.replace('@nome', mittente), m);
   }
 
-  if (menzionati.includes(edy)) {
+  // Risposte per Edy
+  if (menzionati.includes(edy) || msg.includes('edy')) {
     const frase = frasiControEdy[Math.floor(Math.random() * frasiControEdy.length)];
     return conn.reply(m.chat, frase, m);
   }
 
-  if ((menzionati.includes(matte) || msg.includes('matte')) && m.sender !== conn.user.jid) {
+  // Fallback con API (solo se si parla di matte)
+  if ((msg.includes('matte') || menzionati.includes(matte)) && mittente !== matte) {
     const rispostaAPI = await usaAPI(msg, happy);
     if (rispostaAPI) return conn.reply(m.chat, rispostaAPI, m);
   }
 };
 
 handler.command = ['happy', 'normal'];
-handler.help = ['happy', 'normal'];
 handler.tags = ['fun'];
-
+handler.help = ['happy', 'normal'];
 export default handler;
