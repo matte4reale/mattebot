@@ -1,93 +1,80 @@
-import fetch from 'node-fetch';
+let matte = "66621409462" // ID senza @s.whatsapp.net
+let edy = "40767396892"
 
-let happy = false;
-const matte = "66621409462";
-const edy = "40767396892";
+let frasiMatte = [
+  "Occhio a come parli che sei con mio fratello",
+  "Sei un poveraccio, lascia stare Matte",
+  "Non toccare Matte o ti trovi il bot nel letto",
+  "Matte è il mio fratello, attento come ti muovi",
+  "Tocchi Matte e ti tocca il karma"
+]
 
-const frasiNormali = [
-  "Oh @nome, ma chi ti ha chiesto niente?",
-  "Sei noioso come un film francese, @nome.",
-  "@nome, hai finito di rompere i coglioni o vuoi una standing ovation?",
-  "@nome, te lo dice anche tua madre di smettere di taggare la gente",
-  "Cazzo fratello stai sentendo questo? Sembra il monologo di un banana..."
-];
+let frasiInsulti = [
+  "Ti scoppio brutto coglione",
+  "Mamma tua piange quando ti guarda",
+  "Parli come se avessi un cervello",
+  "Scusa, hai dimenticato l'intelligenza a casa?",
+  "Ti hanno cresciuto col tutorial sbagliato",
+  "Fai schifo come le stories dei tuoi amici"
+]
 
-const frasiHappy = [
-  "Ehi @nome, tutto bene fratellino?",
-  "Dai @nome, non fare così... ci vogliamo bene, no?",
-  "Matte è il mio miglior amico, guai a chi lo tocca!",
-  "Rispondo io per Matte, è impegnato a farsi i cavoli suoi ❤️",
-  "Oggi siamo chill, @nome. Spargi amore, non tag!"
-];
+let frasiEdy = [
+  "Edy sei la vergogna di WhatsApp",
+  "Edy levati dal gruppo",
+  "Edy ogni tuo messaggio è un danno",
+  "Chi ti legge si pente della vita",
+  "Manco i bot ti sopportano Edy"
+]
 
-const frasiControEdy = [
-  "Edy, ma vaffanculo va. Sempre in mezzo alle palle",
-  "Edy, anche il tuo telefono vuole bloccarti.",
-  "Sei il motivo per cui le mute non parlano, Edy.",
-  "Chi ha invitato Edy? Sul serio?"
-];
+let stato = true
 
-async function usaAPI(text, happy) {
-  const prompt = happy
-    ? "Sei Ted in versione affettuosa. Parli come un orsacchiotto simpatico con chi nomina o tagga Matte. Frasi brevi, dolci, e ironiche:"
-    : "Sei Ted incazzato. Rispondi con frasi sarcastiche, volgari e divertenti. Offendi gentilmente se serve. Frasi brevi.";
+export async function before(m, { conn }) {
+  let msg = m.text?.toLowerCase() || ""
+  let mittente = m.sender.replace(/[^0-9]/g, "")
+  
+  // Comandi vocali
+  if (msg.includes("ted fatti sentire") && mittente === matte) {
+    stato = true
+    return conn.reply(m.chat, "Sto qua brutto coglione, che vuoi?", m)
+  }
 
-  try {
-    const res = await fetch(`https://apis-starlights-team.koyeb.app/starlight/gemini?text=${encodeURIComponent(prompt + "\n" + text)}`);
-    const json = await res.json();
-    return json.result;
-  } catch (e) {
-    return null;
+  if (msg.includes("ted calma") && mittente === matte) {
+    stato = false
+    return conn.reply(m.chat, "Va bene fratello, sto zitto...", m)
+  }
+
+  // Se disattivo non risponde
+  if (!stato) return
+
+  // Se è una risposta a un suo messaggio
+  if (m.quoted && m.quoted.fromMe) {
+    let risposte = [
+      "Continua che ti meno",
+      "Hai rotto fratè",
+      "Manco tua madre ti risponde così tanto",
+      "Smettila che non sei divertente"
+    ]
+    return conn.reply(m.chat, risposte[Math.floor(Math.random() * risposte.length)], m)
+  }
+
+  // Risposte quando qualcuno tagga Matte
+  if (m.mentionedJid && m.mentionedJid.includes(matte + "@s.whatsapp.net")) {
+    return conn.reply(m.chat, frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
+  }
+
+  // Risposte a frasi che includono "matte"
+  if (msg.includes("matte")) {
+    return conn.reply(m.chat, frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
+  }
+
+  // Insulta Edy pesantemente
+  if (m.mentionedJid && m.mentionedJid.includes(edy + "@s.whatsapp.net")) {
+    return conn.reply(m.chat, frasiEdy[Math.floor(Math.random() * frasiEdy.length)], m)
+  }
+
+  // API GPT solo se non è Matte
+  if (mittente !== matte) {
+    let reply = frasiInsulti[Math.floor(Math.random() * frasiInsulti.length)]
+    return conn.reply(m.chat, reply, m)
   }
 }
-
-let handler = async function (m, { conn, command }) {
-  if (command === 'happy') {
-    happy = true;
-    return m.reply('Modalità Happy attiva 🧸✨');
-  }
-  if (command === 'normal') {
-    happy = false;
-    return m.reply('Modalità normale attiva ☠️');
-  }
-};
-
-handler.all = async function (m, { conn }) {
-  if (m.fromMe || m.sender === conn.user.jid) return;
-
-  const testo = m.text.toLowerCase();
-  const mittente = m.sender.split('@')[0];
-
-  // Calma / riattiva
-  if (testo.includes('ted calma')) {
-    happy = false;
-    return conn.reply(m.chat, 'Okay mi zittisco... per ora 😒', m);
-  }
-  if (testo.includes('ted fatti sentire')) {
-    happy = true;
-    return conn.reply(m.chat, 'TED è tornato, bitches 🐻💥', m);
-  }
-
-  const mention = m.mentionedJid?.map(j => j.split('@')[0]) || [];
-
-  if (mention.includes(matte) && m.sender !== conn.user.jid) {
-    let frase = happy
-      ? frasiHappy[Math.floor(Math.random() * frasiHappy.length)]
-      : frasiNormali[Math.floor(Math.random() * frasiNormali.length)];
-    return conn.reply(m.chat, frase.replace('@nome', mittente), m);
-  }
-
-  if (mention.includes(edy)) {
-    let frase = frasiControEdy[Math.floor(Math.random() * frasiControEdy.length)];
-    return conn.reply(m.chat, frase, m);
-  }
-
-  // Se qualcuno scrive "matte" nel messaggio
-  if (testo.includes('matte') && m.sender !== conn.user.jid) {
-    const rispostaAPI = await usaAPI(testo, happy);
-    if (rispostaAPI) return conn.reply(m.chat, rispostaAPI, m);
-  }
-};
-
-handler.command = ['happy', 'normal'];
-export default handler;
