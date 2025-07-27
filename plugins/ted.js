@@ -81,7 +81,7 @@ export async function before(m, { conn }) {
   }
 
   if (msg.endsWith("?")) {
-    const risposta = await usaAPI(msg, stato === "happy" || isMatte)
+    const risposta = await usaAPI(msg)
     return conn.reply(m.chat, risposta, m)
   }
 
@@ -90,17 +90,13 @@ export async function before(m, { conn }) {
   }
 }
 
-// 🔄 API personalizzata che hai chiesto
-async function usaAPI(text, happy) {
-  const prompt = happy
-    ? "Sei Ted in versione affettuosa. Parla dolcemente, con ironia, e rispondi in modo simpatico:\n"
-    : "Sei Ted in versione volgare e diretta. Rispondi in modo sarcastico, breve e provocatorio:\n"
-
+// ✅ API funzionante senza API key
+async function usaAPI(text) {
   try {
-    const res = await fetch(`https://apis-starlights-team.koyeb.app/starlight/gemini?text=${encodeURIComponent(prompt + text)}`)
+    const res = await fetch(`https://api.some-random-api.com/chatbot?message=${encodeURIComponent(text)}`)
     const json = await res.json()
-    return json.result || "C'è stato un problema a risponderti Matte 😢"
-  } catch (e) {
+    return json.response || "C'è stato un problema a risponderti Matte 😢"
+  } catch {
     return "Errore nel contattare l'API 😓"
   }
 }
