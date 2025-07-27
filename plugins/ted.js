@@ -49,6 +49,8 @@ export async function before(m, { conn }) {
     return conn.reply(m.chat, "⚪ Modalità normale attivata.", m)
   }
 
+  if (!stato) return
+
   if (m.quoted && m.quoted.fromMe) {
     if (mittente === matte) {
       return conn.reply(m.chat, frasiAmorevoli[Math.floor(Math.random() * frasiAmorevoli.length)], m)
@@ -57,9 +59,6 @@ export async function before(m, { conn }) {
   }
 
   if (m.mentionedJid && m.mentionedJid.includes(`${matte}@s.whatsapp.net`)) {
-    if (mittente === matte) {
-      return conn.reply(m.chat, frasiAmorevoli[Math.floor(Math.random() * frasiAmorevoli.length)], m)
-    }
     return conn.reply(m.chat, frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
   }
 
@@ -73,13 +72,19 @@ export async function before(m, { conn }) {
 
   if (m.fromMe) return
 
-  if (msg.endsWith("?") && mittente === matte) {
+  if (mittente === matte && msg.endsWith("?")) {
     try {
-      let url = `https://aemt.me/gpt4?text=${encodeURIComponent(msg)}`
-      let res = await fetch(url)
+      let res = await fetch("https://chatgpt-api.shn.hk/v1/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [{ role: "user", content: msg }]
+        })
+      })
       let json = await res.json()
-      if (json.status && json.result) {
-        return conn.reply(m.chat, json.result, m)
+      if (json.choices && json.choices[0]) {
+        return conn.reply(m.chat, json.choices[0].message.content.trim(), m)
       } else {
         return conn.reply(m.chat, "C'è stato un problema a risponderti Matte 😢", m)
       }
