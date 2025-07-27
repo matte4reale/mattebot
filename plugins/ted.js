@@ -30,29 +30,17 @@ let frasiAmorevoli = [
   "Dai Matte, sei il top fratellone ❤️",
   "Ti voglio bene Matte, anche se dici cose strane",
   "Ti rispondo perché sei speciale 😘",
-  "Solo per te, rispondo bene",
-  "Anche se mi insulti, Matte, io ti voglio bene lo stesso 💕"
+  "Solo per te, rispondo bene"
 ]
 
-let stato = "normal" // 'normal' o 'happy'
-
-// Simulazione GPT "solo per Matte"
-async function fakeGPT(question) {
-  let risposte = [
-    "Secondo me sì fratellone ❤️",
-    "Per te sempre, la risposta è sì 😎",
-    "È ovvio, Matte. Sempre il top.",
-    "Bella domanda Matte, direi proprio di sì"
-  ]
-  return risposte[Math.floor(Math.random() * risposte.length)]
-}
+let stato = "normal" // può essere 'normal' o 'happy'
 
 export async function before(m, { conn }) {
   let msg = m.text?.toLowerCase() || ""
   let mittente = m.sender.endsWith("@s.whatsapp.net") ? m.sender.split("@")[0] : m.sender
   let isMatte = mittente === matte
 
-  // Modalità happy/normal
+  // Modalità happy / normal
   if (msg.startsWith(".happy") && isMatte) {
     stato = "happy"
     return conn.reply(m.chat, "🟢 Modalità felice attivata!", m)
@@ -63,54 +51,50 @@ export async function before(m, { conn }) {
     return conn.reply(m.chat, "⚪ Modalità normale attivata.", m)
   }
 
-  // Se risponde a un messaggio del bot
+  // RISPOSTA a un messaggio del bot
   if (m.quoted && m.quoted.fromMe) {
+    let testoRisposto = m.quoted?.text?.toLowerCase() || ""
+    let giàRisposto = testoRisposto.includes("continua che ti meno") || frasiAmorevoli.some(frase => testoRisposto.toLowerCase().includes(frase.toLowerCase()))
+    if (giàRisposto) return // evita loop
+
     if (isMatte) {
       return conn.reply(m.chat, frasiAmorevoli[Math.floor(Math.random() * frasiAmorevoli.length)], m)
     }
     return conn.reply(m.chat, "Continua che ti meno", m)
   }
 
-  // Se qualcuno tagga Matte
+  // Protezione se taggano Matte
   if (m.mentionedJid && m.mentionedJid.includes(`${matte}@s.whatsapp.net`)) {
     return conn.reply(m.chat, frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
   }
 
-  // Se nel testo c'è "matte"
+  // Protezione se nominano Matte
   if (msg.includes("matte")) {
     return conn.reply(m.chat, frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
   }
 
-  // Se qualcuno tagga Edy
+  // Insulti se taggano Edy
   if (m.mentionedJid && m.mentionedJid.includes(`${edy}@s.whatsapp.net`)) {
     return conn.reply(m.chat, frasiEdy[Math.floor(Math.random() * frasiEdy.length)], m)
   }
 
-  // Se il messaggio è del bot stesso
+  // Non rispondere a sé stesso
   if (m.fromMe) return
 
-  // Se Matte tagga il bot e lo insulta
-  if (isMatte && m.mentionedJid && m.mentionedJid.includes(conn.user.jid)) {
-    if (
-      msg.includes("coglione") ||
-      msg.includes("stronzo") ||
-      msg.includes("merda") ||
-      msg.includes("cretino")
-    ) {
-      return conn.reply(m.chat, frasiAmorevoli[Math.floor(Math.random() * frasiAmorevoli.length)], m)
+  // RISPOSTE ALLE DOMANDE
+  if (msg.endsWith("?")) {
+    if (isMatte) {
+      return conn.reply(m.chat, "Certo fratello! Secondo me sì ❤️", m)
     }
+
+    if (stato === "happy") {
+      return conn.reply(m.chat, "Sì amico! È proprio così 😊", m)
+    }
+
+    return conn.reply(m.chat, "Non lo so, ma sembri comunque stupido a chiederlo.", m)
   }
 
-  // Se Matte fa una domanda
-  if (isMatte && msg.endsWith("?")) {
-    let risposta = await fakeGPT(msg)
-    return conn.reply(m.chat, risposta, m)
-  }
-
-  // Nessuna risposta a domande degli altri
-  if (msg.endsWith("?")) return
-
-  // Insulti se non è Matte
+  // Risposte insultanti per tutti tranne Matte
   if (!isMatte) {
     return conn.reply(m.chat, frasiInsulti[Math.floor(Math.random() * frasiInsulti.length)], m)
   }
