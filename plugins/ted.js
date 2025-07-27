@@ -1,5 +1,3 @@
-import fetch from 'node-fetch'
-
 let matte = "66621409462"
 let edy = "40767396892"
 let stato = true
@@ -30,37 +28,31 @@ let frasiEdy = [
   "Manco i bot ti sopportano Edy"
 ]
 
-let frasiHappy = [
-  "Fratè, oggi siamo tutti amore ❤️",
-  "Non litighiamo dai, abbracciamoci tutti 🧸",
-  "Matte è il mio amico del cuore 💌",
-  "Posso offrirti un sorriso invece di un insulto?",
-  "Oggi il karma è gentile come me ✨"
+let risposteBot = [
+  "Continua che ti meno",
+  "Hai rotto fratè",
+  "Manco tua madre ti risponde così tanto",
+  "Smettila che non sei divertente"
 ]
 
-async function usaAPI(text, happyMode) {
-  let prompt = happyMode
-    ? "Sei Ted in versione affettuosa. Parli come un orsacchiotto simpatico con chi nomina o tagga Matte. Frasi brevi, dolci, e ironiche:"
-    : "Sei Ted incazzato. Rispondi con frasi sarcastiche, volgari e divertenti. Offendi gentilmente se serve. Frasi brevi."
-  try {
-    let res = await fetch(`https://apis-starlights-team.koyeb.app/starlight/gemini?text=${encodeURIComponent(prompt + "\n" + text)}`)
-    let json = await res.json()
-    return json.result
-  } catch (e) {
-    return null
-  }
-}
+let frasiHappy = [
+  "Dai raga vogliamoci bene dai 🧸",
+  "Oggi sono tranquillo, lasciate stare Matte",
+  "Matte è il mio migliore amico, non toccatelo",
+  "Anche se mi insultate vi voglio bene ❤️",
+  "Matte si sta facendo un panino, vi perdona"
+]
 
-export async function before(m, { conn, text, command }) {
+export async function before(m, { conn }) {
   let msg = m.text?.toLowerCase() || ""
-  let mittente = m.sender.replace(/[^0-9]/g, "")
+  let mittente = m.sender.split("@")[0]
 
-  if (command === 'happy' && mittente === matte) {
+  if (msg === '.happy' && mittente === matte) {
     happy = true
     return conn.reply(m.chat, "Modalità Happy attiva 🧸", m)
   }
 
-  if (command === 'normal' && mittente === matte) {
+  if (msg === '.normal' && mittente === matte) {
     happy = false
     return conn.reply(m.chat, "Modalità normale attiva ☠️", m)
   }
@@ -77,50 +69,23 @@ export async function before(m, { conn, text, command }) {
 
   if (!stato || m.fromMe || m.sender === conn.user.jid) return
 
-  let isReplyToBot = m.quoted?.fromMe
-  let mentioned = m.mentionedJid?.map(j => j.replace(/[^0-9]/g, "")) || []
-
-  if (isReplyToBot) {
-    let risposte = [
-      "Continua che ti meno",
-      "Hai rotto fratè",
-      "Manco tua madre ti risponde così tanto",
-      "Smettila che non sei divertente"
-    ]
-    return conn.reply(m.chat, risposte[Math.floor(Math.random() * risposte.length)], m)
+  if (m.quoted && m.quoted.fromMe) {
+    return conn.reply(m.chat, risposteBot[Math.floor(Math.random() * risposteBot.length)], m)
   }
 
-  if (mentioned.includes(matte)) {
-    let frase = happy
-      ? frasiHappy[Math.floor(Math.random() * frasiHappy.length)]
-      : frasiMatte[Math.floor(Math.random() * frasiMatte.length)]
-    return conn.reply(m.chat, frase, m)
+  if (m.mentionedJid && m.mentionedJid.includes(matte + "@s.whatsapp.net")) {
+    return conn.reply(m.chat, happy ? frasiHappy[Math.floor(Math.random() * frasiHappy.length)] : frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
   }
 
   if (msg.includes("matte")) {
-    let frase = happy
-      ? frasiHappy[Math.floor(Math.random() * frasiHappy.length)]
-      : frasiMatte[Math.floor(Math.random() * frasiMatte.length)]
-    return conn.reply(m.chat, frase, m)
+    return conn.reply(m.chat, happy ? frasiHappy[Math.floor(Math.random() * frasiHappy.length)] : frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
   }
 
-  if (mentioned.includes(edy)) {
+  if (m.mentionedJid && m.mentionedJid.includes(edy + "@s.whatsapp.net")) {
     return conn.reply(m.chat, frasiEdy[Math.floor(Math.random() * frasiEdy.length)], m)
   }
 
   if (mittente !== matte) {
-    let apiResponse = await usaAPI(msg, happy)
-    if (apiResponse) {
-      return conn.reply(m.chat, apiResponse, m)
-    } else {
-      let fallback = happy
-        ? frasiHappy[Math.floor(Math.random() * frasiHappy.length)]
-        : frasiInsulti[Math.floor(Math.random() * frasiInsulti.length)]
-      return conn.reply(m.chat, fallback, m)
-    }
+    return conn.reply(m.chat, frasiInsulti[Math.floor(Math.random() * frasiInsulti.length)], m)
   }
 }
-
-export const command = ['happy', 'normal']
-export const tags = ['fun']
-export const help = ['happy', 'normal']
