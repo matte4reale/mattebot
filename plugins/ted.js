@@ -1,5 +1,7 @@
 let matte = "66621409462"
 let edy = "40767396892"
+let stato = "normal"
+let attivo = true
 
 let frasiMatte = [
   "Occhio a come parli che sei con mio fratello",
@@ -14,7 +16,6 @@ let frasiInsulti = [
   "Mamma tua piange quando ti guarda",
   "Parli come se avessi un cervello",
   "Scusa, hai dimenticato l'intelligenza a casa?",
-  "Ti hanno cresciuto col tutorial sbagliato",
   "Fai schifo come le stories dei tuoi amici"
 ]
 
@@ -33,11 +34,9 @@ let frasiAmorevoli = [
   "Solo per te, rispondo bene"
 ]
 
-let stato = "normal"
-
-export async function before(m, { conn }) {
+export async function before(m, { conn, fetch }) {
   let msg = m.text?.toLowerCase() || ""
-  let mittente = m.sender.endsWith("@s.whatsapp.net") ? m.sender.split("@")[0] : m.sender
+  let mittente = m.sender.split("@")[0]
 
   if (msg.startsWith(".happy") && mittente === matte) {
     stato = "happy"
@@ -49,7 +48,17 @@ export async function before(m, { conn }) {
     return conn.reply(m.chat, "⚪ Modalità normale attivata.", m)
   }
 
-  if (!stato) return
+  if (msg.includes("ted calma") && mittente === matte) {
+    attivo = false
+    return conn.reply(m.chat, "Va bene fratello, sto zitto...", m)
+  }
+
+  if (msg.includes("ted fatti sentire") && mittente === matte) {
+    attivo = true
+    return conn.reply(m.chat, "Sto qua brutto coglione, che vuoi?", m)
+  }
+
+  if (!attivo) return
 
   if (m.quoted && m.quoted.fromMe) {
     if (mittente === matte) {
@@ -72,25 +81,31 @@ export async function before(m, { conn }) {
 
   if (m.fromMe) return
 
-  if (mittente === matte && msg.endsWith("?")) {
-    try {
-      let res = await fetch("https://chatgpt-api.shn.hk/v1/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: [{ role: "user", content: msg }]
+  if (msg.endsWith("?")) {
+    if (mittente === matte) {
+      try {
+        let res = await fetch("https://api.chatanywhere.tech/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "gpt-3.5-turbo",
+            messages: [{ role: "user", content: msg }]
+          })
         })
-      })
-      let json = await res.json()
-      if (json.choices && json.choices[0]) {
-        return conn.reply(m.chat, json.choices[0].message.content.trim(), m)
-      } else {
+        let json = await res.json()
+        let reply = json.choices?.[0]?.message?.content
+        if (reply) return conn.reply(m.chat, reply.trim(), m)
+        return conn.reply(m.chat, frasiAmorevoli[Math.floor(Math.random() * frasiAmorevoli.length)], m)
+      } catch {
         return conn.reply(m.chat, "C'è stato un problema a risponderti Matte 😢", m)
       }
-    } catch (e) {
-      return conn.reply(m.chat, "Errore nel contattare l'API 😓", m)
     }
+
+    if (stato === "happy") {
+      return conn.reply(m.chat, "Daiii sì, hai ragione 😄", m)
+    }
+
+    return conn.reply(m.chat, frasiInsulti[Math.floor(Math.random() * frasiInsulti.length)], m)
   }
 
   if (mittente !== matte) {
