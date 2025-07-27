@@ -33,40 +33,62 @@ let frasiAmorevoli = [
   "Solo per te, rispondo bene"
 ]
 
-export async function before(m, { conn, fetch }) {
+let stato = "normal"
+
+export async function before(m, { conn }) {
   let msg = m.text?.toLowerCase() || ""
   let mittente = m.sender.endsWith("@s.whatsapp.net") ? m.sender.split("@")[0] : m.sender
-  let isMatte = mittente === matte
 
-  if (m.fromMe) return
-
-  if (isMatte && /(scemo|idiota|coglione|merda|stupido|ritardato)/.test(msg)) {
-    return conn.reply(m.chat, frasiAmorevoli[Math.floor(Math.random() * frasiAmorevoli.length)], m)
+  if (msg.startsWith(".happy") && mittente === matte) {
+    stato = "happy"
+    return conn.reply(m.chat, "🟢 Modalità felice attivata!", m)
   }
 
-  if (m.mentionedJid?.includes(`${matte}@s.whatsapp.net`) || msg.includes("matte")) {
+  if (msg.startsWith(".normal") && mittente === matte) {
+    stato = "normal"
+    return conn.reply(m.chat, "⚪ Modalità normale attivata.", m)
+  }
+
+  if (m.quoted && m.quoted.fromMe) {
+    if (mittente === matte) {
+      return conn.reply(m.chat, frasiAmorevoli[Math.floor(Math.random() * frasiAmorevoli.length)], m)
+    }
+    return conn.reply(m.chat, "Continua che ti meno", m)
+  }
+
+  if (m.mentionedJid && m.mentionedJid.includes(`${matte}@s.whatsapp.net`)) {
+    if (mittente === matte) {
+      return conn.reply(m.chat, frasiAmorevoli[Math.floor(Math.random() * frasiAmorevoli.length)], m)
+    }
     return conn.reply(m.chat, frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
   }
 
-  if (m.mentionedJid?.includes(`${edy}@s.whatsapp.net`)) {
+  if (msg.includes("matte")) {
+    return conn.reply(m.chat, frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
+  }
+
+  if (m.mentionedJid && m.mentionedJid.includes(`${edy}@s.whatsapp.net`)) {
     return conn.reply(m.chat, frasiEdy[Math.floor(Math.random() * frasiEdy.length)], m)
   }
 
-  if (isMatte && (msg.endsWith("?") || msg.split(" ").length > 3)) {
+  if (m.fromMe) return
+
+  if (msg.endsWith("?") && mittente === matte) {
     try {
-      let res = await fetch(`https://api.safone.dev/chatgpt?message=${encodeURIComponent(msg)}`)
+      let url = `https://aemt.me/gpt4?text=${encodeURIComponent(msg)}`
+      let res = await fetch(url)
       let json = await res.json()
-      if (json?.message) {
-        return conn.reply(m.chat, json.message, m)
+      if (json.status && json.result) {
+        return conn.reply(m.chat, json.result, m)
       } else {
-        return conn.reply(m.chat, "Fratello non ho capito ma ti voglio bene ❤️", m)
+        return conn.reply(m.chat, "C'è stato un problema a risponderti Matte 😢", m)
       }
     } catch (e) {
-      return conn.reply(m.chat, "C'è stato un problema a risponderti Matte 😢", m)
+      return conn.reply(m.chat, "Errore nel contattare l'API 😓", m)
     }
   }
 
-  if (!isMatte) {
+  if (mittente !== matte) {
     return conn.reply(m.chat, frasiInsulti[Math.floor(Math.random() * frasiInsulti.length)], m)
   }
 }
