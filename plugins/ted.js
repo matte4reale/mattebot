@@ -1,7 +1,5 @@
 let matte = "66621409462"
 let edy = "40767396892"
-let stato = "normal"
-let attivo = true
 
 let frasiMatte = [
   "Occhio a come parli che sei con mio fratello",
@@ -16,6 +14,7 @@ let frasiInsulti = [
   "Mamma tua piange quando ti guarda",
   "Parli come se avessi un cervello",
   "Scusa, hai dimenticato l'intelligenza a casa?",
+  "Ti hanno cresciuto col tutorial sbagliato",
   "Fai schifo come le stories dei tuoi amici"
 ]
 
@@ -34,9 +33,24 @@ let frasiAmorevoli = [
   "Solo per te, rispondo bene"
 ]
 
-export async function before(m, { conn, fetch }) {
+let stato = "normal"
+let attivo = true
+
+export async function before(m, { conn }) {
   let msg = m.text?.toLowerCase() || ""
-  let mittente = m.sender.split("@")[0]
+  let mittente = m.sender.endsWith("@s.whatsapp.net") ? m.sender.split("@")[0] : m.sender
+
+  if (msg.includes("ted fatti sentire") && mittente === matte) {
+    attivo = true
+    return conn.reply(m.chat, "Sto qua brutto coglione, che vuoi?", m)
+  }
+
+  if (msg.includes("ted calma") && mittente === matte) {
+    attivo = false
+    return conn.reply(m.chat, "Va bene fratello, sto zitto...", m)
+  }
+
+  if (!attivo) return
 
   if (msg.startsWith(".happy") && mittente === matte) {
     stato = "happy"
@@ -47,18 +61,6 @@ export async function before(m, { conn, fetch }) {
     stato = "normal"
     return conn.reply(m.chat, "⚪ Modalità normale attivata.", m)
   }
-
-  if (msg.includes("ted calma") && mittente === matte) {
-    attivo = false
-    return conn.reply(m.chat, "Va bene fratello, sto zitto...", m)
-  }
-
-  if (msg.includes("ted fatti sentire") && mittente === matte) {
-    attivo = true
-    return conn.reply(m.chat, "Sto qua brutto coglione, che vuoi?", m)
-  }
-
-  if (!attivo) return
 
   if (m.quoted && m.quoted.fromMe) {
     if (mittente === matte) {
@@ -84,16 +86,13 @@ export async function before(m, { conn, fetch }) {
   if (msg.endsWith("?")) {
     if (mittente === matte) {
       try {
-        let res = await fetch("https://api.chatanywhere.tech/v1/chat/completions", {
+        let res = await fetch("https://youapi-proxy.vercel.app/api/gpt", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "gpt-3.5-turbo",
-            messages: [{ role: "user", content: msg }]
-          })
+          body: JSON.stringify({ prompt: msg })
         })
         let json = await res.json()
-        let reply = json.choices?.[0]?.message?.content
+        let reply = json.text
         if (reply) return conn.reply(m.chat, reply.trim(), m)
         return conn.reply(m.chat, frasiAmorevoli[Math.floor(Math.random() * frasiAmorevoli.length)], m)
       } catch {
