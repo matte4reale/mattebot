@@ -1,6 +1,8 @@
 let handler = async (m, { conn }) => {
   const frames = [
-    `   Origin‑Bot   Vare‑Bot   Onix‑Bot   Turbo‑Bot   Bixby‑Bot   `,
+ `333-Bot     Vare-Bot     Turbo-Bot
+     ———     Origin-Bot     ———
+ Onix-Bot     Bixby-Bot     Bixby-Bot`,
     `— Origin‑Bot — Vare‑Bot — Onix‑Bot — Turbo‑Bot — Bixby‑Bot —`,
     `🌐 Un percorso unico per tutti`,
     `🤝 Uno spazio dove ogni bot ha voce`,
