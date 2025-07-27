@@ -1,7 +1,5 @@
 let matte = "66621409462"
 let edy = "40767396892"
-let stato = "normal"
-let attivo = true
 
 let frasiMatte = [
   "Occhio a come parli che sei con mio fratello",
@@ -35,75 +33,73 @@ let frasiAmorevoli = [
   "Solo per te, rispondo bene"
 ]
 
-// API di risposta gratuita
+let stato = "normal"
+let attivo = true
+
 async function usaAPI(text) {
   try {
-    let res = await fetch(`https://some-random-api.ml/chatbot?message=${encodeURIComponent(text)}`);
-    let json = await res.json();
-    if (json.response) return json.response;
-    return "C'è stato un problema a risponderti Matte 😢";
+    let res = await fetch(`https://some-random-api.ml/chatbot?message=${encodeURIComponent(text)}`)
+    let json = await res.json()
+    if (json.response) return json.response
+    return "C'è stato un problema a risponderti Matte 😥"
   } catch {
-    return "Errore nel contattare l'API 😓";
+    return "Errore nel contattare l'API 😓"
   }
 }
 
 export async function before(m, { conn }) {
   let msg = m.text?.toLowerCase() || ""
-  let mittente = m.sender.split("@")[0]
-  let isMatte = mittente === matte
+  let mittente = m.sender.endsWith("@s.whatsapp.net") ? m.sender.split("@")[0] : m.sender
 
-  // Comandi vocali
-  if (msg.includes("ted calma") && isMatte) {
-    attivo = false
-    return conn.reply(m.chat, "Va bene fratello, sto zitto...", m)
-  }
-  if (msg.includes("ted fatti sentire") && isMatte) {
+  if (msg.includes("ted fatti sentire") && mittente === matte) {
     attivo = true
     return conn.reply(m.chat, "Sto qua brutto coglione, che vuoi?", m)
   }
 
+  if (msg.includes("ted calma") && mittente === matte) {
+    attivo = false
+    return conn.reply(m.chat, "Va bene fratello, sto zitto...", m)
+  }
+
   if (!attivo) return
 
-  if (msg.startsWith(".happy") && isMatte) {
+  if (msg.startsWith(".happy") && mittente === matte) {
     stato = "happy"
     return conn.reply(m.chat, "🟢 Modalità felice attivata!", m)
   }
 
-  if (msg.startsWith(".normal") && isMatte) {
+  if (msg.startsWith(".normal") && mittente === matte) {
     stato = "normal"
     return conn.reply(m.chat, "⚪ Modalità normale attivata.", m)
   }
 
-  // Se è una risposta a messaggio del bot
   if (m.quoted && m.quoted.fromMe) {
-    if (isMatte) {
+    if (mittente === matte) {
       return conn.reply(m.chat, frasiAmorevoli[Math.floor(Math.random() * frasiAmorevoli.length)], m)
-    } else {
-      return conn.reply(m.chat, "Continua che ti meno", m)
     }
+    return conn.reply(m.chat, "Continua che ti meno", m)
   }
 
-  // Se taggano o nominano Matte
-  if (m.mentionedJid?.includes(`${matte}@s.whatsapp.net`) || msg.includes("matte")) {
+  if (m.mentionedJid && m.mentionedJid.includes(`${matte}@s.whatsapp.net`)) {
     return conn.reply(m.chat, frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
   }
 
-  // Se taggano Edy
-  if (m.mentionedJid?.includes(`${edy}@s.whatsapp.net`)) {
+  if (msg.includes("matte")) {
+    return conn.reply(m.chat, frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
+  }
+
+  if (m.mentionedJid && m.mentionedJid.includes(`${edy}@s.whatsapp.net`)) {
     return conn.reply(m.chat, frasiEdy[Math.floor(Math.random() * frasiEdy.length)], m)
   }
 
-  // Ignora se il messaggio è del bot stesso
   if (m.fromMe) return
 
-  // Se Matte fa una domanda
-  if (msg.endsWith("?") && isMatte) {
+  if (msg.endsWith("?") && mittente === matte) {
     let risposta = await usaAPI(msg)
     return conn.reply(m.chat, risposta, m)
   }
 
-  // Altri utenti → insulto casuale
-  if (!isMatte) {
+  if (mittente !== matte) {
     return conn.reply(m.chat, frasiInsulti[Math.floor(Math.random() * frasiInsulti.length)], m)
   }
 }
