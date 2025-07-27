@@ -30,10 +30,11 @@ const frasiControEdy = [
   "Edy, anche il tuo telefono vuole bloccarti."
 ];
 
-async function usaAPI(text, happyMode) {
-  const prompt = happyMode
-    ? "Sei Ted in versione affettuosa. Parli come un orsacchiotto simpatico con chi nomina o tagga Matte. Frasi brevi, dolci e ironiche:\n"
+async function usaAPI(text, isHappy) {
+  const prompt = isHappy
+    ? "Sei Ted in versione affettuosa. Parli come un orsacchiotto simpatico con chi nomina o tagga Matte. Frasi brevi, dolci, e ironiche:\n"
     : "Sei Ted incazzato. Rispondi con frasi sarcastiche, volgari e divertenti. Offendi gentilmente se serve. Frasi brevi:\n";
+
   try {
     const res = await fetch(`https://apis-starlights-team.koyeb.app/starlight/gemini?text=${encodeURIComponent(prompt + text)}`);
     const json = await res.json();
@@ -43,36 +44,34 @@ async function usaAPI(text, happyMode) {
   }
 }
 
-// COMANDI MANUALI
-let handler = async function (m, { conn, command }) {
+let handler = async function (m, { conn, text, command }) {
   const msg = m.text.toLowerCase();
+  const mittente = m.sender.split('@')[0];
+  const menzionati = m.mentionedJid?.map(j => j.split('@')[0]) || [];
+
   if (command === 'happy') {
     happy = true;
-    return m.reply('Modalità Happy attiva 🧸');
+    return m.reply('Modalità Happy attiva 🧸✨');
   }
+
   if (command === 'normal') {
     happy = false;
-    return m.reply('Modalità Normale attiva ☠️');
+    return m.reply('Modalità normale attiva ☠️');
   }
+
   if (msg.includes('ted calma')) {
     happy = false;
     return m.reply('Okay mi zittisco... per ora 😒');
   }
+
   if (msg.includes('ted fatti sentire')) {
     happy = true;
     return m.reply('TED è tornato, bitches 🐻💥');
   }
-};
 
-// RISPOSTA AUTOMATICA A TUTTI I MESSAGGI
-handler.all = async function (m, { conn }) {
   if (m.fromMe || m.sender === conn.user.jid) return;
 
-  const testo = m.text?.toLowerCase() || '';
-  const mittente = m.sender.split('@')[0];
-  const menzionati = m.mentionedJid?.map(j => j.split('@')[0]) || [];
-
-  if (menzionati.includes(matte) && m.sender.split('@')[0] !== conn.user.jid.split('@')[0]) {
+  if (menzionati.includes(matte) && m.sender !== conn.user.jid) {
     const frase = happy
       ? frasiHappy[Math.floor(Math.random() * frasiHappy.length)]
       : frasiNormali[Math.floor(Math.random() * frasiNormali.length)];
@@ -84,11 +83,9 @@ handler.all = async function (m, { conn }) {
     return conn.reply(m.chat, frase, m);
   }
 
-  if ((menzionati.includes(matte) || testo.includes('matte')) && m.sender !== conn.user.jid) {
-    const risposta = await usaAPI(testo, happy);
-    if (risposta) {
-      return conn.reply(m.chat, risposta, m);
-    }
+  if ((menzionati.includes(matte) || msg.includes('matte')) && m.sender !== conn.user.jid) {
+    const rispostaAPI = await usaAPI(msg, happy);
+    if (rispostaAPI) return conn.reply(m.chat, rispostaAPI, m);
   }
 };
 
