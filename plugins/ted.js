@@ -34,23 +34,11 @@ let frasiAmorevoli = [
 ]
 
 let stato = "normal"
-let attivo = true
 
 export async function before(m, { conn }) {
   let msg = m.text?.toLowerCase() || ""
   let mittente = m.sender.endsWith("@s.whatsapp.net") ? m.sender.split("@")[0] : m.sender
-
-  if (msg.includes("ted fatti sentire") && mittente === matte) {
-    attivo = true
-    return conn.reply(m.chat, "Sto qua brutto coglione, che vuoi?", m)
-  }
-
-  if (msg.includes("ted calma") && mittente === matte) {
-    attivo = false
-    return conn.reply(m.chat, "Va bene fratello, sto zitto...", m)
-  }
-
-  if (!attivo) return
+  if (mittente === conn.user?.jid?.split("@")[0]) return // Ignora se il bot parla da solo
 
   if (msg.startsWith(".happy") && mittente === matte) {
     stato = "happy"
@@ -62,10 +50,11 @@ export async function before(m, { conn }) {
     return conn.reply(m.chat, "⚪ Modalità normale attivata.", m)
   }
 
+  if (m.quoted && m.quoted.fromMe && mittente === matte) {
+    return conn.reply(m.chat, frasiAmorevoli[Math.floor(Math.random() * frasiAmorevoli.length)], m)
+  }
+
   if (m.quoted && m.quoted.fromMe) {
-    if (mittente === matte) {
-      return conn.reply(m.chat, frasiAmorevoli[Math.floor(Math.random() * frasiAmorevoli.length)], m)
-    }
     return conn.reply(m.chat, "Continua che ti meno", m)
   }
 
@@ -81,30 +70,22 @@ export async function before(m, { conn }) {
     return conn.reply(m.chat, frasiEdy[Math.floor(Math.random() * frasiEdy.length)], m)
   }
 
-  if (m.fromMe) return
+  if (msg.endsWith("?") && mittente === matte) {
+    try {
+      let res = await fetch(`https://api.safone.dev/chatgpt?prompt=${encodeURIComponent(msg)}`)
+      let json = await res.json()
+      if (!json || !json.result) throw 'No result'
+      return conn.reply(m.chat, json.result, m)
+    } catch (e) {
+      return conn.reply(m.chat, "C'è stato un problema a risponderti Matte 😢", m)
+    }
+  }
 
   if (msg.endsWith("?")) {
-    if (mittente === matte) {
-      try {
-        let res = await fetch("https://youapi-proxy.vercel.app/api/gpt", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: msg })
-        })
-        let json = await res.json()
-        let reply = json.text
-        if (reply) return conn.reply(m.chat, reply.trim(), m)
-        return conn.reply(m.chat, frasiAmorevoli[Math.floor(Math.random() * frasiAmorevoli.length)], m)
-      } catch {
-        return conn.reply(m.chat, "C'è stato un problema a risponderti Matte 😢", m)
-      }
-    }
-
     if (stato === "happy") {
-      return conn.reply(m.chat, "Daiii sì, hai ragione 😄", m)
+      return conn.reply(m.chat, "Sì amico! È proprio così 😊", m)
     }
-
-    return conn.reply(m.chat, frasiInsulti[Math.floor(Math.random() * frasiInsulti.length)], m)
+    return conn.reply(m.chat, "Non lo so, ma sembri comunque stupido a chiederlo.", m)
   }
 
   if (mittente !== matte) {
