@@ -1,8 +1,16 @@
 let handler = async (m, { conn }) => {
   const messaggi = [
-    "Sto pensando a qualcosa...",
-    "Aspetta, mi è venuta un'idea!",
-    "Forse è stupida... o forse no.",
+ " 333 bot-          -Origin-Bot
+  Vare-Bot-          -Onix-Bot
+ Turbo-Bot-          -Bixby-Bot
+             
+           Origin-Bot          ",
+    "un unico progetto...",
+  "333 bot--   c    --Origin-Bot
+  Vare-Bot--        --Onix-Bot
+ Turbo-Bot--        --Bixby-Bot
+           
+           Origin-Bot",
     "Ma perché sto scrivendo tutto questo?",
     "Comunque Edy fa schifo.",
     "Matte invece è un king.",
