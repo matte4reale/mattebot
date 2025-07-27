@@ -1,3 +1,5 @@
+import fetch from 'node-fetch'
+
 let matte = "66621409462"
 let edy = "40767396892"
 
@@ -36,70 +38,74 @@ let frasiAmorevoli = [
 let stato = "normal"
 let attivo = true
 
-async function usaAPI(text) {
-  try {
-    let res = await fetch(`https://apis-starlights-team.koyeb.app/starlight/gemini?text=${encodeURIComponent(text)}`)
-    let json = await res.json()
-    if (json.text) return json.text
-    return "C'è stato un problema a risponderti Matte 😥"
-  } catch {
-    return "Errore nel contattare l'API 😓"
-  }
-}
-
 export async function before(m, { conn }) {
   let msg = m.text?.toLowerCase() || ""
   let mittente = m.sender.endsWith("@s.whatsapp.net") ? m.sender.split("@")[0] : m.sender
+  let isMatte = mittente === matte
 
-  if (msg.includes("ted fatti sentire") && mittente === matte) {
-    attivo = true
-    return conn.reply(m.chat, "Sto qua brutto coglione, che vuoi?", m)
-  }
-
-  if (msg.includes("ted calma") && mittente === matte) {
+  // Zittisci o riattiva
+  if (msg.includes("ted calma") && isMatte) {
     attivo = false
     return conn.reply(m.chat, "Va bene fratello, sto zitto...", m)
   }
 
-  if (!attivo) return
+  if (msg.includes("ted fatti sentire") && isMatte) {
+    attivo = true
+    return conn.reply(m.chat, "Sto qua brutto coglione, che vuoi?", m)
+  }
 
-  if (msg.startsWith(".happy") && mittente === matte) {
+  if (msg.startsWith(".happy") && isMatte) {
     stato = "happy"
     return conn.reply(m.chat, "🟢 Modalità felice attivata!", m)
   }
 
-  if (msg.startsWith(".normal") && mittente === matte) {
+  if (msg.startsWith(".normal") && isMatte) {
     stato = "normal"
     return conn.reply(m.chat, "⚪ Modalità normale attivata.", m)
   }
 
+  if (!attivo || m.fromMe) return
+
+  // Se risponde a un messaggio del bot
   if (m.quoted && m.quoted.fromMe) {
-    if (mittente === matte) {
+    if (isMatte) {
       return conn.reply(m.chat, frasiAmorevoli[Math.floor(Math.random() * frasiAmorevoli.length)], m)
     }
     return conn.reply(m.chat, "Continua che ti meno", m)
   }
 
-  if (m.mentionedJid && m.mentionedJid.includes(`${matte}@s.whatsapp.net`)) {
+  // Tag o nome di Matte
+  if (m.mentionedJid?.includes(`${matte}@s.whatsapp.net`) || msg.includes("matte")) {
     return conn.reply(m.chat, frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
   }
 
-  if (msg.includes("matte")) {
-    return conn.reply(m.chat, frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
-  }
-
-  if (m.mentionedJid && m.mentionedJid.includes(`${edy}@s.whatsapp.net`)) {
+  // Tag Edy
+  if (m.mentionedJid?.includes(`${edy}@s.whatsapp.net`)) {
     return conn.reply(m.chat, frasiEdy[Math.floor(Math.random() * frasiEdy.length)], m)
   }
 
-  if (m.fromMe) return
-
-  if (msg.endsWith("?") && mittente === matte) {
-    let risposta = await usaAPI(msg)
+  // Risposte solo alle domande
+  if (msg.endsWith("?")) {
+    const risposta = await usaAPI(msg, stato === "happy" || isMatte)
     return conn.reply(m.chat, risposta, m)
   }
 
-  if (mittente !== matte) {
+  // Resto dei messaggi
+  if (!isMatte) {
     return conn.reply(m.chat, frasiInsulti[Math.floor(Math.random() * frasiInsulti.length)], m)
+  }
+}
+
+// API Gemini gratuita (no key richiesta)
+async function usaAPI(text, happy) {
+  const prompt = happy
+    ? "Sei Ted in versione affettuosa. Parla dolcemente, con ironia, e rispondi in modo simpatico:\n"
+    : "Sei Ted in versione volgare e diretta. Rispondi in modo sarcastico, breve e provocatorio:\n"
+  try {
+    const res = await fetch(`https://apis-starlights-team.koyeb.app/starlight/gemini?text=${encodeURIComponent(prompt + text)}`)
+    const json = await res.json()
+    return json.result || "C'è stato un problema a risponderti Matte 😢"
+  } catch (e) {
+    return "Errore nel contattare l'API 😓"
   }
 }
