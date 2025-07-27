@@ -1,124 +1,70 @@
-import fetch from 'node-fetch'
+let matte = "66621409462" // ID di Matte (senza @s.whatsapp.net)
+let stato = "normal" // Stato iniziale: "normal" o "happy"
 
-let matte = "66621409462"
-let edy = "40767396892"
-let stato = true
-let happy = false
-
-let frasiMatte = [
-  "Occhio a come parli che sei con mio fratello",
-  "Sei un poveraccio, lascia stare Matte",
-  "Non toccare Matte o ti trovi il bot nel letto",
-  "Matte è il mio fratello, attento come ti muovi",
-  "Tocchi Matte e ti tocca il karma"
+let risposteAmichevoli = [
+  "Ma certo fratellone ❤️",
+  "Per te sempre una risposta col cuore 😎",
+  "Sì Matte, ovvio!",
+  "Hai sempre ragione tu fratello",
+  "Ti voglio bene Matte 🫶"
 ]
 
-let frasiInsulti = [
-  "Ti scoppio brutto coglione",
-  "Mamma tua piange quando ti guarda",
-  "Parli come se avessi un cervello",
-  "Scusa, hai dimenticato l'intelligenza a casa?",
-  "Ti hanno cresciuto col tutorial sbagliato",
-  "Fai schifo come le stories dei tuoi amici"
+let risposteAggressive = [
+  "Ma che cazzo chiedi?",
+  "Te lo potevi risparmiare",
+  "Domanda inutile come te",
+  "Fatti curare prima di parlare",
+  "Hai sbagliato chat, poveraccio"
 ]
 
-let frasiEdy = [
-  "Edy sei la vergogna di WhatsApp",
-  "Edy levati dal gruppo",
-  "Edy ogni tuo messaggio è un danno",
-  "Chi ti legge si pente della vita",
-  "Manco i bot ti sopportano Edy"
-]
-
-let risposteBot = [
-  "Continua che ti meno",
-  "Hai rotto fratè",
-  "Manco tua madre ti risponde così tanto",
-  "Smettila che non sei divertente"
-]
-
-let frasiHappy = [
-  "Dai raga vogliamoci bene dai 🧸",
-  "Oggi sono tranquillo, lasciate stare Matte",
-  "Matte è il mio migliore amico, non toccatelo",
-  "Anche se mi insultate vi voglio bene ❤️",
-  "Matte si sta facendo un panino, vi perdona"
-]
-
-let risposteAmorevoliInsulti = [
-  "Ahah Matte dai non essere cattivo, ti voglio bene 🐻",
-  "Va bene fratellino, ma io ti adoro lo stesso ❤️",
-  "Che linguaggio Matte... oggi ti abbraccio lo stesso 😘",
-  "Lo so che scherzi, sei il mio preferito 🧸"
-]
-
-async function usaAPI(msg, happy) {
-  let prompt = happy
-    ? "Sei Ted in versione buona e affettuosa. Rispondi con frasi simpatiche, dolci e divertenti in stile peluche."
-    : "Sei Ted arrabbiato. Rispondi in modo volgare, ironico e provocatorio. Risposte brevi.";
-  try {
-    let res = await fetch("https://apis-starlights-team.koyeb.app/starlight/gemini?text=" + encodeURIComponent(prompt + "\n" + msg))
-    let json = await res.json()
-    return json.result
-  } catch {
-    return null
+// Simulazione di una GPT finta (gratuita)
+async function fakeGPT(question, isMatte = false) {
+  if (isMatte) {
+    return risposteAmichevoli[Math.floor(Math.random() * risposteAmichevoli.length)]
+  } else {
+    return risposteAggressive[Math.floor(Math.random() * risposteAggressive.length)]
   }
 }
 
 export async function before(m, { conn }) {
   let msg = m.text?.toLowerCase() || ""
-  let mittente = m.sender.replace(/[^0-9]/g, "")
+  let mittente = m.sender.split("@")[0]
 
-  if (msg === '.happy' && mittente === matte) {
-    happy = true
-    return conn.reply(m.chat, "Modalità Happy attiva 🧸", m)
+  // Comandi per cambiare modalità
+  if (msg.startsWith(".happy") && mittente === matte) {
+    stato = "happy"
+    return conn.reply(m.chat, "🟢 Modalità felice attivata!", m)
   }
 
-  if (msg === '.normal' && mittente === matte) {
-    happy = false
-    return conn.reply(m.chat, "Modalità normale attiva ☠️", m)
+  if (msg.startsWith(".normal") && mittente === matte) {
+    stato = "normal"
+    return conn.reply(m.chat, "⚪ Modalità normale attivata.", m)
   }
 
-  if (msg.includes("ted fatti sentire") && mittente === matte) {
-    stato = true
-    return conn.reply(m.chat, "Sto qua brutto coglione, che vuoi?", m)
+  // Se è una domanda
+  if (msg.endsWith("?")) {
+    let isMatte = mittente === matte
+    let risposta = await fakeGPT(msg, isMatte || stato === "happy")
+    return conn.reply(m.chat, risposta, m)
   }
 
-  if (msg.includes("ted calma") && mittente === matte) {
-    stato = false
-    return conn.reply(m.chat, "Va bene fratello, sto zitto...", m)
+  // Se qualcuno tagga Matte
+  if (m.mentionedJid?.includes(`${matte}@s.whatsapp.net`)) {
+    return conn.reply(m.chat, "Occhio a come parli di Matte 💢", m)
   }
 
-  if (!stato || m.fromMe || m.sender === conn.user.jid) return
+  // Non insultarsi da solo
+  if (m.fromMe) return
 
-  if (m.quoted && m.quoted.fromMe) {
-    return conn.reply(m.chat, risposteBot[Math.floor(Math.random() * risposteBot.length)], m)
+  // Se il messaggio arriva da Matte: non insultarlo
+  if (mittente === matte) return
+
+  // Altri utenti: risposta in base allo stato
+  if (stato === "normal") {
+    return conn.reply(m.chat, risposteAggressive[Math.floor(Math.random() * risposteAggressive.length)], m)
   }
 
-  if (m.mentionedJid && m.mentionedJid.includes(matte + "@s.whatsapp.net")) {
-    return conn.reply(m.chat, happy ? frasiHappy[Math.floor(Math.random() * frasiHappy.length)] : frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
-  }
-
-  if (msg.includes("matte")) {
-    return conn.reply(m.chat, happy ? frasiHappy[Math.floor(Math.random() * frasiHappy.length)] : frasiMatte[Math.floor(Math.random() * frasiMatte.length)], m)
-  }
-
-  if (m.mentionedJid && m.mentionedJid.includes(edy + "@s.whatsapp.net")) {
-    return conn.reply(m.chat, frasiEdy[Math.floor(Math.random() * frasiEdy.length)], m)
-  }
-
-  if (mittente === matte && /coglione|stronzo|merda|deficiente|vaffanculo/.test(msg)) {
-    return conn.reply(m.chat, risposteAmorevoliInsulti[Math.floor(Math.random() * risposteAmorevoliInsulti.length)], m)
-  }
-
-  if (msg.trim().endsWith("?")) {
-    let risposta = await usaAPI(msg, happy)
-    if (risposta) return conn.reply(m.chat, risposta, m)
-  }
-
-  if (mittente !== matte) {
-    let risposta = await usaAPI(msg, happy)
-    if (risposta) return conn.reply(m.chat, risposta, m)
-    return conn.reply(m.chat, frasiInsulti[Math.floor(Math.random() * frasiInsulti.length)], m)
+  if (stato === "happy") {
+    return conn.reply(m.chat, "Oggi sono felice, ti rispondo bene... ma non approfittarne 😏", m)
   }
 }
