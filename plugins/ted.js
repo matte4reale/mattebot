@@ -1,3 +1,5 @@
+import fetch from 'node-fetch'
+
 let matte = "66621409462"
 let edy = "40767396892"
 let stato = true
@@ -43,9 +45,22 @@ let frasiHappy = [
   "Matte si sta facendo un panino, vi perdona"
 ]
 
+async function usaAPI(msg, happy) {
+  let prompt = happy
+    ? "Sei Ted in versione buona e affettuosa. Rispondi con frasi simpatiche, dolci e divertenti in stile peluche."
+    : "Sei Ted arrabbiato. Rispondi in modo volgare, ironico e provocatorio. Risposte brevi.";
+  try {
+    let res = await fetch("https://apis-starlights-team.koyeb.app/starlight/gemini?text=" + encodeURIComponent(prompt + "\n" + msg))
+    let json = await res.json()
+    return json.result
+  } catch {
+    return null
+  }
+}
+
 export async function before(m, { conn }) {
   let msg = m.text?.toLowerCase() || ""
-  let mittente = m.sender.split("@")[0]
+  let mittente = m.sender.replace(/[^0-9]/g, "")
 
   if (msg === '.happy' && mittente === matte) {
     happy = true
@@ -86,6 +101,8 @@ export async function before(m, { conn }) {
   }
 
   if (mittente !== matte) {
+    let risposta = await usaAPI(msg, happy)
+    if (risposta) return conn.reply(m.chat, risposta, m)
     return conn.reply(m.chat, frasiInsulti[Math.floor(Math.random() * frasiInsulti.length)], m)
   }
 }
