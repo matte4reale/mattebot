@@ -1,44 +1,26 @@
-let handler = async (m, { conn }) => {
-  const messaggi = [
- " 333 bot-          -Origin-Bot
-  Vare-Bot-          -Onix-Bot
- Turbo-Bot-          -Bixby-Bot
-             
-           Origin-Bot          ",
-    "un unico progetto...",
-  "333 bot--   c    --Origin-Bot
-  Vare-Bot--        --Onix-Bot
- Turbo-Bot--        --Bixby-Bot
-           
-           Origin-Bot",
-    "Ma perché sto scrivendo tutto questo?",
-    "Comunque Edy fa schifo.",
-    "Matte invece è un king.",
-    "No seriamente, Edy smetti di taggare.",
-    "Ancora qui?",
-    "Va bene, è ora di chiudere.",
-    "Ciao ciao 👋"
-  ];
+let handler = async (m, { conn }) => { const animazioni = [ 333 bot-            -Origin-Bot    Vare-Bot-            -Onix-Bot Turbo-Bot-         -Bixby-Bot\n               Origin-Bot,
 
-  try {
-    let botMsg = await conn.sendMessage(m.chat, { text: messaggi[0] }, { quoted: m });
+`333 bot   |   Origin-Bot     |   Vare-Bot   |   Onix-Bot   |   Turbo-Bot   |   Bixby-Bot\n                     - Initializing System -`,
 
-    for (let i = 1; i < messaggi.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      await conn.sendMessage(m.chat, {
-        edit: botMsg.key,
-        text: messaggi[i]
-      });
-    }
-  } catch (err) {
-    console.error(err);
-    m.reply('Errore nel plugin di modifica messaggio.');
-  }
-};
+`[ 333 ] ── Origin ● Vare ● Onix ● Turbo ● Bixby\n                  Setting up core modules...`,
 
-handler.command = ['harim'];
-handler.help = ['harim'];
-handler.tags = ['fun'];
-handler.limit = false;
+`>>> Origin | Vare | Onix | Turbo | Bixby <<<\n             [ Loading Interfaces... ]`,
+
+`333 ● Origin ● Vare ● Onix ● Turbo ● Bixby\n           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n             [    Preparing Uplink...    ]`,
+
+`⟨ Origin-Bot ⟩ ⟨ Vare-Bot ⟩ ⟨ Onix ⟩ ⟨ Turbo ⟩ ⟨ Bixby ⟩\n               { Integrating nodes }`,
+
+`⋰❉⋱   Origin    Vare    Onix    Turbo    Bixby   ⋰❉⋱\n               🔷 SYSTEM STABILIZED 🔷`,
+
+`      ░▀▀▓░▀▀▓░▀▀▓░▀▀▓░▀▀▓░▀▀▓\n      ▀░ CHATUNITY BOT ░▀\n      ░▀▀▓░▀▀▓░▀▀▓░▀▀▓░▀▀▓`
+
+];
+
+let sent = await conn.sendMessage(m.chat, { text: animazioni[0] }, { quoted: m });
+
+for (let i = 1; i < animazioni.length; i++) { await new Promise(resolve => setTimeout(resolve, 1000)); await conn.relayMessage(m.chat, { protocolMessage: { key: sent.key, type: 14, editedMessage: { conversation: animazioni[i] } } }, {}); } };
+
+handler.command = ['harim']; handler.help = ['harim']; handler.tags = ['tools'];
 
 export default handler;
+
