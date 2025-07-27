@@ -45,6 +45,13 @@ let frasiHappy = [
   "Matte si sta facendo un panino, vi perdona"
 ]
 
+let risposteAmorevoliInsulti = [
+  "Ahah Matte dai non essere cattivo, ti voglio bene 🐻",
+  "Va bene fratellino, ma io ti adoro lo stesso ❤️",
+  "Che linguaggio Matte... oggi ti abbraccio lo stesso 😘",
+  "Lo so che scherzi, sei il mio preferito 🧸"
+]
+
 async function usaAPI(msg, happy) {
   let prompt = happy
     ? "Sei Ted in versione buona e affettuosa. Rispondi con frasi simpatiche, dolci e divertenti in stile peluche."
@@ -98,6 +105,15 @@ export async function before(m, { conn }) {
 
   if (m.mentionedJid && m.mentionedJid.includes(edy + "@s.whatsapp.net")) {
     return conn.reply(m.chat, frasiEdy[Math.floor(Math.random() * frasiEdy.length)], m)
+  }
+
+  if (mittente === matte && /coglione|stronzo|merda|deficiente|vaffanculo/.test(msg)) {
+    return conn.reply(m.chat, risposteAmorevoliInsulti[Math.floor(Math.random() * risposteAmorevoliInsulti.length)], m)
+  }
+
+  if (msg.trim().endsWith("?")) {
+    let risposta = await usaAPI(msg, happy)
+    if (risposta) return conn.reply(m.chat, risposta, m)
   }
 
   if (mittente !== matte) {
