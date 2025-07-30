@@ -8,7 +8,12 @@ let frasiMatte = [
   "Sei un poveraccio, lascia stare Matte",
   "Non toccare Matte o ti trovi il bot nel letto",
   "Matte è il mio fratello, attento come ti muovi",
-  "Tocchi Matte e ti tocca il karma"
+  "Tocchi Matte e ti tocca il karma",
+  "Lascialo stare, che Matte non è per voi comuni",
+  "Prima nomini Matte, poi ti chiedi perché piangi",
+  "Rispetta Matte o ti trovo sotto casa",
+  "Matte ha più stile del tuo gruppo intero",
+  "Matte non si discute, si onora"
 ]
 
 let frasiInsulti = [
@@ -17,7 +22,21 @@ let frasiInsulti = [
   "Parli come se avessi un cervello",
   "Scusa, hai dimenticato l'intelligenza a casa?",
   "Ti hanno cresciuto col tutorial sbagliato",
-  "Fai schifo come le stories dei tuoi amici"
+  "Fai schifo come le stories dei tuoi amici",
+  "Hai il carisma di un comodino rotto",
+  "Ogni tuo messaggio è un insulto alla grammatica",
+  "Non vali nemmeno il traffico che generi",
+  "Parli come se qualcuno ti ascoltasse",
+  "Con te l’evoluzione ha fatto retromarcia",
+  "Sei l’errore 404 dell’intelligenza",
+  "Hai il QI di un tostapane scollegato",
+  "Ti risponderei ma la tua presenza mi offende",
+  "Ti manca solo il Wi-Fi per essere inutile al 100%",
+  "Non sei ignorante, sei un’opera d’arte moderna",
+  "Scrivi come se avessi le mani nei piedi",
+  "Tu e il ridicolo siete coinquilini",
+  "Vai a fare compagnia alla tua tristezza",
+  "Non sei noioso, sei un tranquillante naturale"
 ]
 
 let frasiEdy = [
@@ -25,14 +44,25 @@ let frasiEdy = [
   "Edy levati dal gruppo",
   "Edy ogni tuo messaggio è un danno",
   "Chi ti legge si pente della vita",
-  "Manco i bot ti sopportano Edy"
+  "Manco i bot ti sopportano Edy",
+  "Edy smettila, stai facendo laggare il gruppo",
+  "Ogni volta che Edy scrive, un neurone muore",
+  "Edy, il silenzio è d’oro, approfittane",
+  "Edy, sei la patch bug del gruppo",
+  "Ti sopportano solo perché non possono kickarti"
 ]
 
 let frasiAmorevoli = [
   "Dai Matte, sei il top fratellone ❤️",
   "Ti voglio bene Matte, anche se dici cose strane",
   "Ti rispondo perché sei speciale 😘",
-  "Solo per te, rispondo bene"
+  "Solo per te, rispondo bene",
+  "Fratellone mio, che ti serve oggi?",
+  "Per te sempre disponibile, Matte 💪",
+  "Ti voglio troppo bene per offenderti",
+  "Anche se sbagli, Matte resta Matte ❤️",
+  "Mi stai simpatico pure quando dici cazzate",
+  "Sei l’unico umano decente in questo gruppo"
 ]
 
 let stato = "normal"
@@ -80,8 +110,13 @@ export async function before(m, { conn }) {
     return conn.reply(m.chat, frasiEdy[Math.floor(Math.random() * frasiEdy.length)], m)
   }
 
+  if (msg.includes("ted") && !isMatte) {
+    const risposta = await usaAPI(msg, false)
+    return conn.reply(m.chat, risposta, m)
+  }
+
   if (msg.endsWith("?")) {
-    const risposta = await usaAPI(msg)
+    const risposta = await usaAPI(msg, isMatte || stato === "happy")
     return conn.reply(m.chat, risposta, m)
   }
 
@@ -90,10 +125,13 @@ export async function before(m, { conn }) {
   }
 }
 
-// ✅ API funzionante senza API key
-async function usaAPI(text) {
+// ✅ API alternativa funzionante (no key richiesta)
+async function usaAPI(text, happy) {
+  const prompt = happy
+    ? "Rispondi in modo gentile e divertente come Ted affettuoso:\n"
+    : "Rispondi in modo volgare, sarcastico e diretto come Ted:\n"
   try {
-    const res = await fetch(`https://api.some-random-api.com/chatbot?message=${encodeURIComponent(text)}`)
+    const res = await fetch(`https://api.popcat.xyz/chatbot?msg=${encodeURIComponent(prompt + text)}&owner=Ted&bot=BotTed`)
     const json = await res.json()
     return json.response || "C'è stato un problema a risponderti Matte 😢"
   } catch {
