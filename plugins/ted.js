@@ -8,17 +8,12 @@ let frasiMatte = [
   "Sei un poveraccio, lascia stare Matte",
   "Non toccare Matte o ti trovi il bot nel letto",
   "Matte è il mio fratello, attento come ti muovi",
-  "Tocchi Matte e ti tocca il karma",
-  "Stai attento a parlare di Matte, coglione",
-  "Matte lo puoi solo guardare da lontano, poveraccio"
+  "Tocchi Matte e ti tocca il karma"
 ]
 
 let frasiInsulti = [
   "Ti scoppio brutto coglione",
-  "Mamma tua piange quando ti guarda",
   "Parli come se avessi un cervello",
-  "Scusa, hai dimenticato l'intelligenza a casa?",
-  "Ti hanno cresciuto col tutorial sbagliato",
   "Fai schifo come le stories dei tuoi amici",
   "La tua esistenza è un errore di sistema",
   "Mi annoio solo a leggerti, fallito"
@@ -28,20 +23,14 @@ let frasiEdy = [
   "Edy sei la vergogna di WhatsApp",
   "Edy levati dal gruppo",
   "Edy ogni tuo messaggio è un danno",
-  "Chi ti legge si pente della vita",
-  "Manco i bot ti sopportano Edy",
-  "Edy, anche le emoji ti evitano",
-  "Ti bloccherei se potessi"
+  "Manco i bot ti sopportano Edy"
 ]
 
 let frasiAmorevoli = [
   "Dai Matte, sei il top fratellone ❤️",
   "Ti voglio bene Matte, anche se dici cose strane",
   "Ti rispondo perché sei speciale 😘",
-  "Solo per te, rispondo bene",
-  "Sei l’unico umano che tollero",
-  "Matte, anche se sei strano, sei il mio preferito",
-  "Se parli tu, ascolto sempre fratellone"
+  "Matte, anche se sei strano, sei il mio preferito"
 ]
 
 let stato = "normal"
@@ -89,15 +78,9 @@ export async function before(m, { conn }) {
     return conn.reply(m.chat, frasiEdy[Math.floor(Math.random() * frasiEdy.length)], m)
   }
 
-  // Risposta all'uso del nome "ted" con contenuto
-  if (msg.startsWith("ted") && !isMatte) {
-    const risposta = await usaAPI(msg, false)
-    return conn.reply(m.chat, risposta, m)
-  }
-
-  // Domande normali
-  if (msg.endsWith("?")) {
-    const risposta = await usaAPI(msg, isMatte || stato === "happy")
+  // Domande o frasi con "ted"
+  if (msg.endsWith("?") || msg.includes("ted")) {
+    const risposta = await usaAPI(msg, isMatte)
     return conn.reply(m.chat, risposta, m)
   }
 
@@ -106,15 +89,14 @@ export async function before(m, { conn }) {
   }
 }
 
-// ✅ API stabile senza chiavi
+// ✅ API DI TEST SENZA CHIAVE (cambia con API AI tua se vuoi output realistici)
 async function usaAPI(text, isMatte) {
-  const prompt = isMatte
-    ? `Parla come Ted affettuoso: ${text}`
-    : `Parla come Ted volgare, sarcastico e aggressivo: ${text}`
   try {
-    const res = await fetch(`https://some-random-api.com/chatbot?message=${encodeURIComponent(prompt)}`)
+    const res = await fetch("https://api.quotable.io/random")
     const json = await res.json()
-    return json.response || "C'è stato un problema a risponderti Matte 😢"
+    return isMatte
+      ? `Ehi fratellone, ecco una per te: "${json.content}"`
+      : `Che vuoi? Beccati questa: "${json.content}"`
   } catch {
     return "Errore nel contattare l'API 😓"
   }
