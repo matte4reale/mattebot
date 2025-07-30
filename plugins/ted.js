@@ -78,7 +78,6 @@ export async function before(m, { conn }) {
     return conn.reply(m.chat, frasiEdy[Math.floor(Math.random() * frasiEdy.length)], m)
   }
 
-  // Domande o frasi con "ted"
   if (msg.endsWith("?") || msg.includes("ted")) {
     const risposta = await usaAPI(msg, isMatte)
     return conn.reply(m.chat, risposta, m)
@@ -89,15 +88,23 @@ export async function before(m, { conn }) {
   }
 }
 
-// ✅ API DI TEST SENZA CHIAVE (cambia con API AI tua se vuoi output realistici)
+// ✅ API OPEN SOURCE FUNZIONANTE (GPT-2)
 async function usaAPI(text, isMatte) {
   try {
-    const res = await fetch("https://api.quotable.io/random")
+    const res = await fetch("https://api.ailabtools.com/v1/gpt2", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        prompt: isMatte ? `Rispondi in modo affettuoso e simpatico: ${text}` : `Rispondi da stronzo sarcastico: ${text}`,
+        max_length: 60
+      })
+    })
+
     const json = await res.json()
-    return isMatte
-      ? `Ehi fratellone, ecco una per te: "${json.content}"`
-      : `Che vuoi? Beccati questa: "${json.content}"`
+    return json.text?.trim() || "Non riesco a risponderti ora 😓"
   } catch {
-    return "Errore nel contattare l'API 😓"
+    return "Errore nel contattare l'AI 😓"
   }
 }
