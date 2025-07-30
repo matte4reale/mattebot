@@ -9,11 +9,8 @@ let frasiMatte = [
   "Non toccare Matte o ti trovi il bot nel letto",
   "Matte è il mio fratello, attento come ti muovi",
   "Tocchi Matte e ti tocca il karma",
-  "Lascialo stare, che Matte non è per voi comuni",
-  "Prima nomini Matte, poi ti chiedi perché piangi",
-  "Rispetta Matte o ti trovo sotto casa",
-  "Matte ha più stile del tuo gruppo intero",
-  "Matte non si discute, si onora"
+  "Stai attento a parlare di Matte, coglione",
+  "Matte lo puoi solo guardare da lontano, poveraccio"
 ]
 
 let frasiInsulti = [
@@ -23,20 +20,8 @@ let frasiInsulti = [
   "Scusa, hai dimenticato l'intelligenza a casa?",
   "Ti hanno cresciuto col tutorial sbagliato",
   "Fai schifo come le stories dei tuoi amici",
-  "Hai il carisma di un comodino rotto",
-  "Ogni tuo messaggio è un insulto alla grammatica",
-  "Non vali nemmeno il traffico che generi",
-  "Parli come se qualcuno ti ascoltasse",
-  "Con te l’evoluzione ha fatto retromarcia",
-  "Sei l’errore 404 dell’intelligenza",
-  "Hai il QI di un tostapane scollegato",
-  "Ti risponderei ma la tua presenza mi offende",
-  "Ti manca solo il Wi-Fi per essere inutile al 100%",
-  "Non sei ignorante, sei un’opera d’arte moderna",
-  "Scrivi come se avessi le mani nei piedi",
-  "Tu e il ridicolo siete coinquilini",
-  "Vai a fare compagnia alla tua tristezza",
-  "Non sei noioso, sei un tranquillante naturale"
+  "La tua esistenza è un errore di sistema",
+  "Mi annoio solo a leggerti, fallito"
 ]
 
 let frasiEdy = [
@@ -45,11 +30,8 @@ let frasiEdy = [
   "Edy ogni tuo messaggio è un danno",
   "Chi ti legge si pente della vita",
   "Manco i bot ti sopportano Edy",
-  "Edy smettila, stai facendo laggare il gruppo",
-  "Ogni volta che Edy scrive, un neurone muore",
-  "Edy, il silenzio è d’oro, approfittane",
-  "Edy, sei la patch bug del gruppo",
-  "Ti sopportano solo perché non possono kickarti"
+  "Edy, anche le emoji ti evitano",
+  "Ti bloccherei se potessi"
 ]
 
 let frasiAmorevoli = [
@@ -57,12 +39,9 @@ let frasiAmorevoli = [
   "Ti voglio bene Matte, anche se dici cose strane",
   "Ti rispondo perché sei speciale 😘",
   "Solo per te, rispondo bene",
-  "Fratellone mio, che ti serve oggi?",
-  "Per te sempre disponibile, Matte 💪",
-  "Ti voglio troppo bene per offenderti",
-  "Anche se sbagli, Matte resta Matte ❤️",
-  "Mi stai simpatico pure quando dici cazzate",
-  "Sei l’unico umano decente in questo gruppo"
+  "Sei l’unico umano che tollero",
+  "Matte, anche se sei strano, sei il mio preferito",
+  "Se parli tu, ascolto sempre fratellone"
 ]
 
 let stato = "normal"
@@ -110,11 +89,13 @@ export async function before(m, { conn }) {
     return conn.reply(m.chat, frasiEdy[Math.floor(Math.random() * frasiEdy.length)], m)
   }
 
-  if (msg.includes("ted") && !isMatte) {
+  // Risposta all'uso del nome "ted" con contenuto
+  if (msg.startsWith("ted") && !isMatte) {
     const risposta = await usaAPI(msg, false)
     return conn.reply(m.chat, risposta, m)
   }
 
+  // Domande normali
   if (msg.endsWith("?")) {
     const risposta = await usaAPI(msg, isMatte || stato === "happy")
     return conn.reply(m.chat, risposta, m)
@@ -125,13 +106,13 @@ export async function before(m, { conn }) {
   }
 }
 
-// ✅ API alternativa funzionante (no key richiesta)
-async function usaAPI(text, happy) {
-  const prompt = happy
-    ? "Rispondi in modo gentile e divertente come Ted affettuoso:\n"
-    : "Rispondi in modo volgare, sarcastico e diretto come Ted:\n"
+// ✅ API stabile senza chiavi
+async function usaAPI(text, isMatte) {
+  const prompt = isMatte
+    ? `Parla come Ted affettuoso: ${text}`
+    : `Parla come Ted volgare, sarcastico e aggressivo: ${text}`
   try {
-    const res = await fetch(`https://api.popcat.xyz/chatbot?msg=${encodeURIComponent(prompt + text)}&owner=Ted&bot=BotTed`)
+    const res = await fetch(`https://some-random-api.com/chatbot?message=${encodeURIComponent(prompt)}`)
     const json = await res.json()
     return json.response || "C'è stato un problema a risponderti Matte 😢"
   } catch {
