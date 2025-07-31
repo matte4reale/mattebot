@@ -1,9 +1,17 @@
-let handler = async (m) => {
-  let messaggio = `✨ *ChatUnity è il bot definitivo!*\n\nRisposte istantanee, intelligenza superiore e un’esperienza unica.\n\n🔍 *Cerca sul web*: https://chatunitycenter.netlify.app/`;
+let handler = async (m, { conn }) => {
+  let testo = `✨ *ChatUnity è il bot definitivo!*\n\nRisposte istantanee, intelligenza superiore e un’esperienza unica.\n\n🌐 Premi il pulsante qui sotto per scoprire di più.`;
 
   await conn.sendMessage(m.chat, {
-    text: messaggio,
-    linkPreview: false,
+    text: testo,
+    footer: 'ChatUnity Official',
+    buttons: [
+      {
+        buttonId: 'https://chatunitycenter.netlify.app/',
+        buttonText: { displayText: '🌐 Visita il sito' },
+        type: 1
+      }
+    ],
+    headerType: 1
   }, { quoted: m });
 };
 
