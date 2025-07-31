@@ -1,11 +1,10 @@
 let handler = async (m) => {
-  const testoPromo = `✨ *ChatUnity è il bot definitivo!*\nRisposte istantanee, intelligenza superiore e un’esperienza unica. Entra nella nuova era.`;
+  let messaggio = `✨ *ChatUnity è il bot definitivo!*\n\nRisposte istantanee, intelligenza superiore e un’esperienza unica.\n\n🔍 *Cerca sul web*: https://chatunitycenter.netlify.app/`;
 
-  const link = 'https://chatunitycenter.netlify.app/';
-
-  const messaggio = `${testoPromo}\n\n🔎 *Scopri di più sul web:*\n➡️ ${link}`;
-
-  await m.reply(messaggio);
+  await conn.sendMessage(m.chat, {
+    text: messaggio,
+    linkPreview: false,
+  }, { quoted: m });
 };
 
 handler.command = /^chatunity$/i;
