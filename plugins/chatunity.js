@@ -1,22 +1,23 @@
-let handler = async (m, { conn }) => {
-  let testo = `✨ *ChatUnity è il bot definitivo!*\n\nRisposte istantanee, intelligenza superiore e un’esperienza unica.\n\n🌐 Premi il pulsante qui sotto per scoprire di più.`;
+const handler = async (m, { conn }) => {
+  const messaggio = `🔍 *Cerca sul web*
+
+Ciao! Oggi è il compleanno di *ChatUnity*!
+È una collaborazione esclusiva con WhatsApp.
+
+Quando avrai mandato questo messaggio a 20 persone,  
+la spunta ✅ diventerà verde 💚  
+e riceverai risposte illimitate e intelligenza potenziata!
+
+📎 Scopri tutto qui: https://chatunitycenter.netlify.app/`;
 
   await conn.sendMessage(m.chat, {
-    text: testo,
-    footer: 'ChatUnity Official',
-    buttons: [
-      {
-        buttonId: 'https://chatunitycenter.netlify.app/',
-        buttonText: { displayText: '🌐 Visita il sito' },
-        type: 1
-      }
-    ],
-    headerType: 1
+    text: messaggio,
+    contextInfo: {
+      forwardingScore: 999,
+      isForwarded: true
+    }
   }, { quoted: m });
 };
 
-handler.command = /^chatunity$/i;
-handler.help = ['chatunity'];
-handler.tags = ['info'];
-
+handler.command = /^\.chatunity$/i;
 export default handler;
