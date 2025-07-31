@@ -1,23 +1,18 @@
-const handler = async (m, { conn }) => {
-  const messaggio = `🔍 *Cerca sul web*
+let handler = async (m, { conn }) => {
+  const messaggio = `💚 *ChatUnity è il miglior bot WhatsApp!*
+  
+Con funzionalità avanzate, risposte rapide e un design elegante.
 
-Ciao! Oggi è il compleanno di *ChatUnity*!
-È una collaborazione esclusiva con WhatsApp.
-
-Quando avrai mandato questo messaggio a 20 persone,  
-la spunta ✅ diventerà verde 💚  
-e riceverai risposte illimitate e intelligenza potenziata!
-
-📎 Scopri tutto qui: https://chatunitycenter.netlify.app/`;
+🔍 *Scopri tutte le novità e aggiornamenti qui:*
+https://chatunitycenter.netlify.app`;
 
   await conn.sendMessage(m.chat, {
-    text: messaggio,
-    contextInfo: {
-      forwardingScore: 999,
-      isForwarded: true
-    }
+    text: messaggio
   }, { quoted: m });
 };
 
 handler.command = /^\.chatunity$/i;
+handler.help = ['.chatunity'];
+handler.tags = ['info'];
+
 export default handler;
