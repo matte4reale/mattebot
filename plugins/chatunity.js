@@ -1,18 +1,30 @@
 let handler = async (m, { conn }) => {
-  const messaggio = `*ChatUnity - Il bot definitivo per la tua community!*
-
-🔹 Automatizza risposte
-🔹 Comandi personalizzati
-🔹 Estetica avanzata e stabile
-
-🌐 Visita il sito ufficiale:  
-https://chatunitycenter.netlify.app`;
+  const testo = `╭───〔  💚 *ChatUnity* 💚  〕───⬣
+│
+│  🔰 *Il miglior bot WhatsApp*
+│  ⚡ Veloce, personalizzabile e gratis
+│
+│  🌐 *Visita il sito ufficiale:*
+│  👉 https://chatunitycenter.netlify.app
+│
+╰──────────────⬣`;
 
   await conn.sendMessage(m.chat, {
-    image: {
-      url: 'https://i.imgur.com/vKNSQhU.png' // 🔄 Puoi sostituirlo con un'immagine tua
-    },
-    caption: messaggio
+    text: testo,
+    footer: 'Premi il link per aprire ChatUnity!',
+    buttons: [
+      {
+        buttonId: `.aiuto`,
+        buttonText: { displayText: '📘 Aiuto' },
+        type: 1
+      },
+      {
+        buttonId: `.menu`,
+        buttonText: { displayText: '📋 Menu' },
+        type: 1
+      }
+    ],
+    headerType: 1
   }, { quoted: m });
 };
 
