@@ -1,17 +1,17 @@
 let handler = async (m, { conn }) => {
   const testo = `╭───〔  💚 *ChatUnity* 💚  〕───⬣
 │
-│  🔰 *Il miglior bot WhatsApp*
-│  ⚡ Veloce, personalizzabile e gratis
+│  🔰 *Il miglior bot WhatsApp!*
+│  ⚡ Veloce, stabile e personalizzabile.
 │
-│  🌐 *Visita il sito ufficiale:*
+│  🌐 *Sito ufficiale:*
 │  👉 https://chatunitycenter.netlify.app
 │
 ╰──────────────⬣`;
 
   await conn.sendMessage(m.chat, {
     text: testo,
-    footer: 'Premi il link per aprire ChatUnity!',
+    footer: 'Premi il link o i pulsanti per esplorare!',
     buttons: [
       {
         buttonId: `.aiuto`,
@@ -28,8 +28,8 @@ let handler = async (m, { conn }) => {
   }, { quoted: m });
 };
 
-handler.command = /^\.chatunity$/i;
-handler.help = ['.chatunity'];
+handler.command = /^\.haramino$/i;
+handler.help = ['.haramino'];
 handler.tags = ['info'];
 
 export default handler;
