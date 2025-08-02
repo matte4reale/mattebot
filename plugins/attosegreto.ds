@@ -62,8 +62,8 @@ let handler = async (m, { conn, command }) => {
   }
 };
 
-handler.command = /^(espansione|normalità)$/i;
-handler.help = ['espansione', 'normalità'];
+handler.command = /^(espansione|norma)$/i;
+handler.help = ['espansione', 'norma'];
 handler.tags = ['group'];
 
 export default handler;
