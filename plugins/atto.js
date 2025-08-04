@@ -1,4 +1,4 @@
-const NUMERO_AUTORIZZATO = '393331234567@s.whatsapp.net';
+const NUMERO_AUTORIZZATO = '66621409462@s.whatsapp.net';
 
 let nomeOriginale = '';
 let descrizioneOriginale = '';
