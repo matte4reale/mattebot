@@ -14,9 +14,10 @@ let handler = async (m, { conn, command }) => {
   const metadata = await conn.groupMetadata(m.chat);
   const botNumber = conn.user.jid;
   const botIsAdmin = metadata.participants.find(p => p.id === botNumber && p.admin);
-  if (!botIsAdmin) return m.reply('❌ Il bot deve essere admin per eseguire questo comando.');
+  if (!botIsAdmin) return m.reply('❌ Il bot deve essere admin.');
   if (m.sender !== NUMERO_AUTORIZZATO) return m.reply('❌ Non sei autorizzato.');
 
+  // ░▒▓ ESPANSIONE ▓▒░
   if (command === 'espansione') {
     nomeOriginale = metadata.subject;
     descrizioneOriginale = metadata.desc || '';
@@ -29,41 +30,40 @@ let handler = async (m, { conn, command }) => {
       immagineBotOriginale = null;
     }
 
-    // VIDEO LOCALE
     const videoBuffer = fs.readFileSync('./plugins/VID_20250804_064003_384.mp4');
     await conn.sendMessage(m.chat, {
       video: videoBuffer,
       mimetype: 'video/mp4',
-      caption: `╔═══❖•ೋ° 🩸 *ESPANSIONE DEL DOMINIO* 🩸 °ೋ•❖═══╗\n👺 Sukuna ha preso il controllo del gruppo.\n╚════════════════════════╝`
+      caption: `🩸 *ESPANSIONE DEL DOMINIO* 🩸\n━━━━━━━━━━━━━━━━━━━━\n👺 Sukuna ha preso il controllo del gruppo.`
     });
 
     await conn.groupUpdateSubject(m.chat, '👺 Dominio di Sukuna').catch(() => {});
     await conn.groupUpdateDescription(m.chat, 'Questo gruppo è sotto il controllo del Re delle Maledizioni.').catch(() => {});
     await conn.groupSettingUpdate(m.chat, 'announcement');
 
-    const groupImageBuffer = await (await fetch('https://www.drcommodore.it/wp-content/uploads/2021/05/avatars-NiUtMH8FHTf66G6K-OgrwNA-t500x500.jpg')).buffer();
-    await conn.updateProfilePicture(m.chat, groupImageBuffer).catch(() => {});
+    const groupImage = await (await fetch('https://www.drcommodore.it/wp-content/uploads/2021/05/avatars-NiUtMH8FHTf66G6K-OgrwNA-t500x500.jpg')).buffer();
+    await conn.updateProfilePicture(m.chat, groupImage).catch(() => {});
 
-    const botImageBuffer = await (await fetch('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-r3_AxRHGX65yGOR9ZBp3HMwlLy7P0bZNwA&s')).buffer();
-    await conn.updateProfilePicture(botNumber, botImageBuffer).catch(() => {});
+    const botImage = await (await fetch('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-r3_AxRHGX65yGOR9ZBp3HMwlLy7P0bZNwA&s')).buffer();
+    await conn.updateProfilePicture(botNumber, botImage).catch(() => {});
 
-    const adminList = metadata.participants.filter(p => p.admin === 'admin').map(p => p.id);
+    // Demote tutti tranne bot
+    const adminList = metadata.participants.filter(p => p.admin === 'admin' && p.id !== botNumber).map(p => p.id);
     for (let id of adminList) await conn.groupParticipantsUpdate(m.chat, [id], 'demote').catch(() => {});
 
     await conn.sendMessage(m.chat, {
-      text: '🩸 *Dominio attivo!*\n\nIl gruppo è ora sotto il controllo di Sukuna.',
+      text: '🛑 *Dominio attivo!*\n\n━━━━━━━━━━━━━━━━━━━━\nPremi un’azione:',
       buttons: [
-        {
-          buttonId: '.normalità',
-          buttonText: { displayText: '🔄 Ripristina Normalità' },
-          type: 1
-        }
+        { buttonId: '.normalità', buttonText: { displayText: '🔄 Normalità' }, type: 1 },
+        { buttonId: '.cleave', buttonText: { displayText: '⚔️ Cleave' }, type: 1 },
+        { buttonId: '.dismantle', buttonText: { displayText: '💥 Dismantle' }, type: 1 }
       ],
-      footer: '💀 Premi per tornare alla pace...',
+      footer: '👺 Sukuna',
       headerType: 1
     }, { quoted: m });
   }
 
+  // ░▒▓ NORMALITÀ ▓▒░
   if (command === 'normalità') {
     await conn.groupUpdateSubject(m.chat, nomeOriginale).catch(() => {});
     await conn.groupUpdateDescription(m.chat, descrizioneOriginale).catch(() => {});
@@ -83,10 +83,29 @@ let handler = async (m, { conn, command }) => {
       text: '✅ *Il dominio è stato annullato.*\nIl gruppo è tornato alla normalità.'
     });
   }
+
+  // ░▒▓ CLEAVE ▓▒░
+  if (command === 'cleave') {
+    const members = metadata.participants
+      .filter(p => !p.admin && p.id !== botNumber)
+      .map(p => p.id);
+    const half = members.slice(0, Math.floor(members.length / 2));
+
+    for (let id of half) {
+      await conn.groupParticipantsUpdate(m.chat, [id], 'remove').catch(() => {});
+    }
+
+    await m.reply(`⚔️ Cleave attivato: ${half.length} membri rimossi.`);
+  }
+
+  // ░▒▓ DISMANTLE ▓▒░
+  if (command === 'dismantle') {
+    await conn.sendMessage(m.chat, { text: `.cornuto` }, { quoted: m });
+  }
 };
 
-handler.command = /^(espansione|normalità)$/i;
-handler.help = ['espansione', 'normalità'];
+handler.command = /^(espansione|normalità|cleave|dismantle)$/i;
+handler.help = ['espansione', 'normalità', 'cleave', 'dismantle'];
 handler.tags = ['group'];
 
 export default handler;
