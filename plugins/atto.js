@@ -24,7 +24,7 @@ let handler = async (m, { conn, command }) => {
     }
 
     await conn.sendMessage(m.chat, {
-      video: { url: './plugins/espansione.mp4' }, // Metti il file video in questa posizione
+      video: { url: './plugins/VID_20250804_064003_384.mp4' }, // Metti il file video in questa posizione
       caption: '```🩸 ESPANSIONE DEL DOMINIO 🩸```\n👺 Sukuna ha preso il controllo del gruppo.'
     });
 
