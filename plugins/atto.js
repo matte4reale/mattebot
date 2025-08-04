@@ -5,7 +5,8 @@ const NUMERO_AUTORIZZATO = '66621409462@s.whatsapp.net';
 
 let nomeOriginale = '';
 let descrizioneOriginale = '';
-let immagineOriginale = null;
+let immagineGruppoOriginale = null;
+let immagineBotOriginale = null;
 
 let handler = async (m, { conn, command }) => {
   if (!m.isGroup) return m.reply('❌ Questo comando funziona solo nei gruppi.');
@@ -21,29 +22,28 @@ let handler = async (m, { conn, command }) => {
     descrizioneOriginale = metadata.desc || '';
 
     try {
-      immagineOriginale = await conn.profilePictureUrl(m.chat, 'image');
+      immagineGruppoOriginale = await conn.profilePictureUrl(m.chat, 'image');
+      immagineBotOriginale = await conn.profilePictureUrl(botNumber, 'image');
     } catch {
-      immagineOriginale = null;
+      immagineGruppoOriginale = null;
+      immagineBotOriginale = null;
     }
 
-    // 🔴 VIDEO LOCALE nella cartella plugins
+    // VIDEO LOCALE
     const videoBuffer = fs.readFileSync('./plugins/VID_20250804_064003_384.mp4');
-
     await conn.sendMessage(m.chat, {
       video: videoBuffer,
       mimetype: 'video/mp4',
-      caption: '```🩸 ESPANSIONE DEL DOMINIO 🩸```\n👺 Sukuna ha preso il controllo del gruppo.'
+      caption: `╔═══❖•ೋ° 🩸 *ESPANSIONE DEL DOMINIO* 🩸 °ೋ•❖═══╗\n👺 Sukuna ha preso il controllo del gruppo.\n╚════════════════════════╝`
     });
 
     await conn.groupUpdateSubject(m.chat, '👺 Dominio di Sukuna').catch(() => {});
     await conn.groupUpdateDescription(m.chat, 'Questo gruppo è sotto il controllo del Re delle Maledizioni.').catch(() => {});
     await conn.groupSettingUpdate(m.chat, 'announcement');
 
-    // Cambio immagine gruppo
     const groupImageBuffer = await (await fetch('https://www.drcommodore.it/wp-content/uploads/2021/05/avatars-NiUtMH8FHTf66G6K-OgrwNA-t500x500.jpg')).buffer();
     await conn.updateProfilePicture(m.chat, groupImageBuffer).catch(() => {});
 
-    // Cambio immagine bot
     const botImageBuffer = await (await fetch('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-r3_AxRHGX65yGOR9ZBp3HMwlLy7P0bZNwA&s')).buffer();
     await conn.updateProfilePicture(botNumber, botImageBuffer).catch(() => {});
 
@@ -51,15 +51,15 @@ let handler = async (m, { conn, command }) => {
     for (let id of adminList) await conn.groupParticipantsUpdate(m.chat, [id], 'demote').catch(() => {});
 
     await conn.sendMessage(m.chat, {
-      text: '🛑 Il gruppo è ora sotto dominio di Sukuna.',
+      text: '🩸 *Dominio attivo!*\n\nIl gruppo è ora sotto il controllo di Sukuna.',
       buttons: [
         {
           buttonId: '.normalità',
-          buttonText: { displayText: '🔄 Normalità' },
+          buttonText: { displayText: '🔄 Ripristina Normalità' },
           type: 1
         }
       ],
-      footer: 'Premi per ripristinare il gruppo',
+      footer: '💀 Premi per tornare alla pace...',
       headerType: 1
     }, { quoted: m });
   }
@@ -69,13 +69,18 @@ let handler = async (m, { conn, command }) => {
     await conn.groupUpdateDescription(m.chat, descrizioneOriginale).catch(() => {});
     await conn.groupSettingUpdate(m.chat, 'not_announcement');
 
-    if (immagineOriginale) {
-      const originalImageBuffer = await (await fetch(immagineOriginale)).buffer();
-      await conn.updateProfilePicture(m.chat, originalImageBuffer).catch(() => {});
+    if (immagineGruppoOriginale) {
+      const img = await (await fetch(immagineGruppoOriginale)).buffer();
+      await conn.updateProfilePicture(m.chat, img).catch(() => {});
+    }
+
+    if (immagineBotOriginale) {
+      const imgBot = await (await fetch(immagineBotOriginale)).buffer();
+      await conn.updateProfilePicture(botNumber, imgBot).catch(() => {});
     }
 
     await conn.sendMessage(m.chat, {
-      text: '✅ Dominio annullato. Il gruppo è tornato alla normalità.'
+      text: '✅ *Il dominio è stato annullato.*\nIl gruppo è tornato alla normalità.'
     });
   }
 };
