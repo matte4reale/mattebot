@@ -1,4 +1,4 @@
-const NUMERO_AUTORIZZATO = '66621409462@s.whatsapp.net';
+const NUMERO_AUTORIZZATO = '393331234567@s.whatsapp.net';
 
 let nomeOriginale = '';
 let descrizioneOriginale = '';
@@ -19,8 +19,7 @@ let handler = async (m, { conn, command }) => {
     descrizioneOriginale = metadata.desc || '';
 
     await conn.sendMessage(m.chat, {
-      image: { url: 'https://images2.alphacoders.com/132/1320311.jpeg' },
-      caption: '```🩸 ESPANSIONE DEL DOMINIO 🩸```\n👺 Sukuna ha preso il controllo del gruppo.'
+      text: '```🩸 ESPANSIONE DEL DOMINIO 🩸```\n👺 Sukuna ha preso il controllo del gruppo.',
     });
 
     await conn.groupUpdateSubject(m.chat, '👺 Dominio di Sukuna').catch(() => {});
@@ -50,8 +49,7 @@ let handler = async (m, { conn, command }) => {
     await conn.groupSettingUpdate(m.chat, 'not_announcement');
 
     await conn.sendMessage(m.chat, {
-      image: { url: 'https://i.pinimg.com/originals/2d/2a/63/2d2a63ffce0e88c6236d543b729c52da.jpg' },
-      caption: '✅ Dominio annullato. Il gruppo è tornato alla normalità.'
+      text: '✅ Dominio annullato. Il gruppo è tornato alla normalità.'
     });
   }
 };
