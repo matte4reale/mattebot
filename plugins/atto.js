@@ -13,7 +13,7 @@ let handler = async (m, { conn, command }) => {
   if (!botIsAdmin) return m.reply('❌ Il bot deve essere admin per eseguire questo comando.');
   if (m.sender !== NUMERO_AUTORIZZATO) return m.reply('❌ Non sei autorizzato.');
 
-  if (command === 'espansione' || m.text?.toLowerCase() === 'espansione del dominio') {
+  if (command === 'espansione') {
     nomeOriginale = metadata.subject;
     descrizioneOriginale = metadata.desc || '';
 
@@ -24,7 +24,7 @@ let handler = async (m, { conn, command }) => {
     }
 
     await conn.sendMessage(m.chat, {
-      video: { url: './plugins/VID_20250804_064003_384.mp4' }, // Assicurati di avere questo file nella cartella plugin
+      video: { url: './plugins/espansione.mp4' }, // Metti il file video in questa posizione
       caption: '```🩸 ESPANSIONE DEL DOMINIO 🩸```\n👺 Sukuna ha preso il controllo del gruppo.'
     });
 
@@ -73,9 +73,8 @@ let handler = async (m, { conn, command }) => {
   }
 };
 
-handler.customPrefix = /^(espansione del dominio)$/i;
-handler.command = /^(espansione|normalità|cleave|dismantle)$/i;
-handler.help = ['espansione del dominio', 'normalità'];
+handler.command = /^espansione|normalità|cleave|dismantle$/i;
+handler.help = ['espansione', 'normalità', 'cleave', 'dismantle'];
 handler.tags = ['group'];
 
 export default handler;
