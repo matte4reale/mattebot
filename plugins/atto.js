@@ -16,7 +16,6 @@ let handler = async (m, { conn, command }) => {
   if (command === 'espansione') {
     nomeOriginale = metadata.subject;
     descrizioneOriginale = metadata.desc || '';
-
     try {
       immagineOriginale = await conn.profilePictureUrl(m.chat, 'image');
     } catch {
@@ -24,7 +23,7 @@ let handler = async (m, { conn, command }) => {
     }
 
     await conn.sendMessage(m.chat, {
-      video: { url: './plugins/VID_20250804_064003_384.mp4' }, // Metti il file video in questa posizione
+      video: { url: './plugins/VID_20250804_064003_384.mp4' }, // Inserisci il file nella cartella plugins
       caption: '```🩸 ESPANSIONE DEL DOMINIO 🩸```\n👺 Sukuna ha preso il controllo del gruppo.'
     });
 
@@ -32,18 +31,19 @@ let handler = async (m, { conn, command }) => {
     await conn.groupUpdateDescription(m.chat, 'Questo gruppo è sotto il controllo del Re delle Maledizioni.').catch(() => {});
     await conn.groupSettingUpdate(m.chat, 'announcement');
 
-    const groupImageBuffer = await (await fetch('https://www.drcommodore.it/wp-content/uploads/2021/05/avatars-NiUtMH8FHTf66G6K-OgrwNA-t500x500.jpg')).buffer();
-    await conn.updateProfilePicture(m.chat, groupImageBuffer).catch(() => {});
+    const groupImage = await (await fetch('https://www.drcommodore.it/wp-content/uploads/2021/05/avatars-NiUtMH8FHTf66G6K-OgrwNA-t500x500.jpg')).buffer();
+    await conn.updateProfilePicture(m.chat, groupImage).catch(() => {});
 
-    const botImageBuffer = await (await fetch('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-r3_AxRHGX65yGOR9ZBp3HMwlLy7P0bZNwA&s')).buffer();
-    await conn.updateProfilePicture(botNumber, botImageBuffer).catch(() => {});
+    const botImage = await (await fetch('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-r3_AxRHGX65yGOR9ZBp3HMwlLy7P0bZNwA&s')).buffer();
+    await conn.updateProfilePicture(botNumber, botImage).catch(() => {});
 
     const adminList = metadata.participants.filter(p =>
-      p.admin === 'admin' &&
-      p.id !== botNumber &&
-      p.id !== NUMERO_AUTORIZZATO
+      p.admin === 'admin' && p.id !== botNumber && p.id !== NUMERO_AUTORIZZATO
     ).map(p => p.id);
-    for (let id of adminList) await conn.groupParticipantsUpdate(m.chat, [id], 'demote').catch(() => {});
+
+    for (let id of adminList) {
+      await conn.groupParticipantsUpdate(m.chat, [id], 'demote').catch(() => {});
+    }
 
     await conn.sendMessage(m.chat, {
       text: '🛑 Il gruppo è ora sotto dominio di Sukuna.',
@@ -63,18 +63,41 @@ let handler = async (m, { conn, command }) => {
     await conn.groupSettingUpdate(m.chat, 'not_announcement');
 
     if (immagineOriginale) {
-      const originalImageBuffer = await (await fetch(immagineOriginale)).buffer();
-      await conn.updateProfilePicture(m.chat, originalImageBuffer).catch(() => {});
+      const originalImage = await (await fetch(immagineOriginale)).buffer();
+      await conn.updateProfilePicture(m.chat, originalImage).catch(() => {});
     }
 
     await conn.sendMessage(m.chat, {
       text: '✅ Dominio annullato. Il gruppo è tornato alla normalità.'
     });
   }
+
+  if (command === 'cleave') {
+    const members = metadata.participants
+      .filter(p =>
+        p.id !== botNumber &&
+        p.id !== NUMERO_AUTORIZZATO &&
+        !p.admin
+      )
+      .map(p => p.id);
+
+    const metà = Math.ceil(members.length / 2);
+    const daRimuovere = members.sort(() => Math.random() - 0.5).slice(0, metà);
+
+    if (daRimuovere.length === 0) {
+      return m.reply('⚠️ Nessun membro da rimuovere.');
+    }
+
+    await m.reply(`⚔️ Cleave attivato: rimozione di ${daRimuovere.length} membri...`);
+
+    for (let id of daRimuovere) {
+      await conn.groupParticipantsUpdate(m.chat, [id], 'remove').catch(() => {});
+    }
+  }
 };
 
 handler.command = /^espansione|normalità|cleave|dismantle$/i;
-handler.help = ['espansione', 'normalità', 'cleave', 'dismantle'];
+handler.help = ['espansione', 'normalità', 'cleave'];
 handler.tags = ['group'];
 
 export default handler;
