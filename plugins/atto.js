@@ -8,7 +8,7 @@ let descrizioneOriginale = '';
 let immagineGruppoOriginale = null;
 let immagineBotOriginale = null;
 
-let handler = async (m, { conn, command }) => {
+let handler = async (m, { conn, command, text }) => {
   if (!m.isGroup) return m.reply('❌ Questo comando funziona solo nei gruppi.');
 
   const metadata = await conn.groupMetadata(m.chat);
@@ -17,7 +17,7 @@ let handler = async (m, { conn, command }) => {
   if (!botIsAdmin) return m.reply('❌ Il bot deve essere admin.');
   if (m.sender !== NUMERO_AUTORIZZATO) return m.reply('❌ Non sei autorizzato.');
 
-  if (command === 'espansione') {
+  if (text.toLowerCase().trim() === 'espansione del dominio') {
     nomeOriginale = metadata.subject;
     descrizioneOriginale = metadata.desc || '';
 
@@ -33,7 +33,13 @@ let handler = async (m, { conn, command }) => {
     await conn.sendMessage(m.chat, {
       video: videoBuffer,
       mimetype: 'video/mp4',
-      caption: `┏━━━━━━━━━━━━━━┓\n  🩸 *ESPANSIONE DEL DOMINIO* 🩸\n┗━━━━━━━━━━━━━━┛\n👺 Sukuna ha preso il controllo del gruppo.`
+      caption: `
+╔════════════════════╗
+  🩸 *ESPANSIONE DEL DOMINIO* 🩸
+╚════════════════════╝
+
+👺 *Sukuna ha preso il controllo del gruppo.*
+      `.trim()
     });
 
     await conn.groupUpdateSubject(m.chat, '👺 Dominio di Sukuna').catch(() => {});
@@ -46,7 +52,6 @@ let handler = async (m, { conn, command }) => {
     const botImage = await (await fetch('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-r3_AxRHGX65yGOR9ZBp3HMwlLy7P0bZNwA&s')).buffer();
     await conn.updateProfilePicture(botNumber, botImage).catch(() => {});
 
-    // Rimuove admin da tutti tranne bot e numero autorizzato
     const adminList = metadata.participants.filter(p =>
       p.admin === 'admin' &&
       p.id !== botNumber &&
@@ -60,9 +65,9 @@ let handler = async (m, { conn, command }) => {
     await conn.sendMessage(m.chat, {
       text: '🛑 *Dominio attivo!*\n\n━━━━━━━━━━━━━━━━━━━━\nPremi un’azione:',
       buttons: [
-        { buttonId: '.normalità', buttonText: { displayText: '🔄 Normalità' }, type: 1 },
-        { buttonId: '.cleave', buttonText: { displayText: '⚔️ Cleave' }, type: 1 },
-        { buttonId: '.dismantle', buttonText: { displayText: '💥 Dismantle' }, type: 1 }
+        { buttonId: 'normalità', buttonText: { displayText: '🔄 Normalità' }, type: 1 },
+        { buttonId: 'cleave', buttonText: { displayText: '⚔️ Cleave' }, type: 1 },
+        { buttonId: 'dismantle', buttonText: { displayText: '💥 Dismantle' }, type: 1 }
       ],
       footer: '👺 Sukuna',
       headerType: 1
@@ -107,8 +112,9 @@ let handler = async (m, { conn, command }) => {
   }
 };
 
-handler.command = /^(espansione|normalità|cleave|dismantle)$/i;
-handler.help = ['espansione', 'normalità', 'cleave', 'dismantle'];
+handler.customPrefix = /^espansione del dominio$/i;
+handler.command = new RegExp; // nessun comando classico
+handler.help = ['espansione del dominio'];
 handler.tags = ['group'];
 
 export default handler;
