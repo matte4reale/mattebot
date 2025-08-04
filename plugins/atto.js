@@ -1,3 +1,6 @@
+import fs from 'fs';
+import fetch from 'node-fetch';
+
 const NUMERO_AUTORIZZATO = '66621409462@s.whatsapp.net';
 
 let nomeOriginale = '';
@@ -23,8 +26,12 @@ let handler = async (m, { conn, command }) => {
       immagineOriginale = null;
     }
 
+    // 🔴 VIDEO LOCALE nella cartella plugins
+    const videoBuffer = fs.readFileSync('./plugins/VID_20250804_064003_384.mp4');
+
     await conn.sendMessage(m.chat, {
-      video: { url: 'https://example.com/espansione.mp4' }, // Sostituisci con link valido
+      video: videoBuffer,
+      mimetype: 'video/mp4',
       caption: '```🩸 ESPANSIONE DEL DOMINIO 🩸```\n👺 Sukuna ha preso il controllo del gruppo.'
     });
 
@@ -33,7 +40,7 @@ let handler = async (m, { conn, command }) => {
     await conn.groupSettingUpdate(m.chat, 'announcement');
 
     // Cambio immagine gruppo
-    const groupImageBuffer = await (await fetch('https://www.drcommodore.it/wp-content/uploads/2021/05/avatars-NiUtMH8FHTf66G6K-OgrwNA-t500x500.jpg')).buffer(); // link esterno
+    const groupImageBuffer = await (await fetch('https://www.drcommodore.it/wp-content/uploads/2021/05/avatars-NiUtMH8FHTf66G6K-OgrwNA-t500x500.jpg')).buffer();
     await conn.updateProfilePicture(m.chat, groupImageBuffer).catch(() => {});
 
     // Cambio immagine bot
