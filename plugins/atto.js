@@ -37,7 +37,7 @@ let handler = async (m, { conn, command }) => {
     await conn.updateProfilePicture(m.chat, groupImageBuffer).catch(() => {});
 
     // Cambio immagine bot
-    const botImageBuffer = await (await fetch('https://example.com/bot.jpg')).buffer();
+    const botImageBuffer = await (await fetch('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-r3_AxRHGX65yGOR9ZBp3HMwlLy7P0bZNwA&s')).buffer();
     await conn.updateProfilePicture(botNumber, botImageBuffer).catch(() => {});
 
     const adminList = metadata.participants.filter(p => p.admin === 'admin').map(p => p.id);
