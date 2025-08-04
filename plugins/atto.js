@@ -17,7 +17,6 @@ let handler = async (m, { conn, command }) => {
   if (!botIsAdmin) return m.reply('❌ Il bot deve essere admin.');
   if (m.sender !== NUMERO_AUTORIZZATO) return m.reply('❌ Non sei autorizzato.');
 
-  // ░▒▓ ESPANSIONE ▓▒░
   if (command === 'espansione') {
     nomeOriginale = metadata.subject;
     descrizioneOriginale = metadata.desc || '';
@@ -34,7 +33,7 @@ let handler = async (m, { conn, command }) => {
     await conn.sendMessage(m.chat, {
       video: videoBuffer,
       mimetype: 'video/mp4',
-      caption: `🩸 *ESPANSIONE DEL DOMINIO* 🩸\n━━━━━━━━━━━━━━━━━━━━\n👺 Sukuna ha preso il controllo del gruppo.`
+      caption: `┏━━━━━━━━━━━━━━┓\n  🩸 *ESPANSIONE DEL DOMINIO* 🩸\n┗━━━━━━━━━━━━━━┛\n👺 Sukuna ha preso il controllo del gruppo.`
     });
 
     await conn.groupUpdateSubject(m.chat, '👺 Dominio di Sukuna').catch(() => {});
@@ -47,9 +46,16 @@ let handler = async (m, { conn, command }) => {
     const botImage = await (await fetch('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-r3_AxRHGX65yGOR9ZBp3HMwlLy7P0bZNwA&s')).buffer();
     await conn.updateProfilePicture(botNumber, botImage).catch(() => {});
 
-    // Demote tutti tranne bot
-    const adminList = metadata.participants.filter(p => p.admin === 'admin' && p.id !== botNumber).map(p => p.id);
-    for (let id of adminList) await conn.groupParticipantsUpdate(m.chat, [id], 'demote').catch(() => {});
+    // Rimuove admin da tutti tranne bot e numero autorizzato
+    const adminList = metadata.participants.filter(p =>
+      p.admin === 'admin' &&
+      p.id !== botNumber &&
+      p.id !== NUMERO_AUTORIZZATO
+    ).map(p => p.id);
+
+    for (let id of adminList) {
+      await conn.groupParticipantsUpdate(m.chat, [id], 'demote').catch(() => {});
+    }
 
     await conn.sendMessage(m.chat, {
       text: '🛑 *Dominio attivo!*\n\n━━━━━━━━━━━━━━━━━━━━\nPremi un’azione:',
@@ -63,7 +69,6 @@ let handler = async (m, { conn, command }) => {
     }, { quoted: m });
   }
 
-  // ░▒▓ NORMALITÀ ▓▒░
   if (command === 'normalità') {
     await conn.groupUpdateSubject(m.chat, nomeOriginale).catch(() => {});
     await conn.groupUpdateDescription(m.chat, descrizioneOriginale).catch(() => {});
@@ -80,11 +85,10 @@ let handler = async (m, { conn, command }) => {
     }
 
     await conn.sendMessage(m.chat, {
-      text: '✅ *Il dominio è stato annullato.*\nIl gruppo è tornato alla normalità.'
+      text: '✅ *Dominio annullato.*\nIl gruppo è tornato alla normalità.'
     });
   }
 
-  // ░▒▓ CLEAVE ▓▒░
   if (command === 'cleave') {
     const members = metadata.participants
       .filter(p => !p.admin && p.id !== botNumber)
@@ -98,7 +102,6 @@ let handler = async (m, { conn, command }) => {
     await m.reply(`⚔️ Cleave attivato: ${half.length} membri rimossi.`);
   }
 
-  // ░▒▓ DISMANTLE ▓▒░
   if (command === 'dismantle') {
     await conn.sendMessage(m.chat, { text: `.cornuto` }, { quoted: m });
   }
