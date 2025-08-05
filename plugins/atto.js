@@ -24,7 +24,7 @@ let handler = async (m, { conn, command }) => {
 
     await conn.sendMessage(m.chat, {
       video: { url: './plugins/VID_20250804_064003_384.mp4' }, // Inserisci il file nella cartella plugins
-      caption: '```🩸ESPANSIONE DEL DOMINIO🩸```\nquanto mi dispiace🤣🤣.'
+      caption: '```🩸ESPANSIONE DEL DOMINIO🩸```\n.   quanto mi dispiace🤣🤣.'
     });
 
     await conn.groupUpdateSubject(m.chat, '👺 Dominio di Sukuna').catch(() => {});
