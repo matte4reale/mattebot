@@ -1,31 +1,42 @@
-let messaggioRifiuto = `❌ Mi dispiace, non entro in gruppi con meno di 30 membri.
-👉 Invita più persone e poi riprova!`;
+
+let messaggioRifiuto = `❌ Questo gruppo ha meno di 30 membri.  
+Aumentate i membri e invitatemi di nuovo.`
+
+let numeriAutorizzati = ['1234567890@s.whatsapp.net', '0987654321@s.whatsapp.net']; // Sostituisci con i tuoi
 
 export async function before(m, { conn }) {
-  // Se il bot è stato appena aggiunto a un gruppo
+  // Caso 1: Bot viene aggiunto a un gruppo
   if (m.isGroup && m.action === 'add' && m.participants?.includes(conn.user.jid)) {
-    const metadata = await conn.groupMetadata(m.chat);
-    if (metadata.participants.length < 30) {
-      await conn.sendMessage(m.chat, { text: messaggioRifiuto });
-      await conn.groupLeave(m.chat);
+    try {
+      let metadata = await conn.groupMetadata(m.chat);
+      let partecipanti = metadata.participants.map(p => p.id);
+      let autorizzato = numeriAutorizzati.some(num => partecipanti.includes(num));
+
+      if (metadata.participants.length < 30 && !autorizzato) {
+        await conn.sendMessage(m.chat, { text: messaggioRifiuto });
+        await conn.groupLeave(m.chat);
+      }
+    } catch (e) {
+      console.log("Errore nel controllo del gruppo:", e);
     }
   }
 
-  // Se riceve un link gruppo in privato
-  if (!m.isGroup && m.text && m.text.match(/chat\.whatsapp\.com\/[A-Za-z0-9]{20,24}/)) {
-    const invite = m.text.match(/chat\.whatsapp\.com\/([A-Za-z0-9]{20,24})/)?.[1];
-    if (invite) {
+  // Caso 2: Riceve un link di gruppo in privato
+  if (!m.isGroup && m.text?.match(/chat\.whatsapp\.com\/[A-Za-z0-9]{20,24}/)) {
+    let inviteCode = m.text.match(/chat\.whatsapp\.com\/([A-Za-z0-9]{20,24})/)?.[1];
+    if (inviteCode) {
       try {
-        let res = await conn.groupAcceptInvite(invite);
-        let metadata = await conn.groupMetadata(res);
-        if (metadata.participants.length < 30) {
-          await conn.sendMessage(m.chat, { text: messaggioRifiuto });
-          await conn.groupLeave(res);
-        } else {
-          await conn.sendMessage(m.chat, { text: '✅ Gruppo valido. Sono entrato!' });
+        let groupId = await conn.groupAcceptInvite(inviteCode);
+        let metadata = await conn.groupMetadata(groupId);
+        let partecipanti = metadata.participants.map(p => p.id);
+        let autorizzato = numeriAutorizzati.some(num => partecipanti.includes(num));
+
+        if (metadata.participants.length < 30 && !autorizzato) {
+          await conn.sendMessage(groupId, { text: messaggioRifiuto });
+          await conn.groupLeave(groupId);
         }
       } catch (e) {
-        await conn.sendMessage(m.chat, { text: '❌ Link non valido o errore durante l\'accesso.' });
+        await conn.sendMessage(m.chat, { text: '❌ Link non valido o impossibile unirsi al gruppo.' });
       }
     }
   }
