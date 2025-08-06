@@ -1,50 +1,40 @@
-const { areJidsSameUser } = require("@whiskeysockets/baileys")
+const { areJidsSameUser } = require('@whiskeysockets/baileys');
 
-// Numeri autorizzati (senza il +, solo cifre)
-const NUMERI_AUTORIZZATI = ['393471234567', '393661234567'];
+const NUMERI_AUTORIZZATI = ['393471234567', '393661234567']; // Sostituisci con i tuoi
 
 module.exports = {
   name: 'groupGuard',
   type: 'event',
   async handler(m, { conn }) {
-    const isGroup = m.key.remoteJid.endsWith('@g.us');
-    const senderJid = m.key.participant || m.key.remoteJid;
-
-    // 💬 1. Controlla se riceve link gruppo in privato
-    if (!isGroup && m.message?.conversation?.includes('chat.whatsapp.com/')) {
-      const link = m.message.conversation.match(/chat\.whatsapp\.com\/([0-9A-Za-z]{20,24})/);
-      if (link) {
+    // 🔧 Verifica se è un messaggio privato con link
+    if (!m.key.remoteJid.endsWith('@g.us') && m.message?.conversation?.includes('chat.whatsapp.com/')) {
+      const code = m.message.conversation.split('chat.whatsapp.com/')[1]?.trim();
+      if (code) {
         try {
-          const info = await conn.groupGetInviteInfo(link[1]);
+          const info = await conn.groupGetInviteInfo(code);
           if (info.size < 30) {
-            await conn.sendMessage(m.key.remoteJid, {
-              text: `❌ Questo gruppo ha meno di 30 membri.\nAumentate i membri e invitatemi di nuovo.`,
-            });
+            await conn.sendMessage(m.key.remoteJid, { text: '❌ Questo gruppo ha meno di 30 membri.\nAumentate i membri e invitatemi di nuovo.' });
           }
-        } catch {
-          await conn.sendMessage(m.key.remoteJid, { text: '⚠️ Link non valido o impossibile controllare.' });
+        } catch (e) {
+          await conn.sendMessage(m.key.remoteJid, { text: '⚠️ Impossibile controllare il gruppo. Link non valido o errore.' });
         }
       }
     }
 
-    // 🚪 2. Se viene aggiunto a un gruppo manualmente
+    // 👥 Quando il bot viene aggiunto a un gruppo
     if (m.messageStubType === 27 || m.messageStubType === 'add') {
       const groupId = m.key.remoteJid;
+      const inviter = m.messageStubParameters?.[0];
       try {
         const metadata = await conn.groupMetadata(groupId);
-        const size = metadata.participants.length;
+        const isAuthorized = NUMERI_AUTORIZZATI.some(num => areJidsSameUser(`${num}@s.whatsapp.net`, inviter));
 
-        // Controlla se chi lo ha aggiunto è autorizzato
-        const autorizzato = NUMERI_AUTORIZZATI.some(num => areJidsSameUser(`${num}@s.whatsapp.net`, m.messageStubParameters[0]));
-
-        if (size < 30 && !autorizzato) {
-          await conn.sendMessage(groupId, {
-            text: `❌ Questo gruppo ha meno di 30 membri.\nAumentate i membri e invitatemi di nuovo.`,
-          });
+        if (metadata.participants.length < 30 && !isAuthorized) {
+          await conn.sendMessage(groupId, { text: '❌ Questo gruppo ha meno di 30 membri.\nAumentate i membri e invitatemi di nuovo.' });
           await conn.groupLeave(groupId);
         }
-      } catch (e) {
-        console.error('[Errore aggiunta gruppo]:', e);
+      } catch (err) {
+        console.error('Errore:', err);
       }
     }
   }
