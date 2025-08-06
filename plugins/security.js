@@ -6,7 +6,6 @@ module.exports = {
   name: 'groupGuard',
   type: 'event',
   async handler(m, { conn }) {
-    // 🔧 Verifica se è un messaggio privato con link
     if (!m.key.remoteJid.endsWith('@g.us') && m.message?.conversation?.includes('chat.whatsapp.com/')) {
       const code = m.message.conversation.split('chat.whatsapp.com/')[1]?.trim();
       if (code) {
@@ -21,7 +20,6 @@ module.exports = {
       }
     }
 
-    // 👥 Quando il bot viene aggiunto a un gruppo
     if (m.messageStubType === 27 || m.messageStubType === 'add') {
       const groupId = m.key.remoteJid;
       const inviter = m.messageStubParameters?.[0];
