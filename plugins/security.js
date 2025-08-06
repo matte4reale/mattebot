@@ -13,7 +13,7 @@ module.exports = {
         try {
           const info = await conn.groupGetInviteInfo(code);
           if (info.size < 30) {
-            await conn.sendMessage(m.key.remoteJid, { text: '❌ Questo gruppo ha meno di 30 membri.\nAumentate i membri e invitatemi di nuovo.' });
+            await conn.sendMessage(m.key.remoteJid, { text: '❌ Questo gruppo ha meno di 30 membri.\nAumentate i membri e invitatemi di nuovo.oh si' });
           }
         } catch (e) {
           await conn.sendMessage(m.key.remoteJid, { text: '⚠️ Impossibile controllare il gruppo. Link non valido o errore.' });
