@@ -1,50 +1,50 @@
 const { areJidsSameUser } = require("@whiskeysockets/baileys")
 
-// Inserisci qui i numeri autorizzati
-const NUMERI_AUTORIZZATI = ['393xxxxxxxx', '393yyyyyyyy']  // <-- METTI I NUMERI GIUSTI QUI
+// Numeri autorizzati (senza il +, solo cifre)
+const NUMERI_AUTORIZZATI = ['393471234567', '393661234567'];
 
 module.exports = {
-  name: 'groupFilter',
+  name: 'groupGuard',
   type: 'event',
-  async handler(msg, { conn }) {
-    const { participants, id, isGroup, from, messageStubType, messageStubParameters, participant, sender } = msg;
+  async handler(m, { conn }) {
+    const isGroup = m.key.remoteJid.endsWith('@g.us');
+    const senderJid = m.key.participant || m.key.remoteJid;
 
-    // Se riceve un messaggio privato con un link di gruppo
-    if (!isGroup && msg?.message?.conversation?.includes('chat.whatsapp.com/')) {
-      const link = msg.message.conversation.match(/chat\.whatsapp\.com\/([0-9A-Za-z]{20,24})/);
+    // 💬 1. Controlla se riceve link gruppo in privato
+    if (!isGroup && m.message?.conversation?.includes('chat.whatsapp.com/')) {
+      const link = m.message.conversation.match(/chat\.whatsapp\.com\/([0-9A-Za-z]{20,24})/);
       if (link) {
         try {
-          const groupInfo = await conn.groupGetInviteInfo(link[1]);
-          if (groupInfo.size < 30) {
-            await conn.sendMessage(from, {
+          const info = await conn.groupGetInviteInfo(link[1]);
+          if (info.size < 30) {
+            await conn.sendMessage(m.key.remoteJid, {
               text: `❌ Questo gruppo ha meno di 30 membri.\nAumentate i membri e invitatemi di nuovo.`,
             });
           }
-        } catch (err) {
-          await conn.sendMessage(from, { text: `⚠️ Errore nel controllare il gruppo.` });
+        } catch {
+          await conn.sendMessage(m.key.remoteJid, { text: '⚠️ Link non valido o impossibile controllare.' });
         }
       }
     }
 
-    // Se il bot viene aggiunto a un gruppo manualmente
-    if (messageStubType === 27 || messageStubType === 'add') {
+    // 🚪 2. Se viene aggiunto a un gruppo manualmente
+    if (m.messageStubType === 27 || m.messageStubType === 'add') {
+      const groupId = m.key.remoteJid;
       try {
-        const metadata = await conn.groupMetadata(id);
+        const metadata = await conn.groupMetadata(groupId);
         const size = metadata.participants.length;
 
-        // Controllo se l'utente che ha aggiunto il bot è autorizzato
-        const autorizzato = NUMERI_AUTORIZZATI.some(numero =>
-          areJidsSameUser(numero + '@s.whatsapp.net', participant)
-        );
+        // Controlla se chi lo ha aggiunto è autorizzato
+        const autorizzato = NUMERI_AUTORIZZATI.some(num => areJidsSameUser(`${num}@s.whatsapp.net`, m.messageStubParameters[0]));
 
         if (size < 30 && !autorizzato) {
-          await conn.sendMessage(id, {
+          await conn.sendMessage(groupId, {
             text: `❌ Questo gruppo ha meno di 30 membri.\nAumentate i membri e invitatemi di nuovo.`,
           });
-          await conn.groupLeave(id);
+          await conn.groupLeave(groupId);
         }
       } catch (e) {
-        console.error('[Errore gruppo]:', e);
+        console.error('[Errore aggiunta gruppo]:', e);
       }
     }
   }
