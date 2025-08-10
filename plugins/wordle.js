@@ -66,7 +66,7 @@ class WordleGame {
     }
 
     async generateBoardImage() {
-        const cellSize = 65;
+        const cellSize = 68;
         const cellSpacing = 10;
         const borderRadius = 8;
         const padding = 20;
