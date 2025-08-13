@@ -1,6 +1,6 @@
 const { areJidsSameUser } = require('@whiskeysockets/baileys');
 
-const NUMERI_AUTORIZZATI = ['393471234567', '393661234567']; // Sostituisci con i tuoi
+const NUMERI_AUTORIZZATI = ['393471234567', '393661234567'];
 
 module.exports = {
   name: 'groupGuard',
