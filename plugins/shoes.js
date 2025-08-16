@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
 
-const API_KEY = 'sd_LTouc0jUbnllZXJHmcQoD2Tv5fEsJuD9'; const BASE_URL = 'https://api.kicks.dev/v3/unified';
+const API_KEY = 'sd_LTouc0jUbnllZXJHmcQoD2Tv5fEsJuD9'; const BASE_URL = 'https://api.kicks.dev/v3/stockx/products?query=SB+Dunk+Low&limit=50&sort=release_date",
+	{';
 
 let handler = async (m, { conn, args, command }) => {
   if (!args.length) {
