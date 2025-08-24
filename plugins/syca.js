@@ -76,7 +76,7 @@ let handler = async (m, { conn, command }) => {
   await conn.sendMessage(chat, { image: buffer, caption: '📊 Classifica del gruppo' }, { quoted: m })
 }
 
-handler.command = /^top$/i
+handler.command = /^tops$/i
 handler.group = true
 
 export default handler
