@@ -1,8 +1,8 @@
-import { createCanvas, loadImage } from 'canvas'
+import { createCanvas } from 'canvas'
 
-async function generaPodio(conn, chat, users, topN = 10) {
-  const width = 950
-  const height = 750
+async function generaPodio(users, topN = 10) {
+  const width = 900
+  const height = 700
   const canvas = createCanvas(width, height)
   const ctx = canvas.getContext('2d')
 
@@ -21,16 +21,17 @@ async function generaPodio(conn, chat, users, topN = 10) {
     ctx.fill()
   }
 
+  // titolo
   ctx.fillStyle = '#fbbf24'
-  ctx.font = 'bold 55px Arial'
+  ctx.font = 'bold 50px Arial'
   ctx.textAlign = 'center'
-  ctx.fillText('🏆 HARUSS PODIO', width / 2, 70)
+  ctx.fillText('🏆 HARUSS CLASSIFICA 🏆', width / 2, 70)
 
-  // --- POSIZIONI PODIO ---
+  // --- PODIO ---
   const podium = [
-    { pos: 2, x: width / 2 - 220, y: 320, h: 180, color: '#c0c0c0' }, // argento
-    { pos: 1, x: width / 2, y: 260, h: 240, color: '#ffd700' },       // oro
-    { pos: 3, x: width / 2 + 220, y: 350, h: 150, color: '#cd7f32' }  // bronzo
+    { pos: 2, x: width / 2 - 220, h: 150, color: '#c0c0c0' }, // argento
+    { pos: 1, x: width / 2, h: 220, color: '#ffd700' },       // oro
+    { pos: 3, x: width / 2 + 220, h: 120, color: '#cd7f32' }  // bronzo
   ]
 
   for (let i = 0; i < 3 && i < users.length; i++) {
@@ -39,36 +40,23 @@ async function generaPodio(conn, chat, users, topN = 10) {
 
     // base podio
     ctx.fillStyle = p.color
-    ctx.fillRect(p.x - 80, height - p.h - 200, 160, p.h)
-
-    // avatar
-    try {
-      const url = await conn.profilePictureUrl(u.id, 'image').catch(() => null)
-      if (url) {
-        const avatar = await loadImage(url)
-        ctx.save()
-        ctx.beginPath()
-        ctx.arc(p.x, height - p.h - 260, 70, 0, Math.PI * 2)
-        ctx.closePath()
-        ctx.clip()
-        ctx.drawImage(avatar, p.x - 70, height - p.h - 330, 140, 140)
-        ctx.restore()
-      }
-    } catch {}
+    ctx.fillRect(p.x - 80, height - p.h - 220, 160, p.h)
 
     // nome
     ctx.fillStyle = '#fff'
     ctx.font = 'bold 26px Arial'
-    ctx.fillText(u.name, p.x, height - p.h - 100)
+    ctx.fillText(u.name, p.x, height - p.h - 240)
 
     // punti
     ctx.fillStyle = '#e2e8f0'
     ctx.font = '22px Arial'
-    ctx.fillText(`💰${u.euro || 0}€ ⭐${u.exp || 0}xp`, p.x, height - p.h - 70)
+    ctx.fillText(`💰${u.euro || 0}€ ⭐${u.exp || 0}xp`, p.x, height - p.h - 200)
 
     // il primo ha la coppa + manine 🙌
     if (p.pos === 1) {
-      ctx.fillText('🙌 🏆 🙌', p.x, height - p.h - 160)
+      ctx.fillStyle = '#ffd700'
+      ctx.font = '30px Arial'
+      ctx.fillText('🙌 🏆 🙌', p.x, height - p.h - 270)
     }
   }
 
@@ -88,6 +76,7 @@ async function generaPodio(conn, chat, users, topN = 10) {
     ctx.fillText(`💰${u.euro || 0}€ ⭐${u.exp || 0}xp`, 500, y)
   }
 
+  // firma
   ctx.fillStyle = '#94a3b8'
   ctx.font = '18px Arial'
   ctx.textAlign = 'right'
@@ -108,7 +97,7 @@ let handler = async (m, { conn }) => {
     }))
     .sort((a, b) => (b.euro + b.exp) - (a.euro + a.exp))
 
-  const buffer = await generaPodio(conn, chat, dbUsers, 10)
+  const buffer = await generaPodio(dbUsers, 10)
   await conn.sendMessage(chat, { image: buffer, caption: '🎉 HARUSS CLASSIFICA 🎉' }, { quoted: m })
 }
 
