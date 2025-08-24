@@ -15,7 +15,7 @@ async function generaClassifica(conn, chat, users, topN = 10) {
   ctx.fillStyle = '#fbbf24'
   ctx.font = 'bold 46px Arial'
   ctx.textAlign = 'center'
-  ctx.fillText('🏆 CLASSIFICA', width / 2, 80)
+  ctx.fillText('🏆 HARUSS RANK', width / 2, 80)
 
   for (let i = 0; i < Math.min(topN, users.length); i++) {
     const u = users[i]
@@ -71,10 +71,10 @@ let handler = async (m, { conn }) => {
     .sort((a, b) => (b.euro + b.exp) - (a.euro + a.exp))
 
   const buffer = await generaClassifica(conn, chat, dbUsers, 10)
-  await conn.sendMessage(chat, { image: buffer, caption: '📊 Classifica del gruppo' }, { quoted: m })
+  await conn.sendMessage(chat, { image: buffer, caption: '📊 HARUSS CLASSIFICA' }, { quoted: m })
 }
 
-handler.command = /^classifica$/i
+handler.command = /^haruss$/i
 handler.group = true
 
 export default handler
