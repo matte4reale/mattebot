@@ -8,20 +8,20 @@ let handler = async (m, { conn }) => {
 
   if (!users.length) return m.reply('❌ Nessun utente trovato nella classifica.')
 
-  const width = 1300
-  const height = 950
+  const width = 1400
+  const height = 900
   const canvas = createCanvas(width, height)
   const ctx = canvas.getContext('2d')
 
   // SFONDO sfumato
   const gradient = ctx.createLinearGradient(0, 0, width, height)
-  gradient.addColorStop(0, '#1e3a8a') // blu
-  gradient.addColorStop(1, '#6d28d9') // viola
+  gradient.addColorStop(0, '#1e3a8a')
+  gradient.addColorStop(1, '#6d28d9')
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, width, height)
 
   // CORIANDOLI
-  for (let i = 0; i < 300; i++) {
+  for (let i = 0; i < 250; i++) {
     ctx.beginPath()
     ctx.fillStyle = `hsl(${Math.random() * 360}, 80%, 60%)`
     ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 3 + 2, 0, Math.PI * 2)
@@ -32,24 +32,24 @@ let handler = async (m, { conn }) => {
   ctx.fillStyle = '#facc15'
   ctx.font = 'bold 60px Arial'
   ctx.textAlign = 'center'
-  ctx.fillText('HARUSS CLASSIFICA', width / 2, 90)
+  ctx.fillText('HARUSS CLASSIFICA', width / 2, 80)
 
-  // P O D I O
-  const podiumX = [width / 2 - 300, width / 2, width / 2 + 300]
+  // P O D I O (a destra)
+  const podiumX = [width - 600, width - 300, width - 900] // 2°, 1°, 3°
   const podiumY = [500, 350, 600]
   const podiumH = [220, 370, 170]
-  const colors = ['#9ca3af', '#facc15', '#d97706'] // 2°, 1°, 3°
+  const colors = ['#9ca3af', '#facc15', '#d97706']
 
   for (let i = 0; i < 3; i++) {
     if (!users[i]) continue
 
     // Colonne
     ctx.fillStyle = colors[i]
-    ctx.fillRect(podiumX[i] - 100, podiumY[i], 200, podiumH[i])
+    ctx.fillRect(podiumX[i], podiumY[i], 180, podiumH[i])
 
     // Cerchio sopra
     ctx.beginPath()
-    ctx.arc(podiumX[i], podiumY[i] - 100, 70, 0, Math.PI * 2)
+    ctx.arc(podiumX[i] + 90, podiumY[i] - 100, 70, 0, Math.PI * 2)
     ctx.fillStyle = colors[i]
     ctx.fill()
 
@@ -60,42 +60,56 @@ let handler = async (m, { conn }) => {
         let img = await loadImage(pp)
         ctx.save()
         ctx.beginPath()
-        ctx.arc(podiumX[i], podiumY[i] - 100, 65, 0, Math.PI * 2)
+        ctx.arc(podiumX[i] + 90, podiumY[i] - 100, 65, 0, Math.PI * 2)
         ctx.closePath()
         ctx.clip()
-        ctx.drawImage(img, podiumX[i] - 65, podiumY[i] - 165, 130, 130)
+        ctx.drawImage(img, podiumX[i] + 25, podiumY[i] - 165, 130, 130)
         ctx.restore()
       }
     } catch {}
 
-    // Numero posizione
-    ctx.fillStyle = '#000'
-    ctx.font = 'bold 30px Arial'
-    ctx.textAlign = 'center'
-    ctx.fillText(`#${i + 1}`, podiumX[i], podiumY[i] - 100 + 95)
-
     // Nome + stats
     ctx.fillStyle = '#fff'
     ctx.font = 'bold 22px Arial'
-    ctx.fillText(users[i].id.split('@')[0], podiumX[i], podiumY[i] + podiumH[i] / 2)
+    ctx.textAlign = 'center'
+    ctx.fillText(users[i].id.split('@')[0], podiumX[i] + 90, podiumY[i] + podiumH[i] + 30)
 
     ctx.font = '18px Arial'
-    ctx.fillText(`${users[i].euro || 0}€ | ${users[i].exp}xp`, podiumX[i], podiumY[i] + podiumH[i] / 2 + 30)
+    ctx.fillText(`${users[i].euro || 0}€ | ${users[i].exp}xp`, podiumX[i] + 90, podiumY[i] + podiumH[i] + 55)
   }
 
-  // Manine + Coppa sul 1°
-  ctx.fillStyle = '#facc15'
-  ctx.font = '60px Arial'
-  ctx.fillText('🏆', width / 2, podiumY[1] - 240)
-  ctx.font = '40px Arial'
-  ctx.fillText('🙌', width / 2 - 80, podiumY[1] - 200)
-  ctx.fillText('🙌', width / 2 + 80, podiumY[1] - 200)
+  // COPPA + MANI disegnate sopra al 1°
+  const centerX = width - 300 + 90
+  const topY = 350 - 200
 
-  // TABELLONE 4–10
-  const boxX = 60
-  const boxY = 250
-  const boxW = 420
-  const boxH = 500
+  // Coppa
+  ctx.fillStyle = '#FFD700'
+  ctx.beginPath()
+  ctx.moveTo(centerX - 50, topY)
+  ctx.lineTo(centerX + 50, topY)
+  ctx.lineTo(centerX + 40, topY + 80)
+  ctx.lineTo(centerX - 40, topY + 80)
+  ctx.closePath()
+  ctx.fill()
+
+  ctx.fillRect(centerX - 20, topY + 80, 40, 40) // stelo
+  ctx.fillRect(centerX - 50, topY + 120, 100, 20) // base
+
+  // Manine
+  ctx.strokeStyle = '#ffcc99'
+  ctx.lineWidth = 8
+  ctx.beginPath()
+  ctx.arc(centerX - 90, topY + 40, 30, 0, Math.PI * 2) // sx
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.arc(centerX + 90, topY + 40, 30, 0, Math.PI * 2) // dx
+  ctx.stroke()
+
+  // LISTA (4–10) a sinistra
+  const boxX = 80
+  const boxY = 200
+  const boxW = 450
+  const boxH = 550
 
   ctx.fillStyle = 'rgba(0,0,0,0.55)'
   ctx.fillRect(boxX, boxY, boxW, boxH)
@@ -108,13 +122,13 @@ let handler = async (m, { conn }) => {
   ctx.font = '22px Arial'
   for (let i = 3; i < Math.min(10, users.length); i++) {
     const u = users[i]
-    const y = boxY + 90 + (i - 3) * 55
+    const y = boxY + 100 + (i - 3) * 60
 
     ctx.fillStyle = '#fff'
     ctx.fillText(`#${i + 1} ${u.id.split('@')[0]}`, boxX + 30, y)
 
     ctx.fillStyle = '#cbd5e1'
-    ctx.fillText(`${u.euro || 0}€ | ${u.exp || 0}xp`, boxX + 250, y)
+    ctx.fillText(`${u.euro || 0}€ | ${u.exp || 0}xp`, boxX + 280, y)
   }
 
   // FIRMA
