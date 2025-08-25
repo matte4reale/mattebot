@@ -91,5 +91,5 @@ let handler = async (m, { conn }) => {
   fs.unlinkSync(outPath)
 }
 
-handler.command = /^harussvideo$/i
+handler.command = /^haruss$/i
 export default handler
