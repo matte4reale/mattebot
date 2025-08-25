@@ -34,7 +34,7 @@ let handler = async (m, { conn }) => {
   ctx.textAlign = 'center'
   ctx.fillText('HARUSS CLASSIFICA', width / 2, 90)
 
-  // coordinate per tabella a sinistra
+  // tabella a sinistra
   const boxX = 100
   const boxY = 250
   const boxW = 500
@@ -48,10 +48,11 @@ let handler = async (m, { conn }) => {
   ctx.textAlign = 'left'
   ctx.fillText('TOP 10:', boxX + 20, boxY + 50)
 
+  // 🔥 lista dal #1 al #10
   ctx.font = '22px Arial'
-  for (let i = 3; i < Math.min(10, users.length); i++) {
+  for (let i = 0; i < Math.min(10, users.length); i++) {
     const u = users[i]
-    const y = boxY + 100 + (i - 3) * 60
+    const y = boxY + 100 + i * 60
 
     ctx.fillStyle = '#fff'
     ctx.fillText(`#${i + 1} ${u.id.split('@')[0]}`, boxX + 30, y)
@@ -60,7 +61,7 @@ let handler = async (m, { conn }) => {
     ctx.fillText(`${u.euro || 0}€ | ${u.exp || 0}xp`, boxX + 310, y)
   }
 
-  // podio a destra alla stessa altezza
+  // podio a destra
   const baseY = boxY + boxH
   const colW = 180
   const spacing = 240
@@ -126,7 +127,7 @@ let handler = async (m, { conn }) => {
   if (first) {
     const y = baseY - first.h
     const cx = first.x + colW / 2
-    const cy = y - 220 // 🔥 più in alto sopra la foto
+    const cy = y - 220 // più alto
 
     ctx.fillStyle = '#FFD700'
     ctx.beginPath()
