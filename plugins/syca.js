@@ -1,4 +1,5 @@
-import { createCanvas, loadImage } from 'canvas'
+import { createCanvas } from 'canvas'
+import { spawn } from 'child_process'
 
 let handler = async (m, { conn }) => {
   const users = Object.entries(global.db.data.users)
@@ -8,171 +9,94 @@ let handler = async (m, { conn }) => {
 
   if (!users.length) return m.reply('❌ Nessun utente trovato nella classifica.')
 
-  const width = 1500
-  const height = 1000
+  const width = 1280
+  const height = 720
+  const frames = 120
+  const fps = 30
+
+  const ffmpeg = spawn('ffmpeg', [
+    '-y',
+    '-f', 'rawvideo',
+    '-pix_fmt', 'rgba',
+    '-s', `${width}x${height}`,
+    '-r', `${fps}`,
+    '-i', '-',
+    '-c:v', 'libx264',
+    '-pix_fmt', 'yuv420p',
+    '/tmp/classifica.mp4'
+  ])
+
   const canvas = createCanvas(width, height)
   const ctx = canvas.getContext('2d')
 
-  // sfondo
-  const gradient = ctx.createLinearGradient(0, 0, width, height)
-  gradient.addColorStop(0, '#1e3a8a')
-  gradient.addColorStop(1, '#6d28d9')
-  ctx.fillStyle = gradient
-  ctx.fillRect(0, 0, width, height)
+  for (let i = 0; i < frames; i++) {
+    ctx.fillStyle = '#1e3a8a'
+    ctx.fillRect(0, 0, width, height)
 
-  // coriandoli
-  for (let i = 0; i < 200; i++) {
-    ctx.beginPath()
-    ctx.fillStyle = `hsl(${Math.random() * 360}, 80%, 60%)`
-    ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 3 + 2, 0, Math.PI * 2)
-    ctx.fill()
-  }
+    for (let j = 0; j < 150; j++) {
+      ctx.beginPath()
+      ctx.fillStyle = `hsl(${Math.random() * 360}, 80%, 60%)`
+      ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 3 + 2, 0, Math.PI * 2)
+      ctx.fill()
+    }
 
-  // titolo
-  ctx.fillStyle = '#facc15'
-  ctx.font = 'bold 60px Arial'
-  ctx.textAlign = 'center'
-  ctx.fillText('HARUSS CLASSIFICA', width / 2, 90)
-
-  // box classifica (a sinistra, con angoli arrotondati e cornicina bianca)
-  const boxX = 100
-  const boxY = 200
-  const boxW = 520
-  const boxH = 650
-  const radius = 30
-
-  ctx.fillStyle = 'rgba(0,0,0,0.55)'
-  ctx.strokeStyle = '#fff'
-  ctx.lineWidth = 6
-  ctx.beginPath()
-  ctx.moveTo(boxX + radius, boxY)
-  ctx.lineTo(boxX + boxW - radius, boxY)
-  ctx.quadraticCurveTo(boxX + boxW, boxY, boxX + boxW, boxY + radius)
-  ctx.lineTo(boxX + boxW, boxY + boxH - radius)
-  ctx.quadraticCurveTo(boxX + boxW, boxY + boxH, boxX + boxW - radius, boxY + boxH)
-  ctx.lineTo(boxX + radius, boxY + boxH)
-  ctx.quadraticCurveTo(boxX, boxY + boxH, boxX, boxY + boxH - radius)
-  ctx.lineTo(boxX, boxY + radius)
-  ctx.quadraticCurveTo(boxX, boxY, boxX + radius, boxY)
-  ctx.closePath()
-  ctx.fill()
-  ctx.stroke()
-
-  // scritte classifica
-  ctx.fillStyle = '#facc15'
-  ctx.font = 'bold 38px Arial'
-  ctx.textAlign = 'left'
-  ctx.fillText('TOP 10:', boxX + 20, boxY + 50)
-
-  ctx.font = '22px Arial'
-  users.forEach((u, i) => {
-    const y = boxY + 100 + i * 55
-
-    ctx.fillStyle = '#fff'
-    ctx.fillText(`#${i + 1} ${u.id.split('@')[0]}`, boxX + 30, y)
-
-    ctx.fillStyle = '#cbd5e1'
-    ctx.fillText(`${u.euro || 0}€ | ${u.exp || 0}xp`, boxX + 310, y)
-  })
-
-  // podio a destra
-  const baseY = boxY + boxH
-  const colW = 180
-  const spacing = 240
-  const centerX = width - 420
-
-  const positions = [
-    { rank: 2, x: centerX - spacing, h: 160, color: '#9ca3af' },
-    { rank: 1, x: centerX, h: 220, color: '#facc15' },
-    { rank: 3, x: centerX + spacing, h: 140, color: '#d97706' }
-  ]
-
-  for (let pos of positions) {
-    const user = users[pos.rank - 1]
-    if (!user) continue
-
-    const y = baseY - pos.h
-
-    // rettangolo podio
-    ctx.fillStyle = pos.color
-    ctx.strokeStyle = '#fff'
-    ctx.lineWidth = 6
-    const r = 20
-
-    ctx.beginPath()
-    ctx.moveTo(pos.x + r, y)
-    ctx.lineTo(pos.x + colW - r, y)
-    ctx.quadraticCurveTo(pos.x + colW, y, pos.x + colW, y + r)
-    ctx.lineTo(pos.x + colW, baseY - r)
-    ctx.quadraticCurveTo(pos.x + colW, baseY, pos.x + colW - r, baseY)
-    ctx.lineTo(pos.x + r, baseY)
-    ctx.quadraticCurveTo(pos.x, baseY, pos.x, baseY - r)
-    ctx.lineTo(pos.x, y + r)
-    ctx.quadraticCurveTo(pos.x, y, pos.x + r, y)
-    ctx.closePath()
-    ctx.fill()
-    ctx.stroke()
-
-    // foto profilo
-    try {
-      let pp = await conn.profilePictureUrl(user.id, 'image').catch(() => null)
-      if (pp) {
-        let img = await loadImage(pp)
-        ctx.save()
-        ctx.beginPath()
-        ctx.arc(pos.x + colW / 2, y - 65, 55, 0, Math.PI * 2)
-        ctx.clip()
-        ctx.drawImage(img, pos.x + colW / 2 - 55, y - 120, 110, 110)
-        ctx.restore()
-      }
-    } catch {}
-
-    ctx.fillStyle = '#fff'
-    ctx.font = 'bold 22px Arial'
+    ctx.fillStyle = '#facc15'
+    ctx.font = 'bold 60px Arial'
     ctx.textAlign = 'center'
-    ctx.fillText(user.id.split('@')[0], pos.x + colW / 2, baseY + 35)
+    ctx.fillText('HARUSS CLASSIFICA', width / 2, 80)
 
-    ctx.font = '18px Arial'
-    ctx.fillText(`${user.euro || 0}€ | ${user.exp}xp`, pos.x + colW / 2, baseY + 60)
-  }
+    let tableX = -600 + (i / frames) * 700
+    ctx.fillStyle = 'rgba(0,0,0,0.55)'
+    ctx.fillRect(tableX, 150, 500, 500)
 
-  // coppa sopra la foto del primo
-  const first = positions.find(p => p.rank === 1)
-  if (first) {
-    const y = baseY - first.h
-    const cx = first.x + colW / 2
-    const cy = y - 180 // più alto
+    ctx.fillStyle = '#facc15'
+    ctx.font = 'bold 38px Arial'
+    ctx.textAlign = 'left'
+    ctx.fillText('TOP 10:', tableX + 20, 200)
 
+    ctx.font = '22px Arial'
+    for (let u = 0; u < users.length; u++) {
+      const y = 250 + u * 40
+      ctx.fillStyle = '#fff'
+      ctx.fillText(`#${u + 1} ${users[u].id.split('@')[0]}`, tableX + 30, y)
+      ctx.fillStyle = '#cbd5e1'
+      ctx.fillText(`${users[u].euro || 0}€ | ${users[u].exp || 0}xp`, tableX + 320, y)
+    }
+
+    let trophyY = -200 + (i / frames) * 350
+    const cx = width - 350
+    const cy = trophyY
     ctx.fillStyle = '#FFD700'
     ctx.beginPath()
-    ctx.moveTo(cx - 35, cy)
-    ctx.lineTo(cx + 35, cy)
-    ctx.lineTo(cx + 28, cy + 60)
-    ctx.lineTo(cx - 28, cy + 60)
+    ctx.moveTo(cx - 40, cy)
+    ctx.lineTo(cx + 40, cy)
+    ctx.lineTo(cx + 30, cy + 80)
+    ctx.lineTo(cx - 30, cy + 80)
     ctx.closePath()
     ctx.fill()
-    ctx.fillRect(cx - 12, cy + 60, 24, 25)
-    ctx.fillRect(cx - 35, cy + 85, 70, 12)
+    ctx.fillRect(cx - 15, cy + 80, 30, 25)
+    ctx.fillRect(cx - 40, cy + 105, 80, 15)
 
     ctx.strokeStyle = '#ffcc99'
-    ctx.lineWidth = 7
+    ctx.lineWidth = 6
     ctx.beginPath()
-    ctx.arc(cx - 70, cy + 30, 22, 0, Math.PI * 2)
+    ctx.arc(cx - 80, cy + 40, 25, 0, Math.PI * 2)
     ctx.stroke()
     ctx.beginPath()
-    ctx.arc(cx + 70, cy + 30, 22, 0, Math.PI * 2)
+    ctx.arc(cx + 80, cy + 40, 25, 0, Math.PI * 2)
     ctx.stroke()
+
+    ffmpeg.stdin.write(canvas.toBuffer('raw'))
   }
 
-  // firma
-  ctx.fillStyle = '#9ca3af'
-  ctx.font = '18px Arial'
-  ctx.textAlign = 'right'
-  ctx.fillText('Dev by Matte', width - 20, height - 20)
-
-  const buffer = canvas.toBuffer()
-  return conn.sendMessage(m.chat, { image: buffer, caption: '📊 Classifica aggiornata!' }, { quoted: m })
+  ffmpeg.stdin.end()
+  ffmpeg.on('close', async () => {
+    await conn.sendMessage(m.chat, {
+      video: { url: '/tmp/classifica.mp4' },
+      caption: '🏆 Classifica animata Haruss'
+    }, { quoted: m })
+  })
 }
 
-handler.command = /^haruss$/i
+handler.command = /^harussvideo$/i
 export default handler
