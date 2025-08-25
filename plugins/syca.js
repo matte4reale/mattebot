@@ -36,10 +36,11 @@ let handler = async (m, { conn }) => {
   const spacing = 240
   const centerX = width - 420
 
+  // colonne più basse
   const positions = [
-    { rank: 2, x: centerX - spacing, h: 250, color: '#9ca3af' },
-    { rank: 1, x: centerX, h: 350, color: '#facc15' },
-    { rank: 3, x: centerX + spacing, h: 200, color: '#d97706' }
+    { rank: 2, x: centerX - spacing, h: 160, color: '#9ca3af' },
+    { rank: 1, x: centerX, h: 220, color: '#facc15' },
+    { rank: 3, x: centerX + spacing, h: 140, color: '#d97706' }
   ]
 
   for (let pos of positions) {
@@ -47,8 +48,8 @@ let handler = async (m, { conn }) => {
     if (!user) continue
 
     ctx.fillStyle = pos.color
-    ctx.strokeStyle = '#333'
-    ctx.lineWidth = 5
+    ctx.strokeStyle = '#fff' // cornice bianca
+    ctx.lineWidth = 6
     const radius = 20
     const y = baseY - pos.h
 
@@ -72,9 +73,9 @@ let handler = async (m, { conn }) => {
         let img = await loadImage(pp)
         ctx.save()
         ctx.beginPath()
-        ctx.arc(pos.x + colW / 2, y - 80, 65, 0, Math.PI * 2)
+        ctx.arc(pos.x + colW / 2, y - 65, 55, 0, Math.PI * 2)
         ctx.clip()
-        ctx.drawImage(img, pos.x + colW / 2 - 65, y - 145, 130, 130)
+        ctx.drawImage(img, pos.x + colW / 2 - 55, y - 120, 110, 110)
         ctx.restore()
       }
     } catch {}
@@ -88,29 +89,30 @@ let handler = async (m, { conn }) => {
     ctx.fillText(`${user.euro || 0}€ | ${user.exp}xp`, pos.x + colW / 2, baseY + 60)
   }
 
+  // coppa sopra al 1° posto
   const first = positions.find(p => p.rank === 1)
   if (first) {
     const cx = first.x + colW / 2
-    const cy = baseY - first.h - 200
+    const cy = baseY - first.h - 160
 
     ctx.fillStyle = '#FFD700'
     ctx.beginPath()
-    ctx.moveTo(cx - 40, cy)
-    ctx.lineTo(cx + 40, cy)
-    ctx.lineTo(cx + 30, cy + 70)
-    ctx.lineTo(cx - 30, cy + 70)
+    ctx.moveTo(cx - 35, cy)
+    ctx.lineTo(cx + 35, cy)
+    ctx.lineTo(cx + 28, cy + 60)
+    ctx.lineTo(cx - 28, cy + 60)
     ctx.closePath()
     ctx.fill()
-    ctx.fillRect(cx - 15, cy + 70, 30, 30)
-    ctx.fillRect(cx - 40, cy + 100, 80, 15)
+    ctx.fillRect(cx - 12, cy + 60, 24, 25)
+    ctx.fillRect(cx - 35, cy + 85, 70, 12)
 
     ctx.strokeStyle = '#ffcc99'
-    ctx.lineWidth = 8
+    ctx.lineWidth = 7
     ctx.beginPath()
-    ctx.arc(cx - 80, cy + 35, 25, 0, Math.PI * 2)
+    ctx.arc(cx - 70, cy + 30, 22, 0, Math.PI * 2)
     ctx.stroke()
     ctx.beginPath()
-    ctx.arc(cx + 80, cy + 35, 25, 0, Math.PI * 2)
+    ctx.arc(cx + 70, cy + 30, 22, 0, Math.PI * 2)
     ctx.stroke()
   }
 
