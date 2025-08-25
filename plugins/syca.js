@@ -1,141 +1,100 @@
-import { createCanvas, loadImage } from 'canvas'
+import { createCanvas } from 'canvas'
 
-async function generaPodio(users, topN = 10, conn) {
-  const width = 1100
+let handler = async (m, { conn, command }) => {
+  const users = Object.entries(global.db.data.users)
+    .map(([id, data]) => ({ id, exp: data.exp || 0, euro: data.euro || 0 }))
+    .sort((a, b) => (b.exp || 0) - (a.exp || 0))
+    .slice(0, 10)
+
+  if (!users.length) return m.reply('❌ Nessun utente trovato nella classifica.')
+
+  const width = 1200
   const height = 800
   const canvas = createCanvas(width, height)
   const ctx = canvas.getContext('2d')
 
-  // --- SFONDO (gradient blu notte) ---
-  const grad = ctx.createLinearGradient(0, 0, width, height)
-  grad.addColorStop(0, '#0f172a')
-  grad.addColorStop(1, '#1e293b')
-  ctx.fillStyle = grad
+  // Sfondo
+  ctx.fillStyle = '#0f172a'
   ctx.fillRect(0, 0, width, height)
 
-  // --- CORIANDOLI ---
-  for (let i = 0; i < 120; i++) {
+  // Coriandoli
+  for (let i = 0; i < 250; i++) {
     ctx.beginPath()
-    const x = Math.random() * width
-    const y = Math.random() * height
-    const r = Math.random() * 5 + 2
-    const colors = ['#f87171', '#60a5fa', '#34d399', '#fbbf24', '#a78bfa']
-    ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)]
-    ctx.arc(x, y, r, 0, Math.PI * 2)
+    ctx.fillStyle = `hsl(${Math.random() * 360}, 70%, 60%)`
+    ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 4 + 2, 0, Math.PI * 2)
     ctx.fill()
   }
 
-  // --- TITOLO ---
+  // Titolo
   ctx.fillStyle = '#facc15'
-  ctx.font = 'bold 54px Arial'
+  ctx.font = 'bold 50px Arial'
   ctx.textAlign = 'center'
   ctx.fillText('HARUSS CLASSIFICA', width / 2, 80)
 
-  // --- PODIO ---
-  const podium = [
-    { pos: 2, x: width / 2 - 250, h: 200, color: '#c0c0c0' }, // argento
-    { pos: 1, x: width / 2, h: 280, color: '#ffd700' },       // oro
-    { pos: 3, x: width / 2 + 250, h: 160, color: '#cd7f32' }  // bronzo
-  ]
+  // Podio
+  const podiumX = [350, 550, 750] // posizioni X
+  const podiumY = [450, 300, 500] // posizioni Y
+  const podiumH = [200, 350, 150] // altezze colonne
+  const colors = ['#e5e7eb', '#facc15', '#d97706'] // 2°, 1°, 3°
 
-  for (let i = 0; i < 3 && i < users.length; i++) {
-    const u = users.find(x => x.rank === podium[i].pos)
-    const p = podium[i]
+  for (let i = 0; i < 3; i++) {
+    if (!users[i]) continue
+    ctx.fillStyle = colors[i]
+    ctx.fillRect(podiumX[i], podiumY[i], 200, podiumH[i])
 
-    // base podio
-    ctx.fillStyle = p.color
-    ctx.fillRect(p.x - 100, height - p.h - 220, 200, p.h)
-
-    // avatar sopra
-    try {
-      let ppUrl = await conn.profilePictureUrl(u.id, 'image').catch(_ => null)
-      if (ppUrl) {
-        const img = await loadImage(ppUrl)
-        const r = 70
-        const cx = p.x
-        const cy = height - p.h - 320
-
-        ctx.save()
-        ctx.beginPath()
-        ctx.arc(cx, cy, r, 0, Math.PI * 2)
-        ctx.closePath()
-        ctx.clip()
-        ctx.drawImage(img, cx - r, cy - r, r * 2, r * 2)
-        ctx.restore()
-      }
-    } catch (e) {
-      ctx.beginPath()
-      ctx.arc(p.x, height - p.h - 320, 70, 0, Math.PI * 2)
-      ctx.fillStyle = '#334155'
-      ctx.fill()
-    }
-
-    // medaglia sopra
+    // Cerchio sopra con medaglia
     ctx.beginPath()
-    ctx.arc(p.x, height - p.h - 420, 40, 0, Math.PI * 2)
-    ctx.fillStyle = p.color
+    ctx.arc(podiumX[i] + 100, podiumY[i] - 60, 50, 0, Math.PI * 2)
+    ctx.fillStyle = colors[i]
     ctx.fill()
+
     ctx.fillStyle = '#000'
-    ctx.font = 'bold 26px Arial'
+    ctx.font = 'bold 28px Arial'
     ctx.textAlign = 'center'
-    ctx.fillText(`#${p.pos}`, p.x, height - p.h - 410)
+    ctx.fillText(`#${i + 1}`, podiumX[i] + 100, podiumY[i] - 50 + 10)
 
-    // nome o numero
+    // Nome + exp
     ctx.fillStyle = '#fff'
-    ctx.font = 'bold 24px Arial'
-    ctx.fillText(u.name || u.id.split('@')[0], p.x, height - p.h - 180)
+    ctx.font = 'bold 22px Arial'
+    ctx.fillText(users[i].id.split('@')[0], podiumX[i] + 100, podiumY[i] + podiumH[i] / 2)
 
-    // punti
-    ctx.fillStyle = '#e2e8f0'
-    ctx.font = '20px Arial'
-    ctx.fillText(`${u.euro || 0}€ | ${u.exp || 0}xp`, p.x, height - p.h - 150)
+    ctx.font = '18px Arial'
+    ctx.fillText(`${users[i].euro || 0}€ | ${users[i].exp}xp`, podiumX[i] + 100, podiumY[i] + podiumH[i] / 2 + 30)
   }
 
-  // --- LISTA TOP 4-10 ---
-  ctx.fillStyle = 'rgba(0,0,0,0.5)'
-  ctx.fillRect(60, 200, 420, 350)
+  // Tabella TOP 4–10 (a sinistra)
+  const boxX = 50
+  const boxY = 200
+  const boxW = 380
+  const boxH = 400
+
+  ctx.fillStyle = 'rgba(0,0,0,0.4)'
+  ctx.fillRect(boxX, boxY, boxW, boxH)
 
   ctx.fillStyle = '#facc15'
   ctx.font = 'bold 30px Arial'
   ctx.textAlign = 'left'
-  ctx.fillText('TOP 10:', 80, 240)
+  ctx.fillText('TOP 10:', boxX + 20, boxY + 40)
 
   ctx.font = '20px Arial'
-  for (let i = 3; i < Math.min(topN, users.length); i++) {
+  for (let i = 3; i < Math.min(10, users.length); i++) {
     const u = users[i]
-    const y = 280 + (i - 3) * 35
+    const y = boxY + 80 + (i - 3) * 35
     ctx.fillStyle = '#fff'
-    ctx.fillText(`#${i + 1} ${u.id.split('@')[0]}`, 100, y)
+    ctx.fillText(`#${i + 1} ${u.id.split('@')[0]}`, boxX + 30, y)
     ctx.fillStyle = '#cbd5e1'
-    ctx.fillText(`${u.euro || 0}€ | ${u.exp || 0}xp`, 350, y)
+    ctx.fillText(`${u.euro || 0}€ | ${u.exp || 0}xp`, boxX + boxW - 160, y)
   }
 
-  // firma
-  ctx.fillStyle = '#94a3b8'
+  // Firma
+  ctx.fillStyle = '#9ca3af'
   ctx.font = '16px Arial'
   ctx.textAlign = 'right'
   ctx.fillText('Dev by Matte', width - 20, height - 20)
 
-  return canvas.toBuffer()
-}
-
-let handler = async (m, { conn }) => {
-  const chat = m.chat
-  const dbUsers = Object.entries(global.db.data.users)
-    .map(([id, u], i) => ({
-      id,
-      name: u.name || null,
-      euro: u.euro || 0,
-      exp: u.exp || 0,
-      rank: i + 1
-    }))
-    .sort((a, b) => (b.euro + b.exp) - (a.euro + a.exp))
-
-  const buffer = await generaPodio(dbUsers, 10, conn)
-  await conn.sendMessage(chat, { image: buffer, caption: '📊 Classifica aggiornata 🎉' }, { quoted: m })
+  const buffer = canvas.toBuffer()
+  return conn.sendMessage(m.chat, { image: buffer, caption: '📊 Classifica aggiornata!' }, { quoted: m })
 }
 
 handler.command = /^haruss$/i
-handler.group = true
-
 export default handler
