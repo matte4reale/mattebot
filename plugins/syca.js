@@ -157,10 +157,10 @@ let handler = async (m, { conn }) => {
   ctx.textAlign = 'right'
   ctx.fillText('Dev by Matte', width - 20, height - 20)
 
-  const buffer = canvas.toBuffer('image/png')
+  const buffer = canvas.toBuffer('image/jpeg', { quality: 0.9 })
   return conn.sendMessage(
     m.chat,
-    { image: buffer, mimetype: 'image/png', caption: '📊 Classifica aggiornata!' },
+    { image: buffer, mimetype: 'image/jpeg', caption: '📊 Classifica aggiornata!' },
     { quoted: m }
   )
 }
