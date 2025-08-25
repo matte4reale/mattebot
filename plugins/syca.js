@@ -13,150 +13,76 @@ let handler = async (m, { conn }) => {
   const canvas = createCanvas(width, height)
   const ctx = canvas.getContext('2d')
 
-  // sfondo
   const gradient = ctx.createLinearGradient(0, 0, width, height)
   gradient.addColorStop(0, '#1e3a8a')
   gradient.addColorStop(1, '#6d28d9')
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, width, height)
 
-  // coriandoli
-  for (let i = 0; i < 200; i++) {
-    ctx.beginPath()
-    ctx.fillStyle = `hsl(${Math.random() * 360}, 80%, 60%)`
-    ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 3 + 2, 0, Math.PI * 2)
-    ctx.fill()
-  }
-
   // titolo
-  ctx.fillStyle = '#facc15'
-  ctx.font = 'bold 60px Arial'
+  ctx.fillStyle = '#fff'
+  ctx.font = 'bold 50px Sans-serif'
   ctx.textAlign = 'center'
-  ctx.fillText('HARUSS CLASSIFICA', width / 2, 90)
+  ctx.fillText('🏆 CLASSIFICA TOP 10 🏆', width / 2, 70)
 
-  // coordinate per tabella a sinistra
-  const boxX = 100
-  const boxY = 250
-  const boxW = 500
-  const boxH = 580
+  // podio
+  const podiumX = 950
+  const podiumY = 500
+  const podiumW = 120
+  const podiumH = [250, 200, 150]
 
-  ctx.fillStyle = 'rgba(0,0,0,0.55)'
-  ctx.fillRect(boxX, boxY, boxW, boxH)
-
-  ctx.fillStyle = '#facc15'
-  ctx.font = 'bold 38px Arial'
-  ctx.textAlign = 'left'
-  ctx.fillText('TOP 10:', boxX + 20, boxY + 50)
-
-  ctx.font = '22px Arial'
-  for (let i = 3; i < Math.min(10, users.length); i++) {
-    const u = users[i]
-    const y = boxY + 100 + (i - 3) * 60
-
-    ctx.fillStyle = '#fff'
-    ctx.fillText(`#${i + 1} ${u.id.split('@')[0]}`, boxX + 30, y)
-
-    ctx.fillStyle = '#cbd5e1'
-    ctx.fillText(`${u.euro || 0}€ | ${u.exp || 0}xp`, boxX + 310, y)
-  }
-
-  // podio a destra alla stessa altezza
-  const baseY = boxY + boxH // base allineata con tabella
-  const colW = 180
-  const spacing = 240
-  const centerX = width - 420
-
-  const positions = [
-    { rank: 2, x: centerX - spacing, h: 160, color: '#9ca3af' },
-    { rank: 1, x: centerX, h: 220, color: '#facc15' },
-    { rank: 3, x: centerX + spacing, h: 140, color: '#d97706' }
-  ]
-
-  for (let pos of positions) {
-    const user = users[pos.rank - 1]
-    if (!user) continue
-
-    const y = baseY - pos.h
-
-    // rettangolo podio
-    ctx.fillStyle = pos.color
+  ;[0,1,2].forEach((i) => {
+    const x = podiumX + i * (podiumW + 30)
+    const y = podiumY - podiumH[i]
+    ctx.fillStyle = ['#FFD700','#C0C0C0','#CD7F32'][i]
+    ctx.beginPath()
+    ctx.roundRect(x, y, podiumW, podiumH[i], 20)
+    ctx.fill()
+    ctx.lineWidth = 4
     ctx.strokeStyle = '#fff'
-    ctx.lineWidth = 6
-    const radius = 20
-
-    ctx.beginPath()
-    ctx.moveTo(pos.x + radius, y)
-    ctx.lineTo(pos.x + colW - radius, y)
-    ctx.quadraticCurveTo(pos.x + colW, y, pos.x + colW, y + radius)
-    ctx.lineTo(pos.x + colW, baseY - radius)
-    ctx.quadraticCurveTo(pos.x + colW, baseY, pos.x + colW - radius, baseY)
-    ctx.lineTo(pos.x + radius, baseY)
-    ctx.quadraticCurveTo(pos.x, baseY, pos.x, baseY - radius)
-    ctx.lineTo(pos.x, y + radius)
-    ctx.quadraticCurveTo(pos.x, y, pos.x + radius, y)
-    ctx.closePath()
-    ctx.fill()
     ctx.stroke()
 
-    // foto profilo
-    try {
-      let pp = await conn.profilePictureUrl(user.id, 'image').catch(() => null)
-      if (pp) {
-        let img = await loadImage(pp)
-        ctx.save()
-        ctx.beginPath()
-        ctx.arc(pos.x + colW / 2, y - 65, 55, 0, Math.PI * 2)
-        ctx.clip()
-        ctx.drawImage(img, pos.x + colW / 2 - 55, y - 120, 110, 110)
-        ctx.restore()
-      }
-    } catch {}
-
-    ctx.fillStyle = '#fff'
-    ctx.font = 'bold 22px Arial'
+    ctx.fillStyle = '#000'
+    ctx.font = 'bold 40px Sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText(user.id.split('@')[0], pos.x + colW / 2, baseY + 35)
+    ctx.fillText(`${i+1}`, x + podiumW/2, y + podiumH[i] - 20)
+  })
 
-    ctx.font = '18px Arial'
-    ctx.fillText(`${user.euro || 0}€ | ${user.exp}xp`, pos.x + colW / 2, baseY + 60)
-  }
-
-  // coppa sopra la foto del primo
-  const first = positions.find(p => p.rank === 1)
-  if (first) {
-    const y = baseY - first.h
-    const cx = first.x + colW / 2
-    const cy = y - 150 // subito sopra la foto profilo
-
-    ctx.fillStyle = '#FFD700'
+  // avatar del primo
+  try {
+    const avatar1 = await loadImage(await conn.profilePictureUrl(users[0].id, 'image').catch(_=>'https://telegra.ph/file/24fa902ead26340f3df2c.png'))
+    ctx.save()
     ctx.beginPath()
-    ctx.moveTo(cx - 35, cy)
-    ctx.lineTo(cx + 35, cy)
-    ctx.lineTo(cx + 28, cy + 60)
-    ctx.lineTo(cx - 28, cy + 60)
+    ctx.arc(podiumX + podiumW/2, podiumY - podiumH[0] - 70, 60, 0, Math.PI*2)
     ctx.closePath()
-    ctx.fill()
-    ctx.fillRect(cx - 12, cy + 60, 24, 25)
-    ctx.fillRect(cx - 35, cy + 85, 70, 12)
+    ctx.clip()
+    ctx.drawImage(avatar1, podiumX, podiumY - podiumH[0] - 130, 120, 120)
+    ctx.restore()
+    // coppa sopra l'avatar
+    ctx.fillStyle = '#FFD700'
+    ctx.font = '80px Sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('🏆', podiumX + podiumW/2, podiumY - podiumH[0] - 160)
+  } catch {}
 
-    ctx.strokeStyle = '#ffcc99'
-    ctx.lineWidth = 7
-    ctx.beginPath()
-    ctx.arc(cx - 70, cy + 30, 22, 0, Math.PI * 2)
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.arc(cx + 70, cy + 30, 22, 0, Math.PI * 2)
-    ctx.stroke()
+  // lista 4-10 a sinistra
+  ctx.fillStyle = '#fff'
+  ctx.font = '30px Sans-serif'
+  ctx.textAlign = 'left'
+  for (let i = 3; i < users.length; i++) {
+    ctx.fillText(`${i+1}. ${users[i].id.split('@')[0]} - ${users[i].exp} XP`, 80, 200 + (i-3)*60)
   }
 
-  ctx.fillStyle = '#9ca3af'
-  ctx.font = '18px Arial'
+  // watermark
+  ctx.fillStyle = '#fff'
+  ctx.font = 'italic 22px Sans-serif'
   ctx.textAlign = 'right'
-  ctx.fillText('Dev by Matte', width - 20, height - 20)
+  ctx.fillText('dev by matte', width - 30, height - 20)
 
   const buffer = canvas.toBuffer()
   return conn.sendMessage(m.chat, { image: buffer, caption: '📊 Classifica aggiornata!' }, { quoted: m })
 }
 
 handler.command = /^haruss$/i
+handler.group = true
 export default handler
