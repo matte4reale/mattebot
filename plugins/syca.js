@@ -1,5 +1,7 @@
 import { createCanvas } from 'canvas'
 import { spawn } from 'child_process'
+import fs from 'fs'
+import path from 'path'
 
 let handler = async (m, { conn }) => {
   const users = Object.entries(global.db.data.users)
@@ -11,20 +13,11 @@ let handler = async (m, { conn }) => {
 
   const width = 1280
   const height = 720
-  const frames = 120
+  const frames = 60 // 2 secondi a 30fps
   const fps = 30
 
-  const ffmpeg = spawn('ffmpeg', [
-    '-y',
-    '-f', 'rawvideo',
-    '-pix_fmt', 'rgba',
-    '-s', `${width}x${height}`,
-    '-r', `${fps}`,
-    '-i', '-',
-    '-c:v', 'libx264',
-    '-pix_fmt', 'yuv420p',
-    '/tmp/classifica.mp4'
-  ])
+  const tmpDir = path.join(process.cwd(), 'tmp_frames')
+  if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir)
 
   const canvas = createCanvas(width, height)
   const ctx = canvas.getContext('2d')
@@ -32,13 +25,6 @@ let handler = async (m, { conn }) => {
   for (let i = 0; i < frames; i++) {
     ctx.fillStyle = '#1e3a8a'
     ctx.fillRect(0, 0, width, height)
-
-    for (let j = 0; j < 150; j++) {
-      ctx.beginPath()
-      ctx.fillStyle = `hsl(${Math.random() * 360}, 80%, 60%)`
-      ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 3 + 2, 0, Math.PI * 2)
-      ctx.fill()
-    }
 
     ctx.fillStyle = '#facc15'
     ctx.font = 'bold 60px Arial'
@@ -74,28 +60,35 @@ let handler = async (m, { conn }) => {
     ctx.lineTo(cx - 30, cy + 80)
     ctx.closePath()
     ctx.fill()
-    ctx.fillRect(cx - 15, cy + 80, 30, 25)
-    ctx.fillRect(cx - 40, cy + 105, 80, 15)
 
-    ctx.strokeStyle = '#ffcc99'
-    ctx.lineWidth = 6
-    ctx.beginPath()
-    ctx.arc(cx - 80, cy + 40, 25, 0, Math.PI * 2)
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.arc(cx + 80, cy + 40, 25, 0, Math.PI * 2)
-    ctx.stroke()
-
-    ffmpeg.stdin.write(canvas.toBuffer('raw'))
+    const file = path.join(tmpDir, `frame_${String(i).padStart(3, '0')}.png`)
+    fs.writeFileSync(file, canvas.toBuffer('image/png'))
   }
 
-  ffmpeg.stdin.end()
-  ffmpeg.on('close', async () => {
-    await conn.sendMessage(m.chat, {
-      video: { url: '/tmp/classifica.mp4' },
-      caption: '🏆 Classifica animata Haruss'
-    }, { quoted: m })
+  const outPath = path.join(process.cwd(), 'classifica.mp4')
+  await new Promise((resolve, reject) => {
+    const ffmpeg = spawn('ffmpeg', [
+      '-y',
+      '-framerate', `${fps}`,
+      '-i', `${tmpDir}/frame_%03d.png`,
+      '-c:v', 'libx264',
+      '-pix_fmt', 'yuv420p',
+      outPath
+    ])
+
+    ffmpeg.on('close', code => {
+      if (code === 0) resolve()
+      else reject(new Error('ffmpeg error'))
+    })
   })
+
+  await conn.sendMessage(m.chat, {
+    video: { url: outPath },
+    caption: '🏆 Classifica animata Haruss'
+  }, { quoted: m })
+
+  fs.rmSync(tmpDir, { recursive: true, force: true })
+  fs.unlinkSync(outPath)
 }
 
 handler.command = /^harussvideo$/i
