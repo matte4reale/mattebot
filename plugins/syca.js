@@ -3,17 +3,21 @@ import { createCanvas, loadImage } from 'canvas'
 function drawEnvelope(ctx, x, y, w = 80, h = 50, color = '#ffffff', stroke = '#000000') {
   ctx.fillStyle = color
   ctx.fillRect(x, y, w, h)
-
   ctx.strokeStyle = stroke
   ctx.lineWidth = 3
   ctx.strokeRect(x, y, w, h)
-
   ctx.beginPath()
   ctx.moveTo(x, y)
   ctx.lineTo(x + w / 2, y + h / 2)
   ctx.lineTo(x + w, y)
   ctx.closePath()
   ctx.stroke()
+}
+
+export async function countMessage(m) {
+  if (!global.db.data.users[m.sender]) global.db.data.users[m.sender] = {}
+  if (!global.db.data.users[m.sender].msgs) global.db.data.users[m.sender].msgs = 0
+  global.db.data.users[m.sender].msgs += 1
 }
 
 let handler = async (m, { conn }) => {
@@ -35,7 +39,6 @@ let handler = async (m, { conn }) => {
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, width, height)
 
-  // coriandoli
   for (let i = 0; i < 200; i++) {
     ctx.beginPath()
     ctx.fillStyle = `hsl(${Math.random() * 360}, 80%, 60%)`
@@ -43,16 +46,16 @@ let handler = async (m, { conn }) => {
     ctx.fill()
   }
 
-  // titolo con busta a sinistra
   ctx.fillStyle = '#facc15'
   ctx.font = 'bold 60px Arial'
   ctx.textAlign = 'left'
   const titleX = 200
   const titleY = 90
-  drawEnvelope(ctx, 50, 50, 60, 40, '#ffffff', '#facc15') // busta
+
+  drawEnvelope(ctx, 50, 50, 60, 40, '#ffffff', '#facc15')
+  drawEnvelope(ctx, titleX + 420, 50, 60, 40, '#ffffff', '#facc15')
   ctx.fillText('TOP MESSAGGI', titleX, titleY)
 
-  // box classifica
   const boxX = 100
   const boxY = 200
   const boxW = 520
@@ -90,7 +93,6 @@ let handler = async (m, { conn }) => {
     ctx.fillText(`${u.msgs || 0} messaggi`, boxX + 310, y)
   })
 
-  // podio
   const baseY = boxY + boxH
   const colW = 180
   const spacing = 240
@@ -148,7 +150,6 @@ let handler = async (m, { conn }) => {
     ctx.fillText(`${user.msgs || 0} messaggi`, pos.x + colW / 2, baseY + 60)
   }
 
-  // coppa sopra il primo
   const first = positions.find(p => p.rank === 1)
   if (first) {
     const y = baseY - first.h
