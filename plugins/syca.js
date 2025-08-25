@@ -21,7 +21,7 @@ let handler = async (m, { conn }) => {
   ctx.fillRect(0, 0, width, height)
 
   // CORIANDOLI
-  for (let i = 0; i < 250; i++) {
+  for (let i = 0; i < 200; i++) {
     ctx.beginPath()
     ctx.fillStyle = `hsl(${Math.random() * 360}, 80%, 60%)`
     ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 3 + 2, 0, Math.PI * 2)
@@ -34,78 +34,81 @@ let handler = async (m, { conn }) => {
   ctx.textAlign = 'center'
   ctx.fillText('HARUSS CLASSIFICA', width / 2, 80)
 
-  // P O D I O (a destra)
-  const podiumX = [width - 600, width - 300, width - 900] // 2°, 1°, 3°
-  const podiumY = [500, 350, 600]
-  const podiumH = [220, 370, 170]
-  const colors = ['#9ca3af', '#facc15', '#d97706']
+  // PODIO
+  const baseY = 600
+  const colW = 180
+  const spacing = 220
+  const centerX = width - 400
 
-  for (let i = 0; i < 3; i++) {
-    if (!users[i]) continue
+  const positions = [
+    { rank: 2, x: centerX - spacing, h: 250, color: '#9ca3af' },
+    { rank: 1, x: centerX, h: 350, color: '#facc15' },
+    { rank: 3, x: centerX + spacing, h: 200, color: '#d97706' }
+  ]
 
-    // Colonne
-    ctx.fillStyle = colors[i]
-    ctx.fillRect(podiumX[i], podiumY[i], 180, podiumH[i])
+  for (let pos of positions) {
+    const user = users[pos.rank - 1]
+    if (!user) continue
 
-    // Cerchio sopra
-    ctx.beginPath()
-    ctx.arc(podiumX[i] + 90, podiumY[i] - 100, 70, 0, Math.PI * 2)
-    ctx.fillStyle = colors[i]
-    ctx.fill()
+    // Colonna
+    ctx.fillStyle = pos.color
+    ctx.fillRect(pos.x, baseY - pos.h, colW, pos.h)
 
-    // Foto profilo
+    // Foto sopra
     try {
-      let pp = await conn.profilePictureUrl(users[i].id, 'image').catch(() => null)
+      let pp = await conn.profilePictureUrl(user.id, 'image').catch(() => null)
       if (pp) {
         let img = await loadImage(pp)
         ctx.save()
         ctx.beginPath()
-        ctx.arc(podiumX[i] + 90, podiumY[i] - 100, 65, 0, Math.PI * 2)
-        ctx.closePath()
+        ctx.arc(pos.x + colW / 2, baseY - pos.h - 70, 65, 0, Math.PI * 2)
         ctx.clip()
-        ctx.drawImage(img, podiumX[i] + 25, podiumY[i] - 165, 130, 130)
+        ctx.drawImage(img, pos.x + colW / 2 - 65, baseY - pos.h - 135, 130, 130)
         ctx.restore()
       }
     } catch {}
 
     // Nome + stats
     ctx.fillStyle = '#fff'
-    ctx.font = 'bold 22px Arial'
+    ctx.font = 'bold 20px Arial'
     ctx.textAlign = 'center'
-    ctx.fillText(users[i].id.split('@')[0], podiumX[i] + 90, podiumY[i] + podiumH[i] + 30)
+    ctx.fillText(user.id.split('@')[0], pos.x + colW / 2, baseY + 30)
 
     ctx.font = '18px Arial'
-    ctx.fillText(`${users[i].euro || 0}€ | ${users[i].exp}xp`, podiumX[i] + 90, podiumY[i] + podiumH[i] + 55)
+    ctx.fillText(`${user.euro || 0}€ | ${user.exp}xp`, pos.x + colW / 2, baseY + 55)
   }
 
-  // COPPA + MANI disegnate sopra al 1°
-  const centerX = width - 300 + 90
-  const topY = 350 - 200
+  // COPPA con mani sul 1°
+  const first = positions.find(p => p.rank === 1)
+  if (first) {
+    const cx = first.x + colW / 2
+    const cy = baseY - first.h - 200
 
-  // Coppa
-  ctx.fillStyle = '#FFD700'
-  ctx.beginPath()
-  ctx.moveTo(centerX - 50, topY)
-  ctx.lineTo(centerX + 50, topY)
-  ctx.lineTo(centerX + 40, topY + 80)
-  ctx.lineTo(centerX - 40, topY + 80)
-  ctx.closePath()
-  ctx.fill()
+    // Coppa
+    ctx.fillStyle = '#FFD700'
+    ctx.beginPath()
+    ctx.moveTo(cx - 40, cy)
+    ctx.lineTo(cx + 40, cy)
+    ctx.lineTo(cx + 30, cy + 70)
+    ctx.lineTo(cx - 30, cy + 70)
+    ctx.closePath()
+    ctx.fill()
 
-  ctx.fillRect(centerX - 20, topY + 80, 40, 40) // stelo
-  ctx.fillRect(centerX - 50, topY + 120, 100, 20) // base
+    ctx.fillRect(cx - 15, cy + 70, 30, 30)
+    ctx.fillRect(cx - 40, cy + 100, 80, 15)
 
-  // Manine
-  ctx.strokeStyle = '#ffcc99'
-  ctx.lineWidth = 8
-  ctx.beginPath()
-  ctx.arc(centerX - 90, topY + 40, 30, 0, Math.PI * 2) // sx
-  ctx.stroke()
-  ctx.beginPath()
-  ctx.arc(centerX + 90, topY + 40, 30, 0, Math.PI * 2) // dx
-  ctx.stroke()
+    // Mani
+    ctx.strokeStyle = '#ffcc99'
+    ctx.lineWidth = 8
+    ctx.beginPath()
+    ctx.arc(cx - 80, cy + 35, 25, 0, Math.PI * 2)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.arc(cx + 80, cy + 35, 25, 0, Math.PI * 2)
+    ctx.stroke()
+  }
 
-  // LISTA (4–10) a sinistra
+  // LISTA 4–10 a sinistra
   const boxX = 80
   const boxY = 200
   const boxW = 450
