@@ -9,7 +9,7 @@ let handler = async (m, { conn }) => {
   if (!users.length) return m.reply('❌ Nessun utente trovato nella classifica.')
 
   const width = 1500
-  const height = 950
+  const height = 1000
   const canvas = createCanvas(width, height)
   const ctx = canvas.getContext('2d')
 
@@ -34,32 +34,46 @@ let handler = async (m, { conn }) => {
   ctx.textAlign = 'center'
   ctx.fillText('HARUSS CLASSIFICA', width / 2, 90)
 
-  // tabella a sinistra
+  // box classifica (a sinistra, con angoli arrotondati e cornicina bianca)
   const boxX = 100
-  const boxY = 250
-  const boxW = 500
-  const boxH = 580
+  const boxY = 200
+  const boxW = 520
+  const boxH = 650
+  const radius = 30
 
   ctx.fillStyle = 'rgba(0,0,0,0.55)'
-  ctx.fillRect(boxX, boxY, boxW, boxH)
+  ctx.strokeStyle = '#fff'
+  ctx.lineWidth = 6
+  ctx.beginPath()
+  ctx.moveTo(boxX + radius, boxY)
+  ctx.lineTo(boxX + boxW - radius, boxY)
+  ctx.quadraticCurveTo(boxX + boxW, boxY, boxX + boxW, boxY + radius)
+  ctx.lineTo(boxX + boxW, boxY + boxH - radius)
+  ctx.quadraticCurveTo(boxX + boxW, boxY + boxH, boxX + boxW - radius, boxY + boxH)
+  ctx.lineTo(boxX + radius, boxY + boxH)
+  ctx.quadraticCurveTo(boxX, boxY + boxH, boxX, boxY + boxH - radius)
+  ctx.lineTo(boxX, boxY + radius)
+  ctx.quadraticCurveTo(boxX, boxY, boxX + radius, boxY)
+  ctx.closePath()
+  ctx.fill()
+  ctx.stroke()
 
+  // scritte classifica
   ctx.fillStyle = '#facc15'
   ctx.font = 'bold 38px Arial'
   ctx.textAlign = 'left'
   ctx.fillText('TOP 10:', boxX + 20, boxY + 50)
 
-  // 🔥 lista dal #1 al #10
   ctx.font = '22px Arial'
-  for (let i = 0; i < Math.min(10, users.length); i++) {
-    const u = users[i]
-    const y = boxY + 100 + i * 60
+  users.forEach((u, i) => {
+    const y = boxY + 100 + i * 55
 
     ctx.fillStyle = '#fff'
     ctx.fillText(`#${i + 1} ${u.id.split('@')[0]}`, boxX + 30, y)
 
     ctx.fillStyle = '#cbd5e1'
     ctx.fillText(`${u.euro || 0}€ | ${u.exp || 0}xp`, boxX + 310, y)
-  }
+  })
 
   // podio a destra
   const baseY = boxY + boxH
@@ -83,18 +97,18 @@ let handler = async (m, { conn }) => {
     ctx.fillStyle = pos.color
     ctx.strokeStyle = '#fff'
     ctx.lineWidth = 6
-    const radius = 20
+    const r = 20
 
     ctx.beginPath()
-    ctx.moveTo(pos.x + radius, y)
-    ctx.lineTo(pos.x + colW - radius, y)
-    ctx.quadraticCurveTo(pos.x + colW, y, pos.x + colW, y + radius)
-    ctx.lineTo(pos.x + colW, baseY - radius)
-    ctx.quadraticCurveTo(pos.x + colW, baseY, pos.x + colW - radius, baseY)
-    ctx.lineTo(pos.x + radius, baseY)
-    ctx.quadraticCurveTo(pos.x, baseY, pos.x, baseY - radius)
-    ctx.lineTo(pos.x, y + radius)
-    ctx.quadraticCurveTo(pos.x, y, pos.x + radius, y)
+    ctx.moveTo(pos.x + r, y)
+    ctx.lineTo(pos.x + colW - r, y)
+    ctx.quadraticCurveTo(pos.x + colW, y, pos.x + colW, y + r)
+    ctx.lineTo(pos.x + colW, baseY - r)
+    ctx.quadraticCurveTo(pos.x + colW, baseY, pos.x + colW - r, baseY)
+    ctx.lineTo(pos.x + r, baseY)
+    ctx.quadraticCurveTo(pos.x, baseY, pos.x, baseY - r)
+    ctx.lineTo(pos.x, y + r)
+    ctx.quadraticCurveTo(pos.x, y, pos.x + r, y)
     ctx.closePath()
     ctx.fill()
     ctx.stroke()
@@ -127,7 +141,7 @@ let handler = async (m, { conn }) => {
   if (first) {
     const y = baseY - first.h
     const cx = first.x + colW / 2
-    const cy = y - 220 // più alto
+    const cy = y - 180 // più alto
 
     ctx.fillStyle = '#FFD700'
     ctx.beginPath()
@@ -150,6 +164,7 @@ let handler = async (m, { conn }) => {
     ctx.stroke()
   }
 
+  // firma
   ctx.fillStyle = '#9ca3af'
   ctx.font = '18px Arial'
   ctx.textAlign = 'right'
