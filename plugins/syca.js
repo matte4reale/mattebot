@@ -8,19 +8,17 @@ let handler = async (m, { conn }) => {
 
   if (!users.length) return m.reply('❌ Nessun utente trovato nella classifica.')
 
-  const width = 1400
-  const height = 900
+  const width = 1500
+  const height = 950
   const canvas = createCanvas(width, height)
   const ctx = canvas.getContext('2d')
 
-  // SFONDO sfumato
   const gradient = ctx.createLinearGradient(0, 0, width, height)
   gradient.addColorStop(0, '#1e3a8a')
   gradient.addColorStop(1, '#6d28d9')
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, width, height)
 
-  // CORIANDOLI
   for (let i = 0; i < 200; i++) {
     ctx.beginPath()
     ctx.fillStyle = `hsl(${Math.random() * 360}, 80%, 60%)`
@@ -28,17 +26,15 @@ let handler = async (m, { conn }) => {
     ctx.fill()
   }
 
-  // TITOLO
   ctx.fillStyle = '#facc15'
   ctx.font = 'bold 60px Arial'
   ctx.textAlign = 'center'
-  ctx.fillText('HARUSS CLASSIFICA', width / 2, 80)
+  ctx.fillText('HARUSS CLASSIFICA', width / 2, 90)
 
-  // PODIO
-  const baseY = 600
+  const baseY = 620
   const colW = 180
-  const spacing = 220
-  const centerX = width - 400
+  const spacing = 240
+  const centerX = width - 420
 
   const positions = [
     { rank: 2, x: centerX - spacing, h: 250, color: '#9ca3af' },
@@ -50,41 +46,53 @@ let handler = async (m, { conn }) => {
     const user = users[pos.rank - 1]
     if (!user) continue
 
-    // Colonna
     ctx.fillStyle = pos.color
-    ctx.fillRect(pos.x, baseY - pos.h, colW, pos.h)
+    ctx.strokeStyle = '#333'
+    ctx.lineWidth = 5
+    const radius = 20
+    const y = baseY - pos.h
 
-    // Foto sopra
+    ctx.beginPath()
+    ctx.moveTo(pos.x + radius, y)
+    ctx.lineTo(pos.x + colW - radius, y)
+    ctx.quadraticCurveTo(pos.x + colW, y, pos.x + colW, y + radius)
+    ctx.lineTo(pos.x + colW, baseY - radius)
+    ctx.quadraticCurveTo(pos.x + colW, baseY, pos.x + colW - radius, baseY)
+    ctx.lineTo(pos.x + radius, baseY)
+    ctx.quadraticCurveTo(pos.x, baseY, pos.x, baseY - radius)
+    ctx.lineTo(pos.x, y + radius)
+    ctx.quadraticCurveTo(pos.x, y, pos.x + radius, y)
+    ctx.closePath()
+    ctx.fill()
+    ctx.stroke()
+
     try {
       let pp = await conn.profilePictureUrl(user.id, 'image').catch(() => null)
       if (pp) {
         let img = await loadImage(pp)
         ctx.save()
         ctx.beginPath()
-        ctx.arc(pos.x + colW / 2, baseY - pos.h - 70, 65, 0, Math.PI * 2)
+        ctx.arc(pos.x + colW / 2, y - 80, 65, 0, Math.PI * 2)
         ctx.clip()
-        ctx.drawImage(img, pos.x + colW / 2 - 65, baseY - pos.h - 135, 130, 130)
+        ctx.drawImage(img, pos.x + colW / 2 - 65, y - 145, 130, 130)
         ctx.restore()
       }
     } catch {}
 
-    // Nome + stats
     ctx.fillStyle = '#fff'
-    ctx.font = 'bold 20px Arial'
+    ctx.font = 'bold 22px Arial'
     ctx.textAlign = 'center'
-    ctx.fillText(user.id.split('@')[0], pos.x + colW / 2, baseY + 30)
+    ctx.fillText(user.id.split('@')[0], pos.x + colW / 2, baseY + 35)
 
     ctx.font = '18px Arial'
-    ctx.fillText(`${user.euro || 0}€ | ${user.exp}xp`, pos.x + colW / 2, baseY + 55)
+    ctx.fillText(`${user.euro || 0}€ | ${user.exp}xp`, pos.x + colW / 2, baseY + 60)
   }
 
-  // COPPA con mani sul 1°
   const first = positions.find(p => p.rank === 1)
   if (first) {
     const cx = first.x + colW / 2
     const cy = baseY - first.h - 200
 
-    // Coppa
     ctx.fillStyle = '#FFD700'
     ctx.beginPath()
     ctx.moveTo(cx - 40, cy)
@@ -93,11 +101,9 @@ let handler = async (m, { conn }) => {
     ctx.lineTo(cx - 30, cy + 70)
     ctx.closePath()
     ctx.fill()
-
     ctx.fillRect(cx - 15, cy + 70, 30, 30)
     ctx.fillRect(cx - 40, cy + 100, 80, 15)
 
-    // Mani
     ctx.strokeStyle = '#ffcc99'
     ctx.lineWidth = 8
     ctx.beginPath()
@@ -108,17 +114,16 @@ let handler = async (m, { conn }) => {
     ctx.stroke()
   }
 
-  // LISTA 4–10 a sinistra
-  const boxX = 80
-  const boxY = 200
-  const boxW = 450
-  const boxH = 550
+  const boxX = 100
+  const boxY = 220
+  const boxW = 500
+  const boxH = 580
 
   ctx.fillStyle = 'rgba(0,0,0,0.55)'
   ctx.fillRect(boxX, boxY, boxW, boxH)
 
   ctx.fillStyle = '#facc15'
-  ctx.font = 'bold 36px Arial'
+  ctx.font = 'bold 38px Arial'
   ctx.textAlign = 'left'
   ctx.fillText('TOP 10:', boxX + 20, boxY + 50)
 
@@ -131,10 +136,9 @@ let handler = async (m, { conn }) => {
     ctx.fillText(`#${i + 1} ${u.id.split('@')[0]}`, boxX + 30, y)
 
     ctx.fillStyle = '#cbd5e1'
-    ctx.fillText(`${u.euro || 0}€ | ${u.exp || 0}xp`, boxX + 280, y)
+    ctx.fillText(`${u.euro || 0}€ | ${u.exp || 0}xp`, boxX + 310, y)
   }
 
-  // FIRMA
   ctx.fillStyle = '#9ca3af'
   ctx.font = '18px Arial'
   ctx.textAlign = 'right'
