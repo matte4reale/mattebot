@@ -13,14 +13,12 @@ let handler = async (m, { conn }) => {
   const canvas = createCanvas(width, height)
   const ctx = canvas.getContext('2d')
 
-  // sfondo gradiente
   const gradient = ctx.createLinearGradient(0, 0, width, height)
   gradient.addColorStop(0, '#1e3a8a')
   gradient.addColorStop(1, '#6d28d9')
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, width, height)
 
-  // coriandoli
   for (let i = 0; i < 200; i++) {
     ctx.beginPath()
     ctx.fillStyle = `hsl(${Math.random() * 360}, 80%, 60%)`
@@ -28,13 +26,11 @@ let handler = async (m, { conn }) => {
     ctx.fill()
   }
 
-  // titolo
   ctx.fillStyle = '#facc15'
   ctx.font = 'bold 60px Arial'
   ctx.textAlign = 'center'
   ctx.fillText('HARUSS CLASSIFICA', width / 2, 90)
 
-  // box classifica
   const boxX = 100
   const boxY = 200
   const boxW = 520
@@ -58,7 +54,6 @@ let handler = async (m, { conn }) => {
   ctx.fill()
   ctx.stroke()
 
-  // scritta TOP 10
   ctx.fillStyle = '#facc15'
   ctx.font = 'bold 38px Arial'
   ctx.textAlign = 'left'
@@ -67,15 +62,12 @@ let handler = async (m, { conn }) => {
   ctx.font = '22px Arial'
   users.forEach((u, i) => {
     const y = boxY + 100 + i * 55
-
     ctx.fillStyle = '#fff'
     ctx.fillText(`#${i + 1} ${u.id.split('@')[0]}`, boxX + 30, y)
-
     ctx.fillStyle = '#cbd5e1'
     ctx.fillText(`${u.euro || 0}€ | ${u.exp || 0}xp`, boxX + 310, y)
   })
 
-  // podio
   const baseY = boxY + boxH
   const colW = 180
   const spacing = 240
@@ -94,7 +86,6 @@ let handler = async (m, { conn }) => {
     const y = baseY - pos.h
     const r = 20
 
-    // colonna podio
     ctx.fillStyle = pos.color
     ctx.strokeStyle = '#fff'
     ctx.lineWidth = 6
@@ -112,7 +103,6 @@ let handler = async (m, { conn }) => {
     ctx.fill()
     ctx.stroke()
 
-    // foto profilo
     try {
       let pp = await conn.profilePictureUrl(user.id, 'image').catch(() => null)
       if (pp) {
@@ -126,7 +116,6 @@ let handler = async (m, { conn }) => {
       }
     } catch {}
 
-    // nome e stats
     ctx.fillStyle = '#fff'
     ctx.font = 'bold 22px Arial'
     ctx.textAlign = 'center'
@@ -136,12 +125,11 @@ let handler = async (m, { conn }) => {
     ctx.fillText(`${user.euro || 0}€ | ${user.exp}xp`, pos.x + colW / 2, baseY + 60)
   }
 
-  // coppa sul 1°
   const first = positions.find(p => p.rank === 1)
   if (first) {
     const y = baseY - first.h
     const cx = first.x + colW / 2
-    const cy = y - 180
+    const cy = y - 230
 
     ctx.fillStyle = '#FFD700'
     ctx.beginPath()
@@ -164,13 +152,11 @@ let handler = async (m, { conn }) => {
     ctx.stroke()
   }
 
-  // firma
   ctx.fillStyle = '#9ca3af'
   ctx.font = '18px Arial'
   ctx.textAlign = 'right'
   ctx.fillText('Dev by Matte', width - 20, height - 20)
 
-  // esporta come PNG
   const buffer = canvas.toBuffer('image/png')
   return conn.sendMessage(
     m.chat,
