@@ -2,7 +2,7 @@ import { createCanvas, loadImage } from 'canvas'
 
 let handler = async (m, { conn }) => {
   const users = Object.entries(global.db.data.users)
-    .map(([id, data]) => ({ id, exp: data.exp || 0, euro: data.euro || 0 }))
+    .map(([id, data]) => ({ id, exp: data.exp || 0 }))
     .sort((a, b) => (b.exp || 0) - (a.exp || 0))
     .slice(0, 10)
 
@@ -19,13 +19,11 @@ let handler = async (m, { conn }) => {
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, width, height)
 
-  // titolo
   ctx.fillStyle = '#fff'
   ctx.font = 'bold 50px Sans-serif'
   ctx.textAlign = 'center'
   ctx.fillText('🏆 CLASSIFICA TOP 10 🏆', width / 2, 70)
 
-  // podio
   const podiumX = 950
   const podiumY = 500
   const podiumW = 120
@@ -48,7 +46,6 @@ let handler = async (m, { conn }) => {
     ctx.fillText(`${i+1}`, x + podiumW/2, y + podiumH[i] - 20)
   })
 
-  // avatar del primo
   try {
     const avatar1 = await loadImage(await conn.profilePictureUrl(users[0].id, 'image').catch(_=>'https://telegra.ph/file/24fa902ead26340f3df2c.png'))
     ctx.save()
@@ -58,14 +55,14 @@ let handler = async (m, { conn }) => {
     ctx.clip()
     ctx.drawImage(avatar1, podiumX, podiumY - podiumH[0] - 130, 120, 120)
     ctx.restore()
-    // coppa sopra l'avatar
+
+    // COPPA sopra la testa, più in alto
     ctx.fillStyle = '#FFD700'
-    ctx.font = '80px Sans-serif'
+    ctx.font = '90px Sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText('🏆', podiumX + podiumW/2, podiumY - podiumH[0] - 160)
+    ctx.fillText('🏆', podiumX + podiumW/2, podiumY - podiumH[0] - 170)
   } catch {}
 
-  // lista 4-10 a sinistra
   ctx.fillStyle = '#fff'
   ctx.font = '30px Sans-serif'
   ctx.textAlign = 'left'
@@ -73,7 +70,6 @@ let handler = async (m, { conn }) => {
     ctx.fillText(`${i+1}. ${users[i].id.split('@')[0]} - ${users[i].exp} XP`, 80, 200 + (i-3)*60)
   }
 
-  // watermark
   ctx.fillStyle = '#fff'
   ctx.font = 'italic 22px Sans-serif'
   ctx.textAlign = 'right'
