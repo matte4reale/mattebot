@@ -2,8 +2,8 @@ import { createCanvas, loadImage } from 'canvas'
 
 let handler = async (m, { conn }) => {
   const users = Object.entries(global.db.data.users)
-    .map(([id, data]) => ({ id, exp: data.exp || 0, euro: data.euro || 0 }))
-    .sort((a, b) => (b.exp || 0) - (a.exp || 0))
+    .map(([id, data]) => ({ id, msgs: data.msgs || 0 }))
+    .sort((a, b) => (b.msgs || 0) - (a.msgs || 0))
     .slice(0, 10)
 
   if (!users.length) return m.reply('❌ Nessun utente trovato nella classifica.')
@@ -29,7 +29,7 @@ let handler = async (m, { conn }) => {
   ctx.fillStyle = '#facc15'
   ctx.font = 'bold 60px Arial'
   ctx.textAlign = 'center'
-  ctx.fillText('HARUSS CLASSIFICA', width / 2, 90)
+  ctx.fillText('📨 TOP MESSAGGI', width / 2, 90)
 
   const boxX = 100
   const boxY = 200
@@ -65,7 +65,7 @@ let handler = async (m, { conn }) => {
     ctx.fillStyle = '#fff'
     ctx.fillText(`#${i + 1} ${u.id.split('@')[0]}`, boxX + 30, y)
     ctx.fillStyle = '#cbd5e1'
-    ctx.fillText(`${u.euro || 0}€ | ${u.exp || 0}xp`, boxX + 310, y)
+    ctx.fillText(`${u.msgs || 0} messaggi`, boxX + 310, y)
   })
 
   const baseY = boxY + boxH
@@ -122,7 +122,7 @@ let handler = async (m, { conn }) => {
     ctx.fillText(user.id.split('@')[0], pos.x + colW / 2, baseY + 35)
 
     ctx.font = '18px Arial'
-    ctx.fillText(`${user.euro || 0}€ | ${user.exp}xp`, pos.x + colW / 2, baseY + 60)
+    ctx.fillText(`${user.msgs || 0} messaggi`, pos.x + colW / 2, baseY + 60)
   }
 
   const first = positions.find(p => p.rank === 1)
@@ -160,10 +160,10 @@ let handler = async (m, { conn }) => {
   const buffer = canvas.toBuffer('image/jpeg', { quality: 0.9 })
   return conn.sendMessage(
     m.chat,
-    { image: buffer, mimetype: 'image/jpeg', caption: '📊 Classifica aggiornata!' },
+    { image: buffer, mimetype: 'image/jpeg', caption: '📊 Classifica messaggi aggiornata!' },
     { quoted: m }
   )
 }
 
-handler.command = /^haruss$/i
+handler.command = /^topmsg$/i
 export default handler
