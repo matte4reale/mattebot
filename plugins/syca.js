@@ -13,12 +13,14 @@ let handler = async (m, { conn }) => {
   const canvas = createCanvas(width, height)
   const ctx = canvas.getContext('2d')
 
+  // sfondo
   const gradient = ctx.createLinearGradient(0, 0, width, height)
   gradient.addColorStop(0, '#1e3a8a')
   gradient.addColorStop(1, '#6d28d9')
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, width, height)
 
+  // coriandoli
   for (let i = 0; i < 200; i++) {
     ctx.beginPath()
     ctx.fillStyle = `hsl(${Math.random() * 360}, 80%, 60%)`
@@ -26,17 +28,44 @@ let handler = async (m, { conn }) => {
     ctx.fill()
   }
 
+  // titolo
   ctx.fillStyle = '#facc15'
   ctx.font = 'bold 60px Arial'
   ctx.textAlign = 'center'
   ctx.fillText('HARUSS CLASSIFICA', width / 2, 90)
 
-  const baseY = 620
+  // coordinate per tabella a sinistra
+  const boxX = 100
+  const boxY = 250
+  const boxW = 500
+  const boxH = 580
+
+  ctx.fillStyle = 'rgba(0,0,0,0.55)'
+  ctx.fillRect(boxX, boxY, boxW, boxH)
+
+  ctx.fillStyle = '#facc15'
+  ctx.font = 'bold 38px Arial'
+  ctx.textAlign = 'left'
+  ctx.fillText('TOP 10:', boxX + 20, boxY + 50)
+
+  ctx.font = '22px Arial'
+  for (let i = 3; i < Math.min(10, users.length); i++) {
+    const u = users[i]
+    const y = boxY + 100 + (i - 3) * 60
+
+    ctx.fillStyle = '#fff'
+    ctx.fillText(`#${i + 1} ${u.id.split('@')[0]}`, boxX + 30, y)
+
+    ctx.fillStyle = '#cbd5e1'
+    ctx.fillText(`${u.euro || 0}€ | ${u.exp || 0}xp`, boxX + 310, y)
+  }
+
+  // podio a destra alla stessa altezza
+  const baseY = boxY + boxH // base allineata con tabella
   const colW = 180
   const spacing = 240
   const centerX = width - 420
 
-  // colonne più basse
   const positions = [
     { rank: 2, x: centerX - spacing, h: 160, color: '#9ca3af' },
     { rank: 1, x: centerX, h: 220, color: '#facc15' },
@@ -47,11 +76,13 @@ let handler = async (m, { conn }) => {
     const user = users[pos.rank - 1]
     if (!user) continue
 
+    const y = baseY - pos.h
+
+    // rettangolo podio
     ctx.fillStyle = pos.color
-    ctx.strokeStyle = '#fff' // cornice bianca
+    ctx.strokeStyle = '#fff'
     ctx.lineWidth = 6
     const radius = 20
-    const y = baseY - pos.h
 
     ctx.beginPath()
     ctx.moveTo(pos.x + radius, y)
@@ -67,6 +98,7 @@ let handler = async (m, { conn }) => {
     ctx.fill()
     ctx.stroke()
 
+    // foto profilo
     try {
       let pp = await conn.profilePictureUrl(user.id, 'image').catch(() => null)
       if (pp) {
@@ -89,11 +121,12 @@ let handler = async (m, { conn }) => {
     ctx.fillText(`${user.euro || 0}€ | ${user.exp}xp`, pos.x + colW / 2, baseY + 60)
   }
 
-  // coppa sopra al 1° posto
+  // coppa sopra la foto del primo
   const first = positions.find(p => p.rank === 1)
   if (first) {
+    const y = baseY - first.h
     const cx = first.x + colW / 2
-    const cy = baseY - first.h - 160
+    const cy = y - 150 // subito sopra la foto profilo
 
     ctx.fillStyle = '#FFD700'
     ctx.beginPath()
@@ -114,31 +147,6 @@ let handler = async (m, { conn }) => {
     ctx.beginPath()
     ctx.arc(cx + 70, cy + 30, 22, 0, Math.PI * 2)
     ctx.stroke()
-  }
-
-  const boxX = 100
-  const boxY = 220
-  const boxW = 500
-  const boxH = 580
-
-  ctx.fillStyle = 'rgba(0,0,0,0.55)'
-  ctx.fillRect(boxX, boxY, boxW, boxH)
-
-  ctx.fillStyle = '#facc15'
-  ctx.font = 'bold 38px Arial'
-  ctx.textAlign = 'left'
-  ctx.fillText('TOP 10:', boxX + 20, boxY + 50)
-
-  ctx.font = '22px Arial'
-  for (let i = 3; i < Math.min(10, users.length); i++) {
-    const u = users[i]
-    const y = boxY + 100 + (i - 3) * 60
-
-    ctx.fillStyle = '#fff'
-    ctx.fillText(`#${i + 1} ${u.id.split('@')[0]}`, boxX + 30, y)
-
-    ctx.fillStyle = '#cbd5e1'
-    ctx.fillText(`${u.euro || 0}€ | ${u.exp || 0}xp`, boxX + 310, y)
   }
 
   ctx.fillStyle = '#9ca3af'
