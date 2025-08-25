@@ -43,12 +43,14 @@ let handler = async (m, { conn }) => {
     ctx.fill()
   }
 
-  // titolo con busta
+  // titolo con busta a sinistra
   ctx.fillStyle = '#facc15'
   ctx.font = 'bold 60px Arial'
-  ctx.textAlign = 'center'
-  ctx.fillText('TOP MESSAGGI', width / 2 + 50, 90)
-  drawEnvelope(ctx, width / 2 - 100, 50, 60, 40, '#ffffff', '#facc15') // busta standard
+  ctx.textAlign = 'left'
+  const titleX = 200
+  const titleY = 90
+  drawEnvelope(ctx, 50, 50, 60, 40, '#ffffff', '#facc15') // busta
+  ctx.fillText('TOP MESSAGGI', titleX, titleY)
 
   // box classifica
   const boxX = 100
