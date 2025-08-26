@@ -1,6 +1,5 @@
 import { createCanvas, loadImage } from 'canvas'
 
-// funzione per disegnare la busta
 function drawEnvelope(ctx, x, y, size) {
   ctx.fillStyle = '#FFD700'
   ctx.strokeStyle = '#fff'
@@ -33,14 +32,12 @@ let handler = async (m, { conn }) => {
   const canvas = createCanvas(width, height)
   const ctx = canvas.getContext('2d')
 
-  // sfondo
   const gradient = ctx.createLinearGradient(0, 0, width, height)
   gradient.addColorStop(0, '#1e3a8a')
   gradient.addColorStop(1, '#6d28d9')
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, width, height)
 
-  // coriandoli
   for (let i = 0; i < 200; i++) {
     ctx.beginPath()
     ctx.fillStyle = `hsl(${Math.random() * 360}, 80%, 60%)`
@@ -48,17 +45,15 @@ let handler = async (m, { conn }) => {
     ctx.fill()
   }
 
-  // titolo
   ctx.fillStyle = '#fff'
   ctx.font = 'bold 60px Arial'
   ctx.textAlign = 'center'
   ctx.fillText('TOP MESSAGGI', width / 2, 90)
 
-  // buste a sinistra e destra
-  drawEnvelope(ctx, width / 2 - 380, 40, 50)
+  // buste più vicine al titolo
+  drawEnvelope(ctx, width / 2 - 330, 40, 50) 
   drawEnvelope(ctx, width / 2 + 280, 40, 50)
 
-  // box classifica
   const boxX = 100
   const boxY = 200
   const boxW = 520
@@ -82,7 +77,6 @@ let handler = async (m, { conn }) => {
   ctx.fill()
   ctx.stroke()
 
-  // scritte classifica
   ctx.fillStyle = '#facc15'
   ctx.font = 'bold 38px Arial'
   ctx.textAlign = 'left'
@@ -97,7 +91,6 @@ let handler = async (m, { conn }) => {
     ctx.fillText(`${u.msgs || 0} messaggi`, boxX + 310, y)
   })
 
-  // podio
   const baseY = boxY + boxH
   const colW = 180
   const spacing = 240
@@ -113,12 +106,10 @@ let handler = async (m, { conn }) => {
     const user = users[pos.rank - 1]
     if (!user) continue
     const y = baseY - pos.h
-
     ctx.fillStyle = pos.color
     ctx.strokeStyle = '#fff'
     ctx.lineWidth = 6
     const r = 20
-
     ctx.beginPath()
     ctx.moveTo(pos.x + r, y)
     ctx.lineTo(pos.x + colW - r, y)
@@ -133,7 +124,6 @@ let handler = async (m, { conn }) => {
     ctx.fill()
     ctx.stroke()
 
-    // foto profilo
     try {
       let pp = await conn.profilePictureUrl(user.id, 'image').catch(() => null)
       if (pp) {
@@ -151,17 +141,16 @@ let handler = async (m, { conn }) => {
     ctx.font = 'bold 22px Arial'
     ctx.textAlign = 'center'
     ctx.fillText(user.id.split('@')[0], pos.x + colW / 2, baseY + 35)
-
     ctx.font = '18px Arial'
     ctx.fillText(`${user.msgs || 0} messaggi`, pos.x + colW / 2, baseY + 60)
   }
 
-  // coppa sopra il primo
   const first = positions.find(p => p.rank === 1)
   if (first) {
     const y = baseY - first.h
     const cx = first.x + colW / 2
-    const cy = y - 180
+    const cy = y - 220 // più in alto
+
     ctx.fillStyle = '#FFD700'
     ctx.beginPath()
     ctx.moveTo(cx - 35, cy)
@@ -172,6 +161,7 @@ let handler = async (m, { conn }) => {
     ctx.fill()
     ctx.fillRect(cx - 12, cy + 60, 24, 25)
     ctx.fillRect(cx - 35, cy + 85, 70, 12)
+
     ctx.strokeStyle = '#ffcc99'
     ctx.lineWidth = 7
     ctx.beginPath()
@@ -182,7 +172,6 @@ let handler = async (m, { conn }) => {
     ctx.stroke()
   }
 
-  // firma
   ctx.fillStyle = '#9ca3af'
   ctx.font = '18px Arial'
   ctx.textAlign = 'right'
@@ -192,16 +181,5 @@ let handler = async (m, { conn }) => {
   return conn.sendMessage(m.chat, { image: buffer, caption: '📊 Classifica messaggi aggiornata!' }, { quoted: m })
 }
 
-// comando
-handler.command = /^topmsg$/i
-
-// prima di ogni messaggio → aggiorna counter
-handler.before = async (m) => {
-  if (!m || !m.sender) return
-  let user = global.db.data.users[m.sender]
-  if (!user) global.db.data.users[m.sender] = {}
-  if (!user.msgs) user.msgs = 0
-  user.msgs += 1
-}
-
+handler.command = /^haruss$/i
 export default handler
