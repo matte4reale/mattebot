@@ -1,23 +1,23 @@
 import { createCanvas, loadImage } from 'canvas'
 
-function drawEnvelope(ctx, x, y, w = 80, h = 50, color = '#ffffff', stroke = '#000000') {
-  ctx.fillStyle = color
-  ctx.fillRect(x, y, w, h)
-  ctx.strokeStyle = stroke
+// funzione per disegnare la busta
+function drawEnvelope(ctx, x, y, size) {
+  ctx.fillStyle = '#FFD700'
+  ctx.strokeStyle = '#fff'
   ctx.lineWidth = 3
-  ctx.strokeRect(x, y, w, h)
+  ctx.beginPath()
+  ctx.rect(x, y, size, size * 0.7)
+  ctx.fill()
+  ctx.stroke()
+
   ctx.beginPath()
   ctx.moveTo(x, y)
-  ctx.lineTo(x + w / 2, y + h / 2)
-  ctx.lineTo(x + w, y)
-  ctx.closePath()
+  ctx.lineTo(x + size / 2, y + size * 0.35)
+  ctx.lineTo(x + size, y)
+  ctx.moveTo(x, y + size * 0.7)
+  ctx.lineTo(x + size / 2, y + size * 0.35)
+  ctx.lineTo(x + size, y + size * 0.7)
   ctx.stroke()
-}
-
-export async function countMessage(m) {
-  if (!global.db.data.users[m.sender]) global.db.data.users[m.sender] = {}
-  if (!global.db.data.users[m.sender].msgs) global.db.data.users[m.sender].msgs = 0
-  global.db.data.users[m.sender].msgs += 1
 }
 
 let handler = async (m, { conn }) => {
@@ -33,12 +33,14 @@ let handler = async (m, { conn }) => {
   const canvas = createCanvas(width, height)
   const ctx = canvas.getContext('2d')
 
+  // sfondo
   const gradient = ctx.createLinearGradient(0, 0, width, height)
   gradient.addColorStop(0, '#1e3a8a')
   gradient.addColorStop(1, '#6d28d9')
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, width, height)
 
+  // coriandoli
   for (let i = 0; i < 200; i++) {
     ctx.beginPath()
     ctx.fillStyle = `hsl(${Math.random() * 360}, 80%, 60%)`
@@ -46,16 +48,17 @@ let handler = async (m, { conn }) => {
     ctx.fill()
   }
 
-  ctx.fillStyle = '#facc15'
+  // titolo
+  ctx.fillStyle = '#fff'
   ctx.font = 'bold 60px Arial'
-  ctx.textAlign = 'left'
-  const titleX = 200
-  const titleY = 90
+  ctx.textAlign = 'center'
+  ctx.fillText('TOP MESSAGGI', width / 2, 90)
 
-  drawEnvelope(ctx, 50, 50, 60, 40, '#ffffff', '#facc15')
-  drawEnvelope(ctx, titleX + 420, 50, 60, 40, '#ffffff', '#facc15')
-  ctx.fillText('TOP MESSAGGI', titleX, titleY)
+  // buste a sinistra e destra
+  drawEnvelope(ctx, width / 2 - 380, 40, 50)
+  drawEnvelope(ctx, width / 2 + 280, 40, 50)
 
+  // box classifica
   const boxX = 100
   const boxY = 200
   const boxW = 520
@@ -79,6 +82,7 @@ let handler = async (m, { conn }) => {
   ctx.fill()
   ctx.stroke()
 
+  // scritte classifica
   ctx.fillStyle = '#facc15'
   ctx.font = 'bold 38px Arial'
   ctx.textAlign = 'left'
@@ -93,6 +97,7 @@ let handler = async (m, { conn }) => {
     ctx.fillText(`${u.msgs || 0} messaggi`, boxX + 310, y)
   })
 
+  // podio
   const baseY = boxY + boxH
   const colW = 180
   const spacing = 240
@@ -107,13 +112,13 @@ let handler = async (m, { conn }) => {
   for (let pos of positions) {
     const user = users[pos.rank - 1]
     if (!user) continue
-
     const y = baseY - pos.h
-    const r = 20
 
     ctx.fillStyle = pos.color
     ctx.strokeStyle = '#fff'
     ctx.lineWidth = 6
+    const r = 20
+
     ctx.beginPath()
     ctx.moveTo(pos.x + r, y)
     ctx.lineTo(pos.x + colW - r, y)
@@ -128,6 +133,7 @@ let handler = async (m, { conn }) => {
     ctx.fill()
     ctx.stroke()
 
+    // foto profilo
     try {
       let pp = await conn.profilePictureUrl(user.id, 'image').catch(() => null)
       if (pp) {
@@ -150,12 +156,12 @@ let handler = async (m, { conn }) => {
     ctx.fillText(`${user.msgs || 0} messaggi`, pos.x + colW / 2, baseY + 60)
   }
 
+  // coppa sopra il primo
   const first = positions.find(p => p.rank === 1)
   if (first) {
     const y = baseY - first.h
     const cx = first.x + colW / 2
-    const cy = y - 230
-
+    const cy = y - 180
     ctx.fillStyle = '#FFD700'
     ctx.beginPath()
     ctx.moveTo(cx - 35, cy)
@@ -166,7 +172,6 @@ let handler = async (m, { conn }) => {
     ctx.fill()
     ctx.fillRect(cx - 12, cy + 60, 24, 25)
     ctx.fillRect(cx - 35, cy + 85, 70, 12)
-
     ctx.strokeStyle = '#ffcc99'
     ctx.lineWidth = 7
     ctx.beginPath()
@@ -177,18 +182,26 @@ let handler = async (m, { conn }) => {
     ctx.stroke()
   }
 
+  // firma
   ctx.fillStyle = '#9ca3af'
   ctx.font = '18px Arial'
   ctx.textAlign = 'right'
   ctx.fillText('Dev by Matte', width - 20, height - 20)
 
-  const buffer = canvas.toBuffer('image/jpeg', { quality: 0.9 })
-  return conn.sendMessage(
-    m.chat,
-    { image: buffer, mimetype: 'image/jpeg', caption: '📊 Classifica messaggi aggiornata!' },
-    { quoted: m }
-  )
+  const buffer = canvas.toBuffer('image/jpeg')
+  return conn.sendMessage(m.chat, { image: buffer, caption: '📊 Classifica messaggi aggiornata!' }, { quoted: m })
 }
 
+// comando
 handler.command = /^topmsg$/i
+
+// prima di ogni messaggio → aggiorna counter
+handler.before = async (m) => {
+  if (!m || !m.sender) return
+  let user = global.db.data.users[m.sender]
+  if (!user) global.db.data.users[m.sender] = {}
+  if (!user.msgs) user.msgs = 0
+  user.msgs += 1
+}
+
 export default handler
