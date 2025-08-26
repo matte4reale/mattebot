@@ -48,11 +48,10 @@ let handler = async (m, { conn }) => {
   ctx.fillStyle = '#fff'
   ctx.font = 'bold 60px Arial'
   ctx.textAlign = 'center'
-  ctx.fillText('✉️ TOP MESSAGGI ✉️', width / 2, 90)
+  ctx.fillText('TOP MESSAGGI', width / 2, 90)
 
-  // Buste simmetriche
-  drawEnvelope(ctx, width / 2 - 360, 40, 50) // sinistra (più vicina al titolo)
-  drawEnvelope(ctx, width / 2 + 310, 40, 50) // destra
+  drawEnvelope(ctx, width / 2 - 380, 40, 50)
+  drawEnvelope(ctx, width / 2 + 280, 40, 50)
 
   const boxX = 100
   const boxY = 200
@@ -152,7 +151,7 @@ let handler = async (m, { conn }) => {
   if (first) {
     const y = baseY - first.h
     const cx = first.x + colW / 2
-    const cy = y - 180
+    const cy = y - 230 // 🔼 alzata la coppa
     ctx.fillStyle = '#FFD700'
     ctx.beginPath()
     ctx.moveTo(cx - 35, cy)
