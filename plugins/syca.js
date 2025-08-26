@@ -48,11 +48,11 @@ let handler = async (m, { conn }) => {
   ctx.fillStyle = '#fff'
   ctx.font = 'bold 60px Arial'
   ctx.textAlign = 'center'
-  ctx.fillText('TOP MESSAGGI', width / 2, 90)
+  ctx.fillText('✉️ TOP MESSAGGI ✉️', width / 2, 90)
 
-  // buste più vicine al titolo
-  drawEnvelope(ctx, width / 2 - 330, 40, 50) 
-  drawEnvelope(ctx, width / 2 + 280, 40, 50)
+  // Buste simmetriche
+  drawEnvelope(ctx, width / 2 - 360, 40, 50) // sinistra (più vicina al titolo)
+  drawEnvelope(ctx, width / 2 + 310, 40, 50) // destra
 
   const boxX = 100
   const boxY = 200
@@ -106,10 +106,12 @@ let handler = async (m, { conn }) => {
     const user = users[pos.rank - 1]
     if (!user) continue
     const y = baseY - pos.h
+
     ctx.fillStyle = pos.color
     ctx.strokeStyle = '#fff'
     ctx.lineWidth = 6
     const r = 20
+
     ctx.beginPath()
     ctx.moveTo(pos.x + r, y)
     ctx.lineTo(pos.x + colW - r, y)
@@ -141,6 +143,7 @@ let handler = async (m, { conn }) => {
     ctx.font = 'bold 22px Arial'
     ctx.textAlign = 'center'
     ctx.fillText(user.id.split('@')[0], pos.x + colW / 2, baseY + 35)
+
     ctx.font = '18px Arial'
     ctx.fillText(`${user.msgs || 0} messaggi`, pos.x + colW / 2, baseY + 60)
   }
@@ -149,8 +152,7 @@ let handler = async (m, { conn }) => {
   if (first) {
     const y = baseY - first.h
     const cx = first.x + colW / 2
-    const cy = y - 220 // più in alto
-
+    const cy = y - 180
     ctx.fillStyle = '#FFD700'
     ctx.beginPath()
     ctx.moveTo(cx - 35, cy)
@@ -161,7 +163,6 @@ let handler = async (m, { conn }) => {
     ctx.fill()
     ctx.fillRect(cx - 12, cy + 60, 24, 25)
     ctx.fillRect(cx - 35, cy + 85, 70, 12)
-
     ctx.strokeStyle = '#ffcc99'
     ctx.lineWidth = 7
     ctx.beginPath()
@@ -181,5 +182,14 @@ let handler = async (m, { conn }) => {
   return conn.sendMessage(m.chat, { image: buffer, caption: '📊 Classifica messaggi aggiornata!' }, { quoted: m })
 }
 
-handler.command = /^haruss$/i
+handler.command = /^topmsg$/i
+
+handler.before = async (m) => {
+  if (!m || !m.sender) return
+  let user = global.db.data.users[m.sender]
+  if (!user) global.db.data.users[m.sender] = {}
+  if (!user.msgs) user.msgs = 0
+  user.msgs += 1
+}
+
 export default handler
