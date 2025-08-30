@@ -56,14 +56,37 @@ function touchGroup(id, subject = '') {
   return groupStats[id]
 }
 
-// 🟡 Funzione che normalizza i testi (emoji + font supportati)
+// 🟡 Normalizza testi e sostituisce caratteri strani
 function sanitizeText(text) {
   if (!text) return ''
   let clean = text.normalize("NFKD")
-  // rimuove caratteri non compatibili
-  clean = clean.replace(/[^\p{L}\p{N}\p{P}\p{Z}\u{1F300}-\u{1FAFF}]/gu, "")
+  // sostituisci caratteri non supportati con ?
+  clean = clean.replace(/[^\p{L}\p{N}\p{P}\p{Z}\u{1F300}-\u{1FAFF}]/gu, "?")
   if (clean.length > 40) clean = clean.slice(0, 37) + "..."
   return clean
+}
+
+// 🟡 Rende emoji con immagini Apple style se trova emoji
+async function renderTextWithEmoji(ctx, text, x, y, font, color = "#fff") {
+  ctx.font = font
+  ctx.fillStyle = color
+  ctx.textAlign = 'center'
+
+  let offsetX = x
+  const chars = Array.from(text)
+  for (const ch of chars) {
+    if (/\p{Emoji}/u.test(ch)) {
+      try {
+        let emojiUrl = `https://emojicdn.elk.sh/${encodeURIComponent(ch)}?style=apple`
+        let img = await loadImage(emojiUrl)
+        ctx.drawImage(img, offsetX, y - 30, 40, 40)
+        offsetX += 35
+        continue
+      } catch {}
+    }
+    ctx.fillText(ch, offsetX, y)
+    offsetX += ctx.measureText(ch).width
+  }
 }
 
 function drawCup(ctx, x, y, size = 60) {
@@ -152,7 +175,7 @@ const handler = async (m, { conn, args }) => {
       ctx.fill()
     }
 
-    const fontStack = '"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji","Poppins","Roboto",sans-serif'
+    const fontStack = '"Poppins","Roboto","Segoe UI","Noto Color Emoji","Apple Color Emoji",sans-serif'
 
     ctx.fillStyle = '#fff'
     ctx.font = `bold 70px ${fontStack}`
@@ -191,13 +214,14 @@ const handler = async (m, { conn, args }) => {
     ctx.fillText('TOP GRUPPI OGGI:', boxX + 20, boxY + 50)
 
     ctx.font = `22px ${fontStack}`
-    sorted.forEach((g, i) => {
+    for (let i = 0; i < sorted.length; i++) {
+      const g = sorted[i]
       const y = boxY + 100 + i * 65
       ctx.fillStyle = '#fff'
-      ctx.fillText(`#${i + 1} ${sanitizeText(g.subject)}`, boxX + 30, y)
+      await renderTextWithEmoji(ctx, `#${i + 1} ${sanitizeText(g.subject)}`, boxX + 120, y, `22px ${fontStack}`, "#fff")
       ctx.fillStyle = '#cbd5e1'
-      ctx.fillText(`${g.dailyMessages} msg oggi | ${g.totalMessages} tot`, boxX + 350, y)
-    })
+      ctx.fillText(`${g.dailyMessages} msg oggi | ${g.totalMessages} tot`, boxX + 430, y)
+    }
 
     const baseY = boxY + boxH
     const colW = 200
@@ -245,9 +269,7 @@ const handler = async (m, { conn, args }) => {
       } catch {}
 
       ctx.fillStyle = '#fff'
-      ctx.font = `bold 22px ${fontStack}`
-      ctx.textAlign = 'center'
-      ctx.fillText(sanitizeText(g.subject), pos.x + colW / 2, baseY + 35)
+      await renderTextWithEmoji(ctx, sanitizeText(g.subject), pos.x + colW / 2, baseY + 35, `bold 22px ${fontStack}`, "#fff")
 
       ctx.font = `18px ${fontStack}`
       ctx.fillText(`${g.dailyMessages} msg oggi | ${g.totalMessages} tot`, pos.x + colW / 2, baseY + 60)
@@ -257,7 +279,7 @@ const handler = async (m, { conn, args }) => {
     if (first) {
       const y = baseY - first.h
       const cx = first.x + colW / 2
-      const cy = y - 190
+      const cy = y - 220 // coppa più in alto
       drawCup(ctx, cx, cy, 70)
     }
 
