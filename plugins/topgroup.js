@@ -1,9 +1,4 @@
-import { createCanvas, loadImage, registerFont } from 'canvas'
-
-// Registrazione Google Fonts / fallback
-registerFont('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', { family: 'DejaVu' })
-registerFont('/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf', { family: 'Noto Color Emoji' })
-registerFont('/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf', { family: 'Liberation' })
+import { createCanvas, loadImage } from 'canvas'
 
 let groupStats = Object.create(null)
 let lastResetKey = getDateKeyRome()
@@ -60,6 +55,17 @@ function touchGroup(id, subject = '') {
   }
   return groupStats[id]
 }
+
+// 🟡 Funzione che normalizza i testi (emoji + font supportati)
+function sanitizeText(text) {
+  if (!text) return ''
+  let clean = text.normalize("NFKD")
+  // rimuove caratteri non compatibili
+  clean = clean.replace(/[^\p{L}\p{N}\p{P}\p{Z}\u{1F300}-\u{1FAFF}]/gu, "")
+  if (clean.length > 40) clean = clean.slice(0, 37) + "..."
+  return clean
+}
+
 function drawCup(ctx, x, y, size = 60) {
   ctx.fillStyle = '#FFD700'
   ctx.beginPath()
@@ -83,12 +89,15 @@ function drawCup(ctx, x, y, size = 60) {
 
 const handler = async (m, { conn, args }) => {
   maybeDailyReset()
+
   if (!m.isGroup) return m.reply('Questo comando funziona solo nei gruppi!')
+
   let topCount = 10
   if (args && args[0]) {
     const n = parseInt(args[0])
     if (!isNaN(n) && n > 0 && n <= 20) topCount = n
   }
+
   try {
     const groups = await conn.groupFetchAllParticipating()
     const list = Object.values(groups || {})
@@ -113,15 +122,20 @@ const handler = async (m, { conn, args }) => {
         lastActivity: s.lastUpdated
       }
     }))
-    const sorted = groupsData.sort((a, b) => {
-      if (b.dailyMessages !== a.dailyMessages) return b.dailyMessages - a.dailyMessages
-      if (b.totalMessages !== a.totalMessages) return b.totalMessages - a.totalMessages
-      if (b.participants !== a.participants) return b.participants - a.participants
-      return a.subject.localeCompare(b.subject)
-    }).slice(0, topCount)
+
+    const sorted = groupsData
+      .sort((a, b) => {
+        if (b.dailyMessages !== a.dailyMessages) return b.dailyMessages - a.dailyMessages
+        if (b.totalMessages !== a.totalMessages) return b.totalMessages - a.totalMessages
+        if (b.participants !== a.participants) return b.participants - a.participants
+        return a.subject.localeCompare(b.subject)
+      })
+      .slice(0, topCount)
+
     if (!sorted.length) return m.reply('❌ Nessun gruppo trovato nella classifica.')
 
-    const width = 1600, height = 1100
+    const width = 1600
+    const height = 1100
     const canvas = createCanvas(width, height)
     const ctx = canvas.getContext('2d')
 
@@ -138,17 +152,22 @@ const handler = async (m, { conn, args }) => {
       ctx.fill()
     }
 
-    const fontStack = '"Noto Color Emoji","Segoe UI Emoji","Apple Color Emoji","DejaVu","Liberation",sans-serif'
+    const fontStack = '"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji","Poppins","Roboto",sans-serif'
 
     ctx.fillStyle = '#fff'
     ctx.font = `bold 70px ${fontStack}`
     ctx.textAlign = 'center'
-    ctx.fillText('🏆 TOP GRUPPI 🏆', width / 2, 100)
+    ctx.fillText('TOP GRUPPI', width / 2, 100)
 
     drawCup(ctx, width / 2 - 420, 55, 55)
     drawCup(ctx, width / 2 + 420, 55, 55)
 
-    const boxX = 80, boxY = 200, boxW = 650, boxH = 750, radius = 30
+    const boxX = 80
+    const boxY = 200
+    const boxW = 650
+    const boxH = 750
+    const radius = 30
+
     ctx.fillStyle = 'rgba(0,0,0,0.55)'
     ctx.strokeStyle = '#fff'
     ctx.lineWidth = 6
@@ -175,25 +194,32 @@ const handler = async (m, { conn, args }) => {
     sorted.forEach((g, i) => {
       const y = boxY + 100 + i * 65
       ctx.fillStyle = '#fff'
-      ctx.fillText(`#${i + 1} ${g.subject}`, boxX + 30, y)
+      ctx.fillText(`#${i + 1} ${sanitizeText(g.subject)}`, boxX + 30, y)
       ctx.fillStyle = '#cbd5e1'
       ctx.fillText(`${g.dailyMessages} msg oggi | ${g.totalMessages} tot`, boxX + 350, y)
     })
 
-    const baseY = boxY + boxH, colW = 200, spacing = 260, centerX = width - 500
+    const baseY = boxY + boxH
+    const colW = 200
+    const spacing = 260
+    const centerX = width - 500
+
     const positions = [
       { rank: 2, x: centerX - spacing, h: 170, color: '#9ca3af' },
       { rank: 1, x: centerX, h: 240, color: '#facc15' },
       { rank: 3, x: centerX + spacing, h: 150, color: '#d97706' }
     ]
+
     for (let pos of positions) {
       const g = sorted[pos.rank - 1]
       if (!g) continue
       const y = baseY - pos.h
+
       ctx.fillStyle = pos.color
       ctx.strokeStyle = '#fff'
       ctx.lineWidth = 6
       const r = 20
+
       ctx.beginPath()
       ctx.moveTo(pos.x + r, y)
       ctx.lineTo(pos.x + colW - r, y)
@@ -207,6 +233,7 @@ const handler = async (m, { conn, args }) => {
       ctx.closePath()
       ctx.fill()
       ctx.stroke()
+
       try {
         let img = await loadImage(g.photo)
         ctx.save()
@@ -216,13 +243,16 @@ const handler = async (m, { conn, args }) => {
         ctx.drawImage(img, pos.x + colW / 2 - 55, y - 120, 110, 110)
         ctx.restore()
       } catch {}
+
       ctx.fillStyle = '#fff'
       ctx.font = `bold 22px ${fontStack}`
       ctx.textAlign = 'center'
-      ctx.fillText(g.subject, pos.x + colW / 2, baseY + 35)
+      ctx.fillText(sanitizeText(g.subject), pos.x + colW / 2, baseY + 35)
+
       ctx.font = `18px ${fontStack}`
       ctx.fillText(`${g.dailyMessages} msg oggi | ${g.totalMessages} tot`, pos.x + colW / 2, baseY + 60)
     }
+
     const first = positions.find(p => p.rank === 1)
     if (first) {
       const y = baseY - first.h
@@ -230,6 +260,7 @@ const handler = async (m, { conn, args }) => {
       const cy = y - 190
       drawCup(ctx, cx, cy, 70)
     }
+
     const { hours, minutes, nowDate } = getResetCountdownRome()
     ctx.fillStyle = '#9ca3af'
     ctx.font = `18px ${fontStack}`
@@ -243,6 +274,7 @@ const handler = async (m, { conn, args }) => {
     await m.reply('Errore nel recuperare i gruppi.')
   }
 }
+
 handler.all = async (m, { conn }) => {
   maybeDailyReset()
   if (!m || !m.isGroup || !m.chat) return
@@ -258,6 +290,8 @@ handler.all = async (m, { conn }) => {
     s.lastUpdated = nowRome().toISOString()
   } catch {}
 }
+
 handler.command = /^topgruppi|topgroups$/i
 handler.group = true
+
 export default handler
