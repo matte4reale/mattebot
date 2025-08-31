@@ -53,17 +53,35 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
   ctx.closePath()
 }
 
-function drawCup(ctx, x, y, size = 80) {
+function drawNiceCup(ctx, x, y, size = 90) {
+  ctx.save()
   ctx.fillStyle = '#FFD700'
+  ctx.strokeStyle = '#fff'
+  ctx.lineWidth = 4
+
+  // coppa principale
   ctx.beginPath()
-  ctx.moveTo(x - size / 2, y)
-  ctx.lineTo(x + size / 2, y)
-  ctx.lineTo(x + size * 0.4, y + size)
-  ctx.lineTo(x - size * 0.4, y + size)
+  ctx.moveTo(x - size * 0.4, y)
+  ctx.lineTo(x + size * 0.4, y)
+  ctx.lineTo(x + size * 0.3, y + size * 0.5)
+  ctx.lineTo(x - size * 0.3, y + size * 0.5)
   ctx.closePath()
   ctx.fill()
-  ctx.fillRect(x - size * 0.15, y + size, size * 0.3, size * 0.3)
-  ctx.fillRect(x - size * 0.5, y + size * 1.3, size, size * 0.15)
+  ctx.stroke()
+
+  // manici
+  ctx.beginPath()
+  ctx.arc(x - size * 0.45, y + size * 0.2, size * 0.25, Math.PI * 0.8, Math.PI * 1.8)
+  ctx.arc(x + size * 0.45, y + size * 0.2, size * 0.25, Math.PI * 1.2, Math.PI * 2.2)
+  ctx.stroke()
+
+  // stelo
+  ctx.fillRect(x - size * 0.1, y + size * 0.5, size * 0.2, size * 0.3)
+
+  // base
+  ctx.fillRect(x - size * 0.25, y + size * 0.8, size * 0.5, size * 0.15)
+
+  ctx.restore()
 }
 
 const handler = async (m, { conn, args }) => {
@@ -107,34 +125,33 @@ const handler = async (m, { conn, args }) => {
 
     if (!sorted.length) return m.reply('❌ Nessun gruppo trovato nella classifica.')
 
-    // Canvas
     const width = 1200, height = 800
     const canvas = createCanvas(width, height)
     const ctx = canvas.getContext('2d')
 
-    // Sfondo pulito (sfumato blu → viola)
+    // sfondo sfumato
     const grad = ctx.createLinearGradient(0, 0, 0, height)
     grad.addColorStop(0, '#1e3a8a')
     grad.addColorStop(1, '#6d28d9')
     ctx.fillStyle = grad
     ctx.fillRect(0, 0, width, height)
 
-    // Titolo
+    // titolo
     ctx.fillStyle = '#fff'
     ctx.font = 'bold 60px "Poppins","Roboto","Segoe UI",sans-serif'
     ctx.textAlign = 'center'
     ctx.fillText('🏆 TOP 3 GRUPPI 🏆', width / 2, 100)
 
-    // Podio centrato
-    const baseY = 620
+    // podio più basso
+    const baseY = 600
     const colW = 220
     const spacing = 280
     const centerX = width / 2
 
     const positions = [
-      { rank: 2, x: centerX - spacing, h: 180, color: '#9ca3af', emoji: '🥈' },
-      { rank: 1, x: centerX, h: 250, color: '#facc15', emoji: '🥇' },
-      { rank: 3, x: centerX + spacing, h: 150, color: '#d97706', emoji: '🥉' }
+      { rank: 2, x: centerX - spacing, h: 150, color: '#9ca3af', emoji: '🥈' },
+      { rank: 1, x: centerX, h: 200, color: '#facc15', emoji: '🥇' },
+      { rank: 3, x: centerX + spacing, h: 120, color: '#d97706', emoji: '🥉' }
     ]
 
     for (let pos of positions) {
@@ -149,44 +166,42 @@ const handler = async (m, { conn, args }) => {
       ctx.strokeStyle = '#fff'
       ctx.stroke()
 
-      // Avatar
       try {
         let img = await loadImage(g.photo)
         ctx.save()
         ctx.beginPath()
-        ctx.arc(pos.x + colW / 2, y - 60, 55, 0, Math.PI * 2)
+        ctx.arc(pos.x + colW / 2, y - 55, 50, 0, Math.PI * 2)
         ctx.clip()
-        ctx.drawImage(img, pos.x + colW / 2 - 55, y - 115, 110, 110)
+        ctx.drawImage(img, pos.x + colW / 2 - 50, y - 105, 100, 100)
         ctx.restore()
       } catch {}
 
-      // Nome
       ctx.fillStyle = '#fff'
       ctx.font = 'bold 22px "Poppins","Roboto","Segoe UI",sans-serif'
-      ctx.fillText(sanitizeText(g.subject), pos.x + colW / 2, baseY + 30)
+      ctx.fillText(sanitizeText(g.subject), pos.x + colW / 2, baseY + 25)
 
-      // Statistiche
       ctx.font = '18px "Poppins","Roboto","Segoe UI",sans-serif'
-      ctx.fillText(`${g.dailyMessages} oggi | ${g.totalMessages} totali`, pos.x + colW / 2, baseY + 55)
+      ctx.fillText(`${g.dailyMessages} oggi | ${g.totalMessages} totali`, pos.x + colW / 2, baseY + 50)
 
-      // Emoji podio
-      ctx.font = 'bold 50px "Poppins"'
+      ctx.font = 'bold 45px "Poppins"'
       ctx.fillText(pos.emoji, pos.x + colW / 2, y + pos.h / 2)
     }
 
-    // Coppa più in alto
+    // coppa bella e più alta
     const first = positions.find(p => p.rank === 1)
     if (first) {
       const cx = first.x + colW / 2
-      const cy = baseY - first.h - 200
-      drawCup(ctx, cx, cy, 90)
+      const cy = baseY - first.h - 240
+      drawNiceCup(ctx, cx, cy, 90)
     }
 
-    // Caption dal 4° in poi con cornici
+    // caption con emoji varie
+    const icons = ['🔹','🔸','⭐','⚡','🔥','🌙','🌟','💠','✨','🎯']
     let caption = "📋 Classifica Gruppi (dal 4° posto in poi):\n\n"
     sorted.slice(3).forEach((g, i) => {
+      let ic = icons[i % icons.length]
       caption += `╔══════════════════════╗\n`
-      caption += `#${i + 4} ${sanitizeText(g.subject)}\n`
+      caption += `${ic} #${i + 4} ${sanitizeText(g.subject)}\n`
       caption += `🗨️ ${g.dailyMessages} oggi | 📊 ${g.totalMessages} totali\n`
       caption += `╚══════════════════════╝\n\n`
     })
