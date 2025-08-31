@@ -43,29 +43,6 @@ function sanitizeText(text) {
   return clean
 }
 
-async function drawEmoji(ctx, emoji, x, y, size = 64) {
-  try {
-    const url = `https://emojicdn.elk.sh/${encodeURIComponent(emoji)}?style=apple`
-    const img = await loadImage(url)
-    ctx.drawImage(img, x - size / 2, y - size / 2, size, size)
-  } catch (e) {
-    console.error("emoji error", emoji, e)
-  }
-}
-
-function drawCup(ctx, x, y, size = 70) {
-  ctx.fillStyle = '#FFD700'
-  ctx.beginPath()
-  ctx.moveTo(x - size / 2, y)
-  ctx.lineTo(x + size / 2, y)
-  ctx.lineTo(x + size * 0.4, y + size)
-  ctx.lineTo(x - size * 0.4, y + size)
-  ctx.closePath()
-  ctx.fill()
-  ctx.fillRect(x - size * 0.15, y + size, size * 0.3, size * 0.3)
-  ctx.fillRect(x - size * 0.5, y + size * 1.3, size, size * 0.15)
-}
-
 function drawRoundedRect(ctx, x, y, w, h, r) {
   ctx.beginPath()
   ctx.moveTo(x + r, y)
@@ -76,17 +53,17 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
   ctx.closePath()
 }
 
-function drawConfetti(ctx, width, height, count = 150) {
-  for (let i = 0; i < count; i++) {
-    const x = Math.random() * width
-    const y = Math.random() * height
-    const size = Math.random() * 8 + 3
-    const colors = ['#f87171', '#34d399', '#60a5fa', '#facc15', '#a78bfa', '#fb923c']
-    ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)]
-    ctx.beginPath()
-    ctx.arc(x, y, size, 0, Math.PI * 2)
-    ctx.fill()
-  }
+function drawCup(ctx, x, y, size = 80) {
+  ctx.fillStyle = '#FFD700'
+  ctx.beginPath()
+  ctx.moveTo(x - size / 2, y)
+  ctx.lineTo(x + size / 2, y)
+  ctx.lineTo(x + size * 0.4, y + size)
+  ctx.lineTo(x - size * 0.4, y + size)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillRect(x - size * 0.15, y + size, size * 0.3, size * 0.3)
+  ctx.fillRect(x - size * 0.5, y + size * 1.3, size, size * 0.15)
 }
 
 const handler = async (m, { conn, args }) => {
@@ -130,15 +107,17 @@ const handler = async (m, { conn, args }) => {
 
     if (!sorted.length) return m.reply('❌ Nessun gruppo trovato nella classifica.')
 
-    // 🎨 Canvas
+    // Canvas
     const width = 1200, height = 800
     const canvas = createCanvas(width, height)
     const ctx = canvas.getContext('2d')
 
-    // Sfondo con coriandoli
-    ctx.fillStyle = '#0f172a'
+    // Sfondo pulito (sfumato blu → viola)
+    const grad = ctx.createLinearGradient(0, 0, 0, height)
+    grad.addColorStop(0, '#1e3a8a')
+    grad.addColorStop(1, '#6d28d9')
+    ctx.fillStyle = grad
     ctx.fillRect(0, 0, width, height)
-    drawConfetti(ctx, width, height, 200)
 
     // Titolo
     ctx.fillStyle = '#fff'
@@ -146,16 +125,16 @@ const handler = async (m, { conn, args }) => {
     ctx.textAlign = 'center'
     ctx.fillText('🏆 TOP 3 GRUPPI 🏆', width / 2, 100)
 
-    // Podio
-    const baseY = 650
+    // Podio centrato
+    const baseY = 620
     const colW = 220
     const spacing = 280
     const centerX = width / 2
 
     const positions = [
-      { rank: 2, x: centerX - spacing, h: 180, color: '#9ca3af' },
-      { rank: 1, x: centerX, h: 250, color: '#facc15' },
-      { rank: 3, x: centerX + spacing, h: 150, color: '#d97706' }
+      { rank: 2, x: centerX - spacing, h: 180, color: '#9ca3af', emoji: '🥈' },
+      { rank: 1, x: centerX, h: 250, color: '#facc15', emoji: '🥇' },
+      { rank: 3, x: centerX + spacing, h: 150, color: '#d97706', emoji: '🥉' }
     ]
 
     for (let pos of positions) {
@@ -163,7 +142,6 @@ const handler = async (m, { conn, args }) => {
       if (!g) continue
       const y = baseY - pos.h
 
-      // rettangolo con angoli arrotondati e bordo bianco
       drawRoundedRect(ctx, pos.x, y, colW, pos.h, 20)
       ctx.fillStyle = pos.color
       ctx.fill()
@@ -171,7 +149,7 @@ const handler = async (m, { conn, args }) => {
       ctx.strokeStyle = '#fff'
       ctx.stroke()
 
-      // avatar
+      // Avatar
       try {
         let img = await loadImage(g.photo)
         ctx.save()
@@ -182,26 +160,35 @@ const handler = async (m, { conn, args }) => {
         ctx.restore()
       } catch {}
 
+      // Nome
       ctx.fillStyle = '#fff'
       ctx.font = 'bold 22px "Poppins","Roboto","Segoe UI",sans-serif'
       ctx.fillText(sanitizeText(g.subject), pos.x + colW / 2, baseY + 30)
 
+      // Statistiche
       ctx.font = '18px "Poppins","Roboto","Segoe UI",sans-serif'
       ctx.fillText(`${g.dailyMessages} oggi | ${g.totalMessages} totali`, pos.x + colW / 2, baseY + 55)
+
+      // Emoji podio
+      ctx.font = 'bold 50px "Poppins"'
+      ctx.fillText(pos.emoji, pos.x + colW / 2, y + pos.h / 2)
     }
 
-    // Coppa sopra il primo → più in alto
+    // Coppa più in alto
     const first = positions.find(p => p.rank === 1)
     if (first) {
       const cx = first.x + colW / 2
-      const cy = baseY - first.h - 170
-      drawCup(ctx, cx, cy, 70)
+      const cy = baseY - first.h - 200
+      drawCup(ctx, cx, cy, 90)
     }
 
-    // Caption (dal 4° in poi)
-    let caption = "Classifica Gruppi (dal 4° in poi):\n\n"
+    // Caption dal 4° in poi con cornici
+    let caption = "📋 Classifica Gruppi (dal 4° posto in poi):\n\n"
     sorted.slice(3).forEach((g, i) => {
-      caption += `#${i + 4} ${sanitizeText(g.subject)} - ${g.dailyMessages} msg oggi (${g.totalMessages} totali)\n`
+      caption += `╔══════════════════════╗\n`
+      caption += `#${i + 4} ${sanitizeText(g.subject)}\n`
+      caption += `🗨️ ${g.dailyMessages} oggi | 📊 ${g.totalMessages} totali\n`
+      caption += `╚══════════════════════╝\n\n`
     })
 
     const buffer = canvas.toBuffer('image/jpeg')
