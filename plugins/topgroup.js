@@ -53,6 +53,16 @@ function sanitizeText(text) {
   return clean
 }
 
+async function drawEmoji(ctx, emoji, x, y, size = 64) {
+  try {
+    const url = `https://emojicdn.elk.sh/${encodeURIComponent(emoji)}?style=apple`
+    const img = await loadImage(url)
+    ctx.drawImage(img, x - size / 2, y - size / 2, size, size)
+  } catch (e) {
+    console.error("emoji error", emoji, e)
+  }
+}
+
 function drawCup(ctx, x, y, size = 70) {
   ctx.fillStyle = '#FFD700'
   ctx.beginPath()
@@ -126,9 +136,13 @@ const handler = async (m, { conn, args }) => {
     ctx.fillRect(0, 0, width, height)
 
     ctx.fillStyle = '#fff'
-    ctx.font = 'bold 60px "Segoe UI Emoji","Noto Color Emoji","Poppins","Roboto",sans-serif'
+    ctx.font = 'bold 60px "Poppins","Roboto","Segoe UI",sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText('🏆 TOP 3 GRUPPI', width / 2, 100)
+    ctx.fillText('TOP 3 GRUPPI', width / 2, 100)
+
+    // 🏆 Emoji sopra titolo
+    await drawEmoji(ctx, "🏆", width/2 - 200, 80, 60)
+    await drawEmoji(ctx, "🏆", width/2 + 200, 80, 60)
 
     // Podio
     const baseY = 650
@@ -161,10 +175,10 @@ const handler = async (m, { conn, args }) => {
       } catch {}
 
       ctx.fillStyle = '#fff'
-      ctx.font = 'bold 22px "Segoe UI Emoji","Noto Color Emoji","Poppins","Roboto",sans-serif'
+      ctx.font = 'bold 22px "Poppins","Roboto","Segoe UI",sans-serif'
       ctx.fillText(sanitizeText(g.subject), pos.x + colW / 2, baseY + 30)
 
-      ctx.font = '18px "Segoe UI Emoji","Noto Color Emoji","Poppins","Roboto",sans-serif'
+      ctx.font = '18px "Poppins","Roboto","Segoe UI",sans-serif'
       ctx.fillText(`${g.dailyMessages} oggi | ${g.totalMessages} totali`, pos.x + colW / 2, baseY + 55)
     }
 
@@ -176,8 +190,8 @@ const handler = async (m, { conn, args }) => {
       drawCup(ctx, cx, cy, 70)
     }
 
-    // Caption per #4 → #10
-    let caption = "🏅 Classifica Gruppi\n\n"
+    // Caption con emoji esterne
+    let caption = "Classifica Gruppi\n\n"
     caption += "🥇 " + sanitizeText(sorted[0]?.subject || '') + ` (${sorted[0]?.dailyMessages} oggi)\n`
     caption += "🥈 " + sanitizeText(sorted[1]?.subject || '') + ` (${sorted[1]?.dailyMessages} oggi)\n`
     caption += "🥉 " + sanitizeText(sorted[2]?.subject || '') + ` (${sorted[2]?.dailyMessages} oggi)\n\n`
