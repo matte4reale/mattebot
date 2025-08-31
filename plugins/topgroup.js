@@ -31,15 +31,6 @@ function maybeDailyReset() {
     lastResetKey = key
   }
 }
-function getResetCountdownRome() {
-  const now = nowRome()
-  const midnight = new Date(now)
-  midnight.setHours(24, 0, 0, 0)
-  const ms = midnight - now
-  const h = Math.max(0, Math.floor(ms / (1000 * 60 * 60)))
-  const m = Math.max(0, Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60)))
-  return { hours: h, minutes: m, nowDate: formatDateRome(now.toISOString()) }
-}
 function touchGroup(id, subject = '') {
   if (!groupStats[id]) {
     groupStats[id] = {
@@ -55,41 +46,14 @@ function touchGroup(id, subject = '') {
   }
   return groupStats[id]
 }
-
-// 🟡 Normalizza testi e sostituisce caratteri strani
 function sanitizeText(text) {
   if (!text) return ''
-  let clean = text.normalize("NFKD")
-  // sostituisci caratteri non supportati con ?
-  clean = clean.replace(/[^\p{L}\p{N}\p{P}\p{Z}\u{1F300}-\u{1FAFF}]/gu, "?")
+  let clean = text.normalize("NFKC")
   if (clean.length > 40) clean = clean.slice(0, 37) + "..."
   return clean
 }
 
-// 🟡 Rende emoji con immagini Apple style se trova emoji
-async function renderTextWithEmoji(ctx, text, x, y, font, color = "#fff") {
-  ctx.font = font
-  ctx.fillStyle = color
-  ctx.textAlign = 'center'
-
-  let offsetX = x
-  const chars = Array.from(text)
-  for (const ch of chars) {
-    if (/\p{Emoji}/u.test(ch)) {
-      try {
-        let emojiUrl = `https://emojicdn.elk.sh/${encodeURIComponent(ch)}?style=apple`
-        let img = await loadImage(emojiUrl)
-        ctx.drawImage(img, offsetX, y - 30, 40, 40)
-        offsetX += 35
-        continue
-      } catch {}
-    }
-    ctx.fillText(ch, offsetX, y)
-    offsetX += ctx.measureText(ch).width
-  }
-}
-
-function drawCup(ctx, x, y, size = 60) {
+function drawCup(ctx, x, y, size = 70) {
   ctx.fillStyle = '#FFD700'
   ctx.beginPath()
   ctx.moveTo(x - size / 2, y)
@@ -100,14 +64,6 @@ function drawCup(ctx, x, y, size = 60) {
   ctx.fill()
   ctx.fillRect(x - size * 0.15, y + size, size * 0.3, size * 0.3)
   ctx.fillRect(x - size * 0.5, y + size * 1.3, size, size * 0.15)
-  ctx.strokeStyle = '#ffcc99'
-  ctx.lineWidth = 6
-  ctx.beginPath()
-  ctx.arc(x - size * 0.9, y + size * 0.5, size * 0.35, 0, Math.PI * 2)
-  ctx.stroke()
-  ctx.beginPath()
-  ctx.arc(x + size * 0.9, y + size * 0.5, size * 0.35, 0, Math.PI * 2)
-  ctx.stroke()
 }
 
 const handler = async (m, { conn, args }) => {
@@ -157,80 +113,32 @@ const handler = async (m, { conn, args }) => {
 
     if (!sorted.length) return m.reply('❌ Nessun gruppo trovato nella classifica.')
 
-    const width = 1600
-    const height = 1100
+    // 🎨 Canvas solo per top 3
+    const width = 1200, height = 800
     const canvas = createCanvas(width, height)
     const ctx = canvas.getContext('2d')
 
+    // Background
     const gradient = ctx.createLinearGradient(0, 0, width, height)
     gradient.addColorStop(0, '#0f172a')
     gradient.addColorStop(1, '#1e3a8a')
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, width, height)
 
-    for (let i = 0; i < 180; i++) {
-      ctx.beginPath()
-      ctx.fillStyle = `hsl(${Math.random() * 360}, 80%, 60%)`
-      ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 3 + 2, 0, Math.PI * 2)
-      ctx.fill()
-    }
-
-    const fontStack = '"Poppins","Roboto","Segoe UI","Noto Color Emoji","Apple Color Emoji",sans-serif'
-
     ctx.fillStyle = '#fff'
-    ctx.font = `bold 70px ${fontStack}`
+    ctx.font = 'bold 60px "Segoe UI Emoji","Noto Color Emoji","Poppins","Roboto",sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText('TOP GRUPPI', width / 2, 100)
+    ctx.fillText('🏆 TOP 3 GRUPPI', width / 2, 100)
 
-    drawCup(ctx, width / 2 - 420, 55, 55)
-    drawCup(ctx, width / 2 + 420, 55, 55)
-
-    const boxX = 80
-    const boxY = 200
-    const boxW = 650
-    const boxH = 750
-    const radius = 30
-
-    ctx.fillStyle = 'rgba(0,0,0,0.55)'
-    ctx.strokeStyle = '#fff'
-    ctx.lineWidth = 6
-    ctx.beginPath()
-    ctx.moveTo(boxX + radius, boxY)
-    ctx.lineTo(boxX + boxW - radius, boxY)
-    ctx.quadraticCurveTo(boxX + boxW, boxY, boxX + boxW, boxY + radius)
-    ctx.lineTo(boxX + boxW, boxY + boxH - radius)
-    ctx.quadraticCurveTo(boxX + boxW, boxY + boxH, boxX + boxW - radius, boxY + boxH)
-    ctx.lineTo(boxX + radius, boxY + boxH)
-    ctx.quadraticCurveTo(boxX, boxY + boxH, boxX, boxY + boxH - radius)
-    ctx.lineTo(boxX, boxY + radius)
-    ctx.quadraticCurveTo(boxX, boxY, boxX + radius, boxY)
-    ctx.closePath()
-    ctx.fill()
-    ctx.stroke()
-
-    ctx.fillStyle = '#facc15'
-    ctx.font = `bold 38px ${fontStack}`
-    ctx.textAlign = 'left'
-    ctx.fillText('TOP GRUPPI OGGI:', boxX + 20, boxY + 50)
-
-    ctx.font = `22px ${fontStack}`
-    for (let i = 0; i < sorted.length; i++) {
-      const g = sorted[i]
-      const y = boxY + 100 + i * 65
-      ctx.fillStyle = '#fff'
-      await renderTextWithEmoji(ctx, `#${i + 1} ${sanitizeText(g.subject)}`, boxX + 120, y, `22px ${fontStack}`, "#fff")
-      ctx.fillStyle = '#cbd5e1'
-      ctx.fillText(`${g.dailyMessages} msg oggi | ${g.totalMessages} tot`, boxX + 430, y)
-    }
-
-    const baseY = boxY + boxH
-    const colW = 200
-    const spacing = 260
-    const centerX = width - 500
+    // Podio
+    const baseY = 650
+    const colW = 220
+    const spacing = 280
+    const centerX = width / 2
 
     const positions = [
-      { rank: 2, x: centerX - spacing, h: 170, color: '#9ca3af' },
-      { rank: 1, x: centerX, h: 240, color: '#facc15' },
+      { rank: 2, x: centerX - spacing, h: 180, color: '#9ca3af' },
+      { rank: 1, x: centerX, h: 250, color: '#facc15' },
       { rank: 3, x: centerX + spacing, h: 150, color: '#d97706' }
     ]
 
@@ -240,57 +148,46 @@ const handler = async (m, { conn, args }) => {
       const y = baseY - pos.h
 
       ctx.fillStyle = pos.color
-      ctx.strokeStyle = '#fff'
-      ctx.lineWidth = 6
-      const r = 20
-
-      ctx.beginPath()
-      ctx.moveTo(pos.x + r, y)
-      ctx.lineTo(pos.x + colW - r, y)
-      ctx.quadraticCurveTo(pos.x + colW, y, pos.x + colW, y + r)
-      ctx.lineTo(pos.x + colW, baseY - r)
-      ctx.quadraticCurveTo(pos.x + colW, baseY, pos.x + colW - r, baseY)
-      ctx.lineTo(pos.x + r, baseY)
-      ctx.quadraticCurveTo(pos.x, baseY, pos.x, baseY - r)
-      ctx.lineTo(pos.x, y + r)
-      ctx.quadraticCurveTo(pos.x, y, pos.x + r, y)
-      ctx.closePath()
-      ctx.fill()
-      ctx.stroke()
+      ctx.fillRect(pos.x, y, colW, pos.h)
 
       try {
         let img = await loadImage(g.photo)
         ctx.save()
         ctx.beginPath()
-        ctx.arc(pos.x + colW / 2, y - 65, 55, 0, Math.PI * 2)
+        ctx.arc(pos.x + colW / 2, y - 60, 55, 0, Math.PI * 2)
         ctx.clip()
-        ctx.drawImage(img, pos.x + colW / 2 - 55, y - 120, 110, 110)
+        ctx.drawImage(img, pos.x + colW / 2 - 55, y - 115, 110, 110)
         ctx.restore()
       } catch {}
 
       ctx.fillStyle = '#fff'
-      await renderTextWithEmoji(ctx, sanitizeText(g.subject), pos.x + colW / 2, baseY + 35, `bold 22px ${fontStack}`, "#fff")
+      ctx.font = 'bold 22px "Segoe UI Emoji","Noto Color Emoji","Poppins","Roboto",sans-serif'
+      ctx.fillText(sanitizeText(g.subject), pos.x + colW / 2, baseY + 30)
 
-      ctx.font = `18px ${fontStack}`
-      ctx.fillText(`${g.dailyMessages} msg oggi | ${g.totalMessages} tot`, pos.x + colW / 2, baseY + 60)
+      ctx.font = '18px "Segoe UI Emoji","Noto Color Emoji","Poppins","Roboto",sans-serif'
+      ctx.fillText(`${g.dailyMessages} oggi | ${g.totalMessages} totali`, pos.x + colW / 2, baseY + 55)
     }
 
+    // Coppa sopra il primo
     const first = positions.find(p => p.rank === 1)
     if (first) {
-      const y = baseY - first.h
       const cx = first.x + colW / 2
-      const cy = y - 220 // coppa più in alto
+      const cy = baseY - first.h - 120
       drawCup(ctx, cx, cy, 70)
     }
 
-    const { hours, minutes, nowDate } = getResetCountdownRome()
-    ctx.fillStyle = '#9ca3af'
-    ctx.font = `18px ${fontStack}`
-    ctx.textAlign = 'center'
-    ctx.fillText(`Reset tra ${hours}h ${minutes}m • ${nowDate}`, width / 2, height - 20)
+    // Caption per #4 → #10
+    let caption = "🏅 Classifica Gruppi\n\n"
+    caption += "🥇 " + sanitizeText(sorted[0]?.subject || '') + ` (${sorted[0]?.dailyMessages} oggi)\n`
+    caption += "🥈 " + sanitizeText(sorted[1]?.subject || '') + ` (${sorted[1]?.dailyMessages} oggi)\n`
+    caption += "🥉 " + sanitizeText(sorted[2]?.subject || '') + ` (${sorted[2]?.dailyMessages} oggi)\n\n`
+    caption += "Altri gruppi:\n"
+    sorted.slice(3).forEach((g, i) => {
+      caption += `#${i + 4} ${sanitizeText(g.subject)} - ${g.dailyMessages} msg oggi\n`
+    })
 
     const buffer = canvas.toBuffer('image/jpeg')
-    await conn.sendMessage(m.chat, { image: buffer, caption: '🏆 Classifica gruppi aggiornata!' }, { quoted: m })
+    await conn.sendMessage(m.chat, { image: buffer, caption }, { quoted: m })
   } catch (e) {
     console.error('topgruppi error:', e)
     await m.reply('Errore nel recuperare i gruppi.')
