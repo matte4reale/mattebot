@@ -12,16 +12,6 @@ function getDateKeyRome(d = nowRome()) {
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
 }
-function formatDateRome(iso) {
-  const d = iso ? new Date(iso) : nowRome()
-  const local = new Date(d.toLocaleString('en-US', { timeZone: 'Europe/Rome' }))
-  const dd = String(local.getDate()).padStart(2, '0')
-  const mm = String(local.getMonth() + 1).padStart(2, '0')
-  const yyyy = local.getFullYear()
-  const hh = String(local.getHours()).padStart(2, '0')
-  const min = String(local.getMinutes()).padStart(2, '0')
-  return `${dd}/${mm}/${yyyy} ${hh}:${min}`
-}
 function maybeDailyReset() {
   const key = getDateKeyRome()
   if (key !== lastResetKey) {
@@ -76,9 +66,31 @@ function drawCup(ctx, x, y, size = 70) {
   ctx.fillRect(x - size * 0.5, y + size * 1.3, size, size * 0.15)
 }
 
+function drawRoundedRect(ctx, x, y, w, h, r) {
+  ctx.beginPath()
+  ctx.moveTo(x + r, y)
+  ctx.arcTo(x + w, y, x + w, y + h, r)
+  ctx.arcTo(x + w, y + h, x, y + h, r)
+  ctx.arcTo(x, y + h, x, y, r)
+  ctx.arcTo(x, y, x + w, y, r)
+  ctx.closePath()
+}
+
+function drawConfetti(ctx, width, height, count = 150) {
+  for (let i = 0; i < count; i++) {
+    const x = Math.random() * width
+    const y = Math.random() * height
+    const size = Math.random() * 8 + 3
+    const colors = ['#f87171', '#34d399', '#60a5fa', '#facc15', '#a78bfa', '#fb923c']
+    ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)]
+    ctx.beginPath()
+    ctx.arc(x, y, size, 0, Math.PI * 2)
+    ctx.fill()
+  }
+}
+
 const handler = async (m, { conn, args }) => {
   maybeDailyReset()
-
   if (!m.isGroup) return m.reply('Questo comando funziona solo nei gruppi!')
 
   let topCount = 10
@@ -113,36 +125,26 @@ const handler = async (m, { conn, args }) => {
     }))
 
     const sorted = groupsData
-      .sort((a, b) => {
-        if (b.dailyMessages !== a.dailyMessages) return b.dailyMessages - a.dailyMessages
-        if (b.totalMessages !== a.totalMessages) return b.totalMessages - a.totalMessages
-        if (b.participants !== a.participants) return b.participants - a.participants
-        return a.subject.localeCompare(b.subject)
-      })
+      .sort((a, b) => b.dailyMessages - a.dailyMessages || b.totalMessages - a.totalMessages)
       .slice(0, topCount)
 
     if (!sorted.length) return m.reply('❌ Nessun gruppo trovato nella classifica.')
 
-    // 🎨 Canvas solo per top 3
+    // 🎨 Canvas
     const width = 1200, height = 800
     const canvas = createCanvas(width, height)
     const ctx = canvas.getContext('2d')
 
-    // Background
-    const gradient = ctx.createLinearGradient(0, 0, width, height)
-    gradient.addColorStop(0, '#0f172a')
-    gradient.addColorStop(1, '#1e3a8a')
-    ctx.fillStyle = gradient
+    // Sfondo con coriandoli
+    ctx.fillStyle = '#0f172a'
     ctx.fillRect(0, 0, width, height)
+    drawConfetti(ctx, width, height, 200)
 
+    // Titolo
     ctx.fillStyle = '#fff'
     ctx.font = 'bold 60px "Poppins","Roboto","Segoe UI",sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText('TOP 3 GRUPPI', width / 2, 100)
-
-    // 🏆 Emoji sopra titolo
-    await drawEmoji(ctx, "🏆", width/2 - 200, 80, 60)
-    await drawEmoji(ctx, "🏆", width/2 + 200, 80, 60)
+    ctx.fillText('🏆 TOP 3 GRUPPI 🏆', width / 2, 100)
 
     // Podio
     const baseY = 650
@@ -161,9 +163,15 @@ const handler = async (m, { conn, args }) => {
       if (!g) continue
       const y = baseY - pos.h
 
+      // rettangolo con angoli arrotondati e bordo bianco
+      drawRoundedRect(ctx, pos.x, y, colW, pos.h, 20)
       ctx.fillStyle = pos.color
-      ctx.fillRect(pos.x, y, colW, pos.h)
+      ctx.fill()
+      ctx.lineWidth = 5
+      ctx.strokeStyle = '#fff'
+      ctx.stroke()
 
+      // avatar
       try {
         let img = await loadImage(g.photo)
         ctx.save()
@@ -182,22 +190,18 @@ const handler = async (m, { conn, args }) => {
       ctx.fillText(`${g.dailyMessages} oggi | ${g.totalMessages} totali`, pos.x + colW / 2, baseY + 55)
     }
 
-    // Coppa sopra il primo
+    // Coppa sopra il primo → più in alto
     const first = positions.find(p => p.rank === 1)
     if (first) {
       const cx = first.x + colW / 2
-      const cy = baseY - first.h - 120
+      const cy = baseY - first.h - 170
       drawCup(ctx, cx, cy, 70)
     }
 
-    // Caption con emoji esterne
-    let caption = "Classifica Gruppi\n\n"
-    caption += "🥇 " + sanitizeText(sorted[0]?.subject || '') + ` (${sorted[0]?.dailyMessages} oggi)\n`
-    caption += "🥈 " + sanitizeText(sorted[1]?.subject || '') + ` (${sorted[1]?.dailyMessages} oggi)\n`
-    caption += "🥉 " + sanitizeText(sorted[2]?.subject || '') + ` (${sorted[2]?.dailyMessages} oggi)\n\n`
-    caption += "Altri gruppi:\n"
+    // Caption (dal 4° in poi)
+    let caption = "Classifica Gruppi (dal 4° in poi):\n\n"
     sorted.slice(3).forEach((g, i) => {
-      caption += `#${i + 4} ${sanitizeText(g.subject)} - ${g.dailyMessages} msg oggi\n`
+      caption += `#${i + 4} ${sanitizeText(g.subject)} - ${g.dailyMessages} msg oggi (${g.totalMessages} totali)\n`
     })
 
     const buffer = canvas.toBuffer('image/jpeg')
