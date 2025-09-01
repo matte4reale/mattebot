@@ -1,90 +1,61 @@
-import { createCanvas } from 'canvas'
+import { createCanvas, loadImage } from 'canvas'
+import fs from 'fs'
+import { exec } from 'child_process'
 
-const CAMERE = 6
+const FRAME_COUNT = 90 // 3 secondi a 30fps
+const WIDTH = 600, HEIGHT = 600
 
 let handler = async (m, { conn }) => {
-  if (!m.isGroup) return m.reply('❌ Questo comando funziona solo nei gruppi.')
+  const players = Object.keys(global.db.data.users).slice(0, 6) // max 6 player
 
-  const colpo = Math.floor(Math.random() * CAMERE) + 1
-  const proiettile = Math.floor(Math.random() * CAMERE) + 1
-  const morto = colpo === proiettile
+  if (players.length < 2) return m.reply("❌ Servono almeno 2 giocatori")
 
-  const canvas = createCanvas(600, 600)
-  const ctx = canvas.getContext('2d')
-
-  // sfondo gradiente metallico
-  const grad = ctx.createRadialGradient(300, 300, 100, 300, 300, 400)
-  grad.addColorStop(0, '#1f2937')
-  grad.addColorStop(1, '#111')
-  ctx.fillStyle = grad
-  ctx.fillRect(0, 0, 600, 600)
-
-  // tamburo pistola
-  ctx.beginPath()
-  ctx.arc(300, 300, 220, 0, Math.PI * 2)
-  ctx.fillStyle = '#444'
-  ctx.fill()
-  ctx.strokeStyle = '#aaa'
-  ctx.lineWidth = 12
-  ctx.stroke()
-
-  // cerchio interno
-  ctx.beginPath()
-  ctx.arc(300, 300, 80, 0, Math.PI * 2)
-  ctx.fillStyle = '#333'
-  ctx.fill()
-  ctx.strokeStyle = '#888'
-  ctx.lineWidth = 6
-  ctx.stroke()
-
-  // camere
-  for (let i = 0; i < CAMERE; i++) {
-    const angle = (i / CAMERE) * Math.PI * 2 - Math.PI / 2
-    const cx = 300 + Math.cos(angle) * 130
-    const cy = 300 + Math.sin(angle) * 130
-
-    // camera esterna
-    ctx.beginPath()
-    ctx.arc(cx, cy, 50, 0, Math.PI * 2)
-    ctx.fillStyle = (i + 1 === proiettile) ? '#b91c1c' : '#222'
-    ctx.fill()
-    ctx.strokeStyle = '#999'
-    ctx.lineWidth = 5
-    ctx.stroke()
-
-    // piccolo cerchio interno (effetto 3D)
-    ctx.beginPath()
-    ctx.arc(cx, cy, 20, 0, Math.PI * 2)
-    ctx.fillStyle = '#555'
-    ctx.fill()
+  // scarico pp di tutti
+  let avatars = []
+  for (let id of players) {
+    let pp = await conn.profilePictureUrl(id, 'image').catch(() => null)
+    if (pp) avatars.push(await loadImage(pp))
   }
 
-  // testo risultato
-  ctx.font = 'bold 50px Arial'
-  ctx.textAlign = 'center'
-  ctx.lineWidth = 8
-  ctx.strokeStyle = morto ? '#7f1d1d' : '#065f46'
-  ctx.strokeText(morto ? '💀 COLPITO!' : '✅ SALVO!', 300, 560)
+  // creo frames
+  for (let f = 0; f < FRAME_COUNT; f++) {
+    const canvas = createCanvas(WIDTH, HEIGHT)
+    const ctx = canvas.getContext('2d')
 
-  ctx.fillStyle = morto ? '#ef4444' : '#22c55e'
-  ctx.fillText(morto ? '💀 COLPITO!' : '✅ SALVO!', 300, 560)
+    // sfondo
+    ctx.fillStyle = "#111"
+    ctx.fillRect(0, 0, WIDTH, HEIGHT)
 
-  const buffer = canvas.toBuffer()
-  await conn.sendMessage(m.chat, { image: buffer, caption: `🔫 Roulette russa: ${morto ? '☠️ BOOM! Sei stato colpito!' : '😮‍💨 Click! Sei salvo questa volta.'}` }, { quoted: m })
+    // pistola tamburo
+    let angle = (f / FRAME_COUNT) * Math.PI * 6 // gira
+    ctx.save()
+    ctx.translate(WIDTH/2, HEIGHT/2)
+    ctx.rotate(angle)
+    ctx.fillStyle = "#444"
+    ctx.beginPath()
+    ctx.arc(0, 0, 200, 0, Math.PI*2)
+    ctx.fill()
+    ctx.restore()
 
-  if (morto) {
-    try {
-      await conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove')
-      setTimeout(() => {
-        conn.groupParticipantsUpdate(m.chat, [m.sender], 'add')
-      }, 30000)
-    } catch {
-      m.reply('⚠️ Non sono riuscito a kikkarti, ma eri morto lo stesso 💀')
-    }
+    // disegna player come cerchio attorno
+    let radius = 250
+    avatars.forEach((img, i) => {
+      let theta = (i / avatars.length) * Math.PI * 2
+      let x = WIDTH/2 + Math.cos(theta) * radius
+      let y = HEIGHT/2 + Math.sin(theta) * radius
+      ctx.drawImage(img, x-40, y-40, 80, 80)
+    })
+
+    // salva frame
+    fs.writeFileSync(`frames/frame${String(f).padStart(4, '0')}.png`, canvas.toBuffer())
   }
+
+  // crea video
+  exec(`ffmpeg -framerate 30 -i frames/frame%04d.png -c:v libx264 -pix_fmt yuv420p roulette.mp4`, async (err) => {
+    if (err) return m.reply("❌ Errore ffmpeg")
+    await conn.sendMessage(m.chat, { video: fs.readFileSync("roulette.mp4"), caption: "🔫 Roulette Russa 🎥" }, { quoted: m })
+  })
 }
 
-handler.command = /^roulette$/i
-handler.group = true
-
+handler.command = /^roulettevid$/i
 export default handler
