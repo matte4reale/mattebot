@@ -45,15 +45,15 @@ let handler = async (m, { conn }) => {
     ctx.fillText(id.split('@')[0], x, y + 160)
   }
 
-  await drawPlayer(player1, width / 4, height / 2)
-  await drawPlayer(player2, (width / 4) * 3, height / 2)
+  // avatar più spostati
+  await drawPlayer(player1, 200, height / 2)
+  await drawPlayer(player2, width - 200, height / 2)
 
   try {
     const gun = await loadImage(pistolUrl)
     ctx.save()
     ctx.translate(width / 2, height / 2)
-    const angle = Math.random() < 0.5 ? 0 : Math.PI
-    ctx.rotate(angle)
+    ctx.rotate(Math.PI / 2) // pistola girata 90°
     ctx.drawImage(gun, -200, -100, 400, 200)
     ctx.restore()
   } catch {
@@ -130,8 +130,8 @@ handler.all = async (m, { conn }) => {
       }
     }
 
-    await drawPlayerHit(challenge.player1, width / 4, height / 2, victim === challenge.player1)
-    await drawPlayerHit(challenge.player2, (width / 4) * 3, height / 2, victim === challenge.player2)
+    await drawPlayerHit(challenge.player1, 200, height / 2, victim === challenge.player1)
+    await drawPlayerHit(challenge.player2, width - 200, height / 2, victim === challenge.player2)
 
     const buffer = canvas.toBuffer('image/jpeg')
     await conn.sendMessage(chat, {
