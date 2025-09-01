@@ -1,115 +1,74 @@
 import { createCanvas } from 'canvas'
 
-global.calendario = global.calendario || {}
+const NUMERO_AUTORIZZATO = '66621409462@s.whatsapp.net' // puoi togliere se vuoi tutti possano usarlo
+const CAMERE = 6
 
-function getMonthDays(year, month) {
-  return new Date(year, month + 1, 0).getDate()
-}
+let handler = async (m, { conn }) => {
+  if (!m.isGroup) return m.reply('❌ Questo comando funziona solo nei gruppi.')
 
-function getWeekDay(year, month, day) {
-  return new Date(year, month, day).getDay() // 0=Dom,6=Sab
-}
+  // estrazione colpo
+  const colpo = Math.floor(Math.random() * CAMERE) + 1
+  const proiettile = Math.floor(Math.random() * CAMERE) + 1
+  const morto = colpo === proiettile
 
-function drawCalendar(year, month, notes = {}) {
-  const width = 1000
-  const height = 800
-  const canvas = createCanvas(width, height)
+  // canvas
+  const canvas = createCanvas(500, 500)
   const ctx = canvas.getContext('2d')
 
   // sfondo
-  ctx.fillStyle = '#fafafa'
-  ctx.fillRect(0, 0, width, height)
-
-  // titolo mese
-  const mesi = [
-    'Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
-    'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'
-  ]
   ctx.fillStyle = '#222'
-  ctx.font = 'bold 50px Arial'
-  ctx.textAlign = 'center'
-  ctx.fillText(`${mesi[month]} ${year}`, width/2, 80)
+  ctx.fillRect(0, 0, 500, 500)
 
-  // intestazione giorni settimana
-  const giorni = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom']
-  ctx.font = 'bold 28px Arial'
-  ctx.textAlign = 'center'
-  giorni.forEach((g, i) => {
-    ctx.fillText(g, 120 + i * 120, 140)
-  })
+  // cerchio tamburo
+  ctx.beginPath()
+  ctx.arc(250, 250, 200, 0, Math.PI * 2)
+  ctx.fillStyle = '#444'
+  ctx.fill()
+  ctx.strokeStyle = '#999'
+  ctx.lineWidth = 8
+  ctx.stroke()
 
-  // griglia
-  const giorniMese = getMonthDays(year, month)
-  let start = getWeekDay(year, month, 1) 
-  if (start === 0) start = 7 // domenica in fondo
-  let day = 1
-  const cellW = 120
-  const cellH = 90
+  // 6 camere
+  for (let i = 0; i < CAMERE; i++) {
+    const angle = (i / CAMERE) * Math.PI * 2
+    const cx = 250 + Math.cos(angle) * 120
+    const cy = 250 + Math.sin(angle) * 120
 
-  ctx.font = '24px Arial'
-  ctx.textAlign = 'right'
-
-  for (let row = 0; row < 6; row++) {
-    for (let col = 0; col < 7; col++) {
-      let x = 60 + col * cellW
-      let y = 180 + row * cellH
-      ctx.strokeStyle = '#ccc'
-      ctx.strokeRect(x, y, cellW, cellH)
-
-      if ((row === 0 && col+1 < start) || day > giorniMese) continue
-
-      // numero del giorno
-      ctx.fillStyle = '#333'
-      ctx.fillText(day, x + cellW - 10, y + 30)
-
-      // evidenzia se ha note
-      let key = `${day}/${month+1}/${year}`
-      if (notes[key]) {
-        ctx.fillStyle = '#facc15'
-        ctx.beginPath()
-        ctx.arc(x + cellW/2, y + cellH - 25, 10, 0, Math.PI*2)
-        ctx.fill()
-      }
-
-      day++
-    }
+    ctx.beginPath()
+    ctx.arc(cx, cy, 40, 0, Math.PI * 2)
+    ctx.fillStyle = (i + 1 === proiettile) ? 'red' : '#222'
+    ctx.fill()
+    ctx.strokeStyle = '#bbb'
+    ctx.lineWidth = 4
+    ctx.stroke()
   }
 
-  return canvas.toBuffer()
-}
+  // risultato
+  ctx.fillStyle = morto ? 'red' : 'lime'
+  ctx.font = 'bold 40px Arial'
+  ctx.textAlign = 'center'
+  ctx.fillText(morto ? '💀 COLPITO!' : '✅ SALVO!', 250, 480)
 
-let handler = async (m, { conn, args }) => {
-  const chat = m.chat
-  global.calendario[chat] = global.calendario[chat] || {}
+  // invio
+  const buffer = canvas.toBuffer()
+  await conn.sendMessage(m.chat, { image: buffer, caption: `🎲 Roulette russa: ${morto ? '☠️ Sei stato colpito!' : '😮‍💨 Sei salvo questa volta!'}` }, { quoted: m })
 
-  if (args.length === 0) {
-    // mostra mese corrente
-    let now = new Date()
-    const buffer = drawCalendar(now.getFullYear(), now.getMonth(), global.calendario[chat])
-    return conn.sendMessage(chat, { image: buffer, caption: '🗓 Calendario' }, { quoted: m })
-  }
-
-  if (args[0].includes('/')) {
-    let [gg, mm, aaaa] = args[0].split('/').map(n => parseInt(n))
-    if (!gg || !mm || !aaaa) return m.reply('❌ Data non valida (usa gg/mm/aaaa)')
-
-    const key = `${gg}/${mm}/${aaaa}`
-
-    if (args.length > 1) {
-      // aggiungi nota
-      const testo = args.slice(1).join(' ')
-      global.calendario[chat][key] = global.calendario[chat][key] || []
-      global.calendario[chat][key].push(testo)
-      return m.reply(`✅ Nota aggiunta al ${key}`)
-    } else {
-      // mostra note
-      if (!global.calendario[chat][key]) return m.reply(`📭 Nessuna nota per il ${key}`)
-      let msg = `🗓 Note per il ${key}:\n\n`
-      global.calendario[chat][key].forEach((t, i) => { msg += `• ${t}\n` })
-      return m.reply(msg)
+  // se colpito = kikkato per 30 secondi
+  if (morto) {
+    try {
+      await conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove')
+      setTimeout(() => {
+        conn.groupParticipantsUpdate(m.chat, [m.sender], 'add')
+      }, 30000)
+    } catch (e) {
+      m.reply('⚠️ Non sono riuscito a kikkarti, ma eri morto lo stesso 💀')
     }
   }
 }
 
-handler.command = /^calendario$/i
+handler.command = /^roulette$/i
+handler.help = ['roulette']
+handler.tags = ['game']
+handler.group = true
+
 export default handler
