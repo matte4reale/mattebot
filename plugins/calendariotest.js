@@ -4,32 +4,34 @@ let handler = async (m, { conn, participants }) => {
   if (!m.isGroup) return m.reply('❌ Questo comando funziona solo nei gruppi!')
 
   let players = participants
-    .filter(p => !p.admin) // facciamo che non colpisce gli admin
+    .filter(p => !p.admin) // non colpisce admin
     .map(p => p.id)
 
-  if (players.length < 2) return m.reply('❌ Servono almeno 2 partecipanti!')
+  if (players.length < 2) return m.reply('❌ Servono almeno 2 giocatori!')
 
-  // scegli la vittima
   let victim = players[Math.floor(Math.random() * players.length)]
 
-  const width = 1000
+  const width = 1200
   const height = 1000
   const canvas = createCanvas(width, height)
   const ctx = canvas.getContext('2d')
 
-  // sfondo
-  ctx.fillStyle = '#111'
+  // sfondo elegante
+  let grad = ctx.createLinearGradient(0, 0, width, height)
+  grad.addColorStop(0, '#0f172a')
+  grad.addColorStop(1, '#1e293b')
+  ctx.fillStyle = grad
   ctx.fillRect(0, 0, width, height)
 
-  // cerchio dei giocatori
-  const centerX = width / 2
-  const centerY = height / 2
-  const radius = 350
+  // cerchio giocatori
+  const cx = width / 2
+  const cy = height / 2
+  const r = 370
 
   for (let i = 0; i < players.length; i++) {
     let angle = (i / players.length) * (2 * Math.PI) - Math.PI / 2
-    let x = centerX + radius * Math.cos(angle)
-    let y = centerY + radius * Math.sin(angle)
+    let x = cx + r * Math.cos(angle)
+    let y = cy + r * Math.sin(angle)
 
     try {
       let pp = await conn.profilePictureUrl(players[i], 'image').catch(() => null)
@@ -37,62 +39,102 @@ let handler = async (m, { conn, participants }) => {
         let img = await loadImage(pp)
         ctx.save()
         ctx.beginPath()
-        ctx.arc(x, y, 70, 0, Math.PI * 2)
+        ctx.arc(x, y, 65, 0, Math.PI * 2)
+        ctx.shadowColor = 'rgba(255,255,255,0.6)'
+        ctx.shadowBlur = 12
         ctx.clip()
-        ctx.drawImage(img, x - 70, y - 70, 140, 140)
+        ctx.drawImage(img, x - 65, y - 65, 130, 130)
         ctx.restore()
       }
 
-      // cerchietto bianco attorno
-      ctx.strokeStyle = '#fff'
-      ctx.lineWidth = 5
+      ctx.strokeStyle = '#facc15'
+      ctx.lineWidth = 4
       ctx.beginPath()
-      ctx.arc(x, y, 72, 0, Math.PI * 2)
+      ctx.arc(x, y, 68, 0, Math.PI * 2)
       ctx.stroke()
 
-      // scrivi il numero
       ctx.fillStyle = '#fff'
-      ctx.font = '22px Arial'
+      ctx.font = '20px Arial'
       ctx.textAlign = 'center'
-      ctx.fillText(i + 1, x, y + 100)
+      ctx.fillText(i + 1, x, y + 95)
 
-      // se è la vittima → disegno splash rosso
+      // effetto sparo sulla vittima
       if (players[i] === victim) {
-        ctx.fillStyle = 'rgba(220, 20, 60, 0.7)'
+        ctx.fillStyle = 'rgba(220,0,0,0.4)'
         ctx.beginPath()
-        ctx.arc(x, y, 80, 0, Math.PI * 2)
+        ctx.arc(x, y, 85, 0, Math.PI * 2)
         ctx.fill()
 
-        ctx.fillStyle = '#fff'
+        ctx.fillStyle = '#ff4444'
         ctx.font = 'bold 26px Arial'
-        ctx.fillText('💀 COLPITO', x, y - 100)
+        ctx.fillText('💀 COLPITO', x, y - 95)
+
+        // "buco" e sangue
+        ctx.fillStyle = '#660000'
+        ctx.beginPath()
+        ctx.arc(x, y, 20, 0, Math.PI * 2)
+        ctx.fill()
+
+        for (let j = 0; j < 12; j++) {
+          let bx = x + Math.cos(Math.random() * 2 * Math.PI) * (30 + Math.random() * 30)
+          let by = y + Math.sin(Math.random() * 2 * Math.PI) * (30 + Math.random() * 30)
+          ctx.fillStyle = 'rgba(200,0,0,0.8)'
+          ctx.beginPath()
+          ctx.arc(bx, by, 6 + Math.random() * 8, 0, Math.PI * 2)
+          ctx.fill()
+        }
       }
     } catch {}
   }
 
-  // pistola al centro che punta verso la vittima
+  // pistola realistica (laterale che punta verso la vittima)
+  let gunX = cx - 80
+  let gunY = cy - 80
+
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.rotate(Math.random() * Math.PI * 2) // punta random
+  ctx.translate(-cx, -cy)
+
+  // canna
   ctx.fillStyle = '#444'
+  ctx.fillRect(gunX, gunY, 180, 35)
+
+  // parte frontale
+  ctx.fillStyle = '#666'
+  ctx.fillRect(gunX + 180, gunY + 5, 30, 25)
+
+  // manico
+  ctx.fillStyle = '#2e2e2e'
   ctx.beginPath()
-  ctx.rect(centerX - 40, centerY - 80, 80, 160)
+  ctx.moveTo(gunX, gunY + 35)
+  ctx.lineTo(gunX + 60, gunY + 150)
+  ctx.lineTo(gunX + 100, gunY + 150)
+  ctx.lineTo(gunX + 60, gunY + 35)
+  ctx.closePath()
   ctx.fill()
-  ctx.strokeStyle = '#999'
-  ctx.lineWidth = 5
+
+  // grilletto
+  ctx.strokeStyle = '#aaa'
+  ctx.lineWidth = 4
+  ctx.beginPath()
+  ctx.arc(gunX + 40, gunY + 60, 15, Math.PI / 2, Math.PI)
   ctx.stroke()
 
-  ctx.fillStyle = '#666'
-  ctx.fillRect(centerX - 15, centerY - 200, 30, 120)
+  ctx.restore()
 
-  ctx.fillStyle = '#999'
-  ctx.fillRect(centerX - 60, centerY + 40, 120, 40)
-
-  // scritta finale
-  ctx.fillStyle = '#f00'
-  ctx.font = 'bold 48px Arial'
+  // titolo
+  ctx.fillStyle = '#facc15'
+  ctx.font = 'bold 54px Arial'
   ctx.textAlign = 'center'
-  ctx.fillText('💥 Roulette Russa 💥', centerX, 80)
+  ctx.fillText('ROULETTE RUSSA', cx, 90)
 
   let buffer = canvas.toBuffer()
-  await conn.sendMessage(m.chat, { image: buffer, caption: `🔫 Colpito: @${victim.split('@')[0]}` }, { quoted: m, mentions: [victim] })
+  return conn.sendMessage(
+    m.chat,
+    { image: buffer, caption: `🔫 È stato colpito: @${victim.split('@')[0]}` },
+    { quoted: m, mentions: [victim] }
+  )
 }
 
 handler.command = /^roulette$/i
