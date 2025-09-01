@@ -1,152 +1,126 @@
 import { createCanvas, loadImage } from 'canvas'
 
-const pistolUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/AK-47_type_II_noBG.png/330px-AK-47_type_II_noBG.png'
+let games = {} // salviamo le partite per chat
 
-global.rouletteChallenge = {}
-
-let handler = async (m, { conn }) => {
-  if (!m.mentionedJid?.[0]) return m.reply('⚠️ Usa: `.roulette @utente` per sfidare qualcuno.')
-
-  const player1 = m.sender
-  const player2 = m.mentionedJid[0]
-  if (player2 === player1) return m.reply('⚠️ Non puoi sfidare te stesso.')
-
-  global.rouletteChallenge[m.chat] = { player1, player2 }
-
-  const width = 1000, height = 700
-  const canvas = createCanvas(width, height)
-  const ctx = canvas.getContext('2d')
-
-  ctx.fillStyle = '#111'
-  ctx.fillRect(0, 0, width, height)
-
-  ctx.fillStyle = '#facc15'
-  ctx.font = 'bold 60px Arial'
-  ctx.textAlign = 'center'
-  ctx.fillText('ROULETTE RUSSA', width / 2, 80)
-
-  async function drawPlayer(id, x, y) {
-    const ppUrl = await conn.profilePictureUrl(id, 'image').catch(() => null)
-    const img = ppUrl ? await loadImage(ppUrl) : null
-    ctx.save()
-    ctx.beginPath()
-    ctx.arc(x, y, 120, 0, Math.PI * 2)
-    ctx.clip()
-    if (img) ctx.drawImage(img, x - 120, y - 120, 240, 240)
-    ctx.restore()
-    ctx.strokeStyle = '#facc15'
-    ctx.lineWidth = 8
-    ctx.beginPath()
-    ctx.arc(x, y, 120, 0, Math.PI * 2)
-    ctx.stroke()
-    ctx.fillStyle = '#fff'
-    ctx.font = 'bold 28px Arial'
-    ctx.textAlign = 'center'
-    ctx.fillText(id.split('@')[0], x, y + 160)
-  }
-
-  // avatar più spostati
-  await drawPlayer(player1, 200, height / 2)
-  await drawPlayer(player2, width - 200, height / 2)
-
-  try {
-    const gun = await loadImage(pistolUrl)
-    ctx.save()
-    ctx.translate(width / 2, height / 2)
-    ctx.rotate(Math.PI / 2) // pistola girata 90°
-    ctx.drawImage(gun, -200, -100, 400, 200)
-    ctx.restore()
-  } catch {
-    ctx.fillStyle = '#666'
-    ctx.fillRect(width / 2 - 100, height / 2 - 30, 200, 60)
-  }
-
-  const buffer = canvas.toBuffer('image/jpeg')
-  await conn.sendMessage(m.chat, {
-    image: buffer,
-    caption: `🔫 ${player1.split('@')[0]} sfida ${player2.split('@')[0]}!\nChi rischia?`,
-    buttons: [
-      { buttonId: '.risk', buttonText: { displayText: '👉 Rischia' }, type: 1 },
-      { buttonId: '.quit', buttonText: { displayText: '❌ Ritirati' }, type: 1 }
-    ],
-    headerType: 4,
-    mentions: [player1, player2]
-  })
-}
-
-handler.command = /^roulette$/i
-handler.group = true
-
-handler.all = async (m, { conn }) => {
+let handler = async (m, { conn, command, args, participants }) => {
   const chat = m.chat
-  const challenge = global.rouletteChallenge[chat]
-  if (!challenge) return
+  games[chat] = games[chat] || { players: [], turn: 0, active: false }
 
-  if (m.text === '.risk' && (m.sender === challenge.player1 || m.sender === challenge.player2)) {
-    const challenger = m.sender
-    const opponent = (challenger === challenge.player1) ? challenge.player2 : challenge.player1
-    const victim = (Math.random() < 0.5) ? challenger : opponent
+  if (command === 'roulette') {
+    if (!m.mentionedJid[0]) return m.reply('⚠️ Tagga un utente per sfidarlo.\nEsempio: .roulette @utente')
 
-    const width = 1000, height = 700
+    const player1 = m.sender
+    const player2 = m.mentionedJid[0]
+
+    games[chat] = { players: [player1, player2], turn: 0, active: true }
+
+    return m.reply(`🎲 Roulette russa iniziata tra @${player1.split('@')[0]} e @${player2.split('@')[0]}!\nUsa .risk per sparare.`, null, { mentions: [player1, player2] })
+  }
+
+  if (command === 'risk') {
+    let game = games[chat]
+    if (!game || !game.active) return m.reply('❌ Nessuna partita attiva. Usa .roulette @utente per iniziare.')
+    let shooter = game.players[game.turn]
+    if (m.sender !== shooter) return m.reply('⏳ Non è il tuo turno!')
+
+    let target = game.players[1 - game.turn]
+
+    // 1 probabilità su 6
+    let shot = Math.floor(Math.random() * 6) === 0
+
+    const width = 1000, height = 600
     const canvas = createCanvas(width, height)
     const ctx = canvas.getContext('2d')
 
+    // sfondo
     ctx.fillStyle = '#111'
     ctx.fillRect(0, 0, width, height)
-    ctx.fillStyle = '#facc15'
-    ctx.font = 'bold 60px Arial'
-    ctx.textAlign = 'center'
-    ctx.fillText('💥 LO SPARO!', width / 2, 80)
 
-    async function drawPlayerHit(id, x, y, hit) {
-      const ppUrl = await conn.profilePictureUrl(id, 'image').catch(() => null)
-      const img = ppUrl ? await loadImage(ppUrl) : null
-      if (img) {
+    // titolo
+    ctx.fillStyle = '#facc15'
+    ctx.font = 'bold 50px Arial'
+    ctx.textAlign = 'center'
+    ctx.fillText('ROULETTE RUSSA', width / 2, 70)
+
+    // avatar
+    const radius = 120
+    const positions = [
+      { x: 220, y: 300, id: game.players[0] },
+      { x: 780, y: 300, id: game.players[1] }
+    ]
+
+    for (let pos of positions) {
+      try {
+        let pp = await conn.profilePictureUrl(pos.id, 'image').catch(() => null)
+        let img = pp ? await loadImage(pp) : null
         ctx.save()
         ctx.beginPath()
-        ctx.arc(x, y, 120, 0, Math.PI * 2)
+        ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2)
+        ctx.closePath()
         ctx.clip()
-        ctx.drawImage(img, x - 120, y - 120, 240, 240)
+        if (img) ctx.drawImage(img, pos.x - radius, pos.y - radius, radius * 2, radius * 2)
         ctx.restore()
-      }
-      ctx.strokeStyle = '#facc15'
-      ctx.lineWidth = 8
-      ctx.beginPath()
-      ctx.arc(x, y, 120, 0, Math.PI * 2)
-      ctx.stroke()
-      ctx.fillStyle = '#fff'
-      ctx.font = 'bold 28px Arial'
-      ctx.textAlign = 'center'
-      ctx.fillText(id.split('@')[0], x, y + 160)
 
-      if (hit) {
-        ctx.fillStyle = 'rgba(255,0,0,0.6)'
+        ctx.lineWidth = 8
+        ctx.strokeStyle = '#facc15'
         ctx.beginPath()
-        ctx.arc(x, y, 130, 0, Math.PI * 2)
-        ctx.fill()
+        ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2)
+        ctx.stroke()
+
+        // nome
+        let name = await conn.getName(pos.id)
+        name = name.replace(/[^\x00-\x7F]/g, '') // normalizza
         ctx.fillStyle = '#fff'
-        ctx.font = 'bold 32px Arial'
-        ctx.fillText('💀 COLPITO', x, y - 140)
-      }
+        ctx.font = '24px Arial'
+        ctx.textAlign = 'center'
+        ctx.fillText(name, pos.x, pos.y + radius + 40)
+      } catch {}
     }
 
-    await drawPlayerHit(challenge.player1, 200, height / 2, victim === challenge.player1)
-    await drawPlayerHit(challenge.player2, width - 200, height / 2, victim === challenge.player2)
+    // pistola
+    const pistol = await loadImage('https://upload.wikimedia.org/wikipedia/commons/6/65/AK-47_type_II_noBG.png')
+    ctx.save()
+    if (game.turn === 0) {
+      // punta a destra
+      ctx.translate(width / 2, height / 2)
+      ctx.rotate(0.1)
+      ctx.drawImage(pistol, -150, -100, 300, 200)
+    } else {
+      // punta a sinistra
+      ctx.translate(width / 2, height / 2)
+      ctx.rotate(Math.PI - 0.1)
+      ctx.drawImage(pistol, -150, -100, 300, 200)
+    }
+    ctx.restore()
+
+    if (shot) {
+      // colpito
+      const victimPos = positions[1 - game.turn]
+
+      // buco in fronte
+      ctx.fillStyle = 'black'
+      ctx.beginPath()
+      ctx.arc(victimPos.x, victimPos.y - 40, 18, 0, Math.PI * 2)
+      ctx.fill()
+
+      // sangue
+      ctx.strokeStyle = 'red'
+      ctx.lineWidth = 5
+      ctx.beginPath()
+      ctx.moveTo(victimPos.x, victimPos.y - 22)
+      ctx.lineTo(victimPos.x, victimPos.y + 120)
+      ctx.stroke()
+
+      game.active = false
+    } else {
+      // cambia turno
+      game.turn = 1 - game.turn
+    }
 
     const buffer = canvas.toBuffer('image/jpeg')
-    await conn.sendMessage(chat, {
-      image: buffer,
-      caption: `🔫 Vittima: @${victim.split('@')[0]}`,
-      mentions: [victim]
-    }, { quoted: m })
-
-    delete global.rouletteChallenge[chat]
-  }
-
-  if (m.text === '.quit') {
-    delete global.rouletteChallenge[m.chat]
-    await conn.sendMessage(m.chat, { text: '❌ Sfida ritirata.' }, { quoted: m })
+    return conn.sendMessage(m.chat, { image: buffer, caption: shot ? '💥 Colpito! Fine partita.' : '😮 Click a vuoto! Prossimo turno.' }, { quoted: m })
   }
 }
 
+handler.command = /^(roulette|risk)$/i
 export default handler
