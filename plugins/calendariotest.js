@@ -1,132 +1,182 @@
 import { createCanvas, loadImage } from 'canvas'
 
-let games = {}
+const GUN_URL = 'https://upload.wikimedia.org/wikipedia/commons/6/65/AK-47_type_II_noBG.png'
 
-let handler = async (m, { conn, command }) => {
+global.roulette = global.roulette || {}
+
+let handler = async (m, { conn, args, command }) => {
   const chat = m.chat
-  games[chat] = games[chat] || { players: [], turn: 0, active: false }
 
   if (command === 'roulette') {
-    if (!m.mentionedJid[0]) return m.reply('⚠️ Tagga un utente per sfidarlo.\nEsempio: .roulette @utente')
+    if (!global.roulette[chat]) {
+      global.roulette[chat] = {
+        players: [],
+        turn: 0,
+        alive: {}
+      }
+    }
 
-    const player1 = m.sender
-    const player2 = m.mentionedJid[0]
+    let game = global.roulette[chat]
 
-    games[chat] = { players: [player1, player2], turn: 0, active: true }
+    if (args[0] === 'join') {
+      if (game.players.length >= 2) return m.reply('❌ Sono già entrati 2 giocatori.')
+      if (game.players.includes(m.sender)) return m.reply('⚠️ Sei già in gioco!')
+      game.players.push(m.sender)
+      game.alive[m.sender] = true
+      return m.reply(`✅ Sei entrato! (${game.players.length}/2)`)
+    }
 
-    return m.reply(
-      `🎲 Roulette russa iniziata!\n👤 @${player1.split('@')[0]} VS 👤 @${player2.split('@')[0]}\n\nUsa *.risk* per sparare.`,
-      null,
-      { mentions: [player1, player2] }
-    )
+    if (args[0] === 'start') {
+      if (game.players.length < 2) return m.reply('❌ Servono 2 giocatori per iniziare.')
+      game.turn = Math.floor(Math.random() * 2)
+
+      await sendBoard(conn, chat, game)
+
+      return conn.sendMessage(chat, {
+        text: `🎲 Inizia la Roulette Russa!\n👉 Tocca a @${game.players[game.turn].split('@')[0]}`,
+        footer: "Roulette Russa",
+        buttons: [
+          { buttonId: 'risk', buttonText: { displayText: '🎯 Spara' }, type: 1 },
+          { buttonId: 'pass', buttonText: { displayText: '⏭️ Passa' }, type: 1 }
+        ],
+        headerType: 1,
+        mentions: [game.players[game.turn]]
+      })
+    }
   }
 
-  if (command === 'risk') {
-    let game = games[chat]
-    if (!game || !game.active) return m.reply('❌ Nessuna partita attiva. Usa .roulette @utente per iniziare.')
+  if (m.message?.buttonsResponseMessage) {
+    const id = m.message.buttonsResponseMessage.selectedButtonId
+    const game = global.roulette[chat]
+    if (!game) return
 
-    let shooter = game.players[game.turn]
-    if (m.sender !== shooter) return m.reply('⏳ Non è il tuo turno!')
+    const player = game.players[game.turn]
+    if (m.sender !== player) return m.reply('❌ Non è il tuo turno!')
 
-    let target = game.players[1 - game.turn]
-
-    let shot = Math.floor(Math.random() * 6) === 0
-
-    const width = 1000, height = 600
-    const canvas = createCanvas(width, height)
-    const ctx = canvas.getContext('2d')
-
-    // sfondo sfumato accattivante
-    const gradient = ctx.createRadialGradient(width/2, height/2, 200, width/2, height/2, 700)
-    gradient.addColorStop(0, '#0f172a')
-    gradient.addColorStop(1, '#1e293b')
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, width, height)
-
-    // titolo
-    ctx.fillStyle = '#facc15'
-    ctx.font = 'bold 60px Arial'
-    ctx.textAlign = 'center'
-    ctx.fillText('ROULETTE RUSSA', width / 2, 90)
-
-    // avatar
-    const radius = 120
-    const positions = [
-      { x: 250, y: 320, id: game.players[0] },
-      { x: 750, y: 320, id: game.players[1] }
-    ]
-
-    for (let pos of positions) {
-      try {
-        let pp = await conn.profilePictureUrl(pos.id, 'image').catch(() => null)
-        let img = pp ? await loadImage(pp) : null
-        ctx.save()
-        ctx.beginPath()
-        ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2)
-        ctx.clip()
-        if (img) ctx.drawImage(img, pos.x - radius, pos.y - radius, radius * 2, radius * 2)
-        ctx.restore()
-
-        ctx.lineWidth = 8
-        ctx.strokeStyle = '#facc15'
-        ctx.beginPath()
-        ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2)
-        ctx.stroke()
-
-        let name = await conn.getName(pos.id)
-        name = name.replace(/[^\x00-\x7F]/g, '') // niente caratteri strani
-        ctx.fillStyle = '#fff'
-        ctx.font = '26px Arial'
-        ctx.textAlign = 'center'
-        ctx.fillText(name, pos.x, pos.y + radius + 45)
-      } catch {}
+    if (id === 'risk') {
+      let shot = Math.random() < 0.3
+      if (shot) {
+        game.alive[player] = false
+        await sendBoard(conn, chat, game, player, true)
+        conn.sendMessage(chat, { text: `💥 BOOM! @${player.split('@')[0]} è stato eliminato!`, mentions: [player] })
+        delete global.roulette[chat]
+      } else {
+        game.turn = 1 - game.turn
+        await sendBoard(conn, chat, game)
+        return conn.sendMessage(chat, {
+          text: `😮 Click! Sei salvo!\n👉 Tocca a @${game.players[game.turn].split('@')[0]}`,
+          footer: "Roulette Russa",
+          buttons: [
+            { buttonId: 'risk', buttonText: { displayText: '🎯 Spara' }, type: 1 },
+            { buttonId: 'pass', buttonText: { displayText: '⏭️ Passa' }, type: 1 }
+          ],
+          headerType: 1,
+          mentions: [game.players[game.turn]]
+        })
+      }
     }
 
-    // pistola
-    const pistol = await loadImage('https://upload.wikimedia.org/wikipedia/commons/6/65/AK-47_type_II_noBG.png')
-    ctx.save()
-    ctx.translate(width / 2, height / 2)
-
-    if (game.turn === 0) {
-      // punta a destra
-      ctx.scale(0.7, 0.7)
-      ctx.drawImage(pistol, -100, -70, 400, 200)
-    } else {
-      // punta a sinistra
-      ctx.scale(-0.7, 0.7)
-      ctx.drawImage(pistol, -100, -70, 400, 200)
-    }
-    ctx.restore()
-
-    // se colpisce
-    if (shot) {
-      const victimPos = positions[1 - game.turn]
-
-      ctx.fillStyle = 'black'
-      ctx.beginPath()
-      ctx.arc(victimPos.x, victimPos.y - 40, 18, 0, Math.PI * 2)
-      ctx.fill()
-
-      ctx.strokeStyle = 'red'
-      ctx.lineWidth = 5
-      ctx.beginPath()
-      ctx.moveTo(victimPos.x, victimPos.y - 22)
-      ctx.lineTo(victimPos.x, victimPos.y + 120)
-      ctx.stroke()
-
-      game.active = false
-    } else {
+    if (id === 'pass') {
       game.turn = 1 - game.turn
+      await sendBoard(conn, chat, game)
+      return conn.sendMessage(chat, {
+        text: `🔄 Passato! Ora tocca a @${game.players[game.turn].split('@')[0]}`,
+        footer: "Roulette Russa",
+        buttons: [
+          { buttonId: 'risk', buttonText: { displayText: '🎯 Spara' }, type: 1 },
+          { buttonId: 'pass', buttonText: { displayText: '⏭️ Passa' }, type: 1 }
+        ],
+        headerType: 1,
+        mentions: [game.players[game.turn]]
+      })
     }
-
-    const buffer = canvas.toBuffer('image/jpeg')
-    return conn.sendMessage(
-      m.chat,
-      { image: buffer, caption: shot ? '💥 Colpito! Fine partita.' : '😮 Click a vuoto! Prossimo turno.' },
-      { quoted: m }
-    )
   }
 }
 
-handler.command = /^(roulette|risk)$/i
+handler.command = /^roulette$/i
 export default handler
+
+async function sendBoard(conn, chat, game, dead = null, shot = false) {
+  const width = 1200
+  const height = 600
+  const canvas = createCanvas(width, height)
+  const ctx = canvas.getContext('2d')
+
+  ctx.fillStyle = "#111"
+  ctx.fillRect(0, 0, width, height)
+
+  ctx.fillStyle = "#facc15"
+  ctx.font = "bold 60px Arial"
+  ctx.textAlign = "center"
+  ctx.fillText("ROULETTE RUSSA", width / 2, 80)
+
+  const positions = [
+    { x: 250, y: 300 },
+    { x: 950, y: 300 }
+  ]
+
+  for (let i = 0; i < game.players.length; i++) {
+    const id = game.players[i]
+    try {
+      let pp = await conn.profilePictureUrl(id, 'image').catch(() => null)
+      if (pp) {
+        let img = await loadImage(pp)
+        ctx.save()
+        ctx.beginPath()
+        ctx.arc(positions[i].x, positions[i].y, 120, 0, Math.PI * 2)
+        ctx.clip()
+        ctx.drawImage(img, positions[i].x - 120, positions[i].y - 120, 240, 240)
+        ctx.restore()
+
+        ctx.lineWidth = 10
+        ctx.strokeStyle = dead === id ? "red" : "yellow"
+        ctx.beginPath()
+        ctx.arc(positions[i].x, positions[i].y, 120, 0, Math.PI * 2)
+        ctx.stroke()
+
+        ctx.fillStyle = "#fff"
+        ctx.font = "30px Arial"
+        ctx.textAlign = "center"
+        ctx.fillText(id.split('@')[0], positions[i].x, positions[i].y + 170)
+
+        if (shot && dead === id) {
+          ctx.fillStyle = "black"
+          ctx.beginPath()
+          ctx.arc(positions[i].x, positions[i].y - 30, 18, 0, Math.PI * 2)
+          ctx.fill()
+
+          ctx.fillStyle = "rgba(255,0,0,0.7)"
+          ctx.beginPath()
+          ctx.arc(positions[i].x, positions[i].y - 25, 35, 0, Math.PI * 2)
+          ctx.fill()
+
+          for (let b = 0; b < 8; b++) {
+            ctx.beginPath()
+            ctx.moveTo(positions[i].x, positions[i].y - 25)
+            let angle = (Math.PI * 2 * b) / 8
+            ctx.lineTo(positions[i].x + Math.cos(angle) * 70, positions[i].y - 25 + Math.sin(angle) * 70)
+            ctx.strokeStyle = "rgba(255,0,0,0.6)"
+            ctx.lineWidth = 5
+            ctx.stroke()
+          }
+        }
+      }
+    } catch {}
+  }
+
+  try {
+    let gun = await loadImage(GUN_URL)
+    ctx.save()
+    if (game.turn === 0) {
+      ctx.translate(positions[0].x + 250, positions[0].y)
+      ctx.scale(-1, 1)
+      ctx.drawImage(gun, -200, -100, 300, 200)
+    } else {
+      ctx.drawImage(gun, positions[1].x - 300, positions[1].y - 100, 300, 200)
+    }
+    ctx.restore()
+  } catch {}
+
+  const buffer = canvas.toBuffer('image/jpeg')
+  await conn.sendMessage(chat, { image: buffer, caption: "🎲 Roulette Russa" })
+}
