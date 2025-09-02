@@ -4,7 +4,7 @@ let activeLang = {}
 
 const handler = async (m, { conn, args }) => {
     if (!args[0]) {
-        return m.reply('⚠️ Dimmi la lingua! Es: .traduci en oppure .traduci it')
+        return m.reply('⚠️ Dimmi la lingua! Es: .traducii en oppure .traducii it')
     }
 
     const lang = args[0].toLowerCase()
