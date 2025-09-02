@@ -2,48 +2,52 @@ import translate from '@vitalets/google-translate-api'
 
 let userLang = {}
 
-const handler = async (m, { conn, args, usedPrefix, command }) => {
+const handler = async (m, { args, usedPrefix, command }) => {
     if (!args[0]) {
-        return m.reply(`🌍 Dimmi la lingua!\n\nEsempio: *${usedPrefix + command} en*`)
+        return m.reply(`🌍 Dimmi la lingua!\n\nEsempio: *${usedPrefix + command} es*`)
     }
 
     let lang = args[0].toLowerCase()
     userLang[m.sender] = lang
 
-    await m.reply(`✅ Traduzione attiva: *${lang.toUpperCase()}*`)
-
-    for (let name in global.plugins) {
-        let pl = global.plugins[name]
-
-        if (Array.isArray(pl.help)) {
-            try {
-                for (let i = 0; i < pl.help.length; i++) {
-                    let res = await translate(pl.help[i], { to: lang })
-                    pl.help[i] = res.text
-                }
-            } catch {}
-        }
-
-        if (Array.isArray(pl.tags)) {
-            try {
-                for (let i = 0; i < pl.tags.length; i++) {
-                    let res = await translate(pl.tags[i], { to: lang })
-                    pl.tags[i] = res.text
-                }
-            } catch {}
-        }
-
-        if (typeof pl.description === 'string') {
-            try {
-                let res = await translate(pl.description, { to: lang })
-                pl.description = res.text
-            } catch {}
-        }
-    }
+    await m.reply(`✅ Tutti i messaggi del bot saranno tradotti in *${lang.toUpperCase()}*`)
 }
 
-handler.help = ['traduci <lingua>']
+handler.help = ['traducii <lingua>']
 handler.tags = ['tools']
-handler.command = ['traduci']
+handler.command = ['traducii']
+
+export async function before(m, { conn }) {
+    let lang = userLang[m.sender]
+    if (!lang) return
+
+    // patch m.reply
+    let originalReply = m.reply.bind(m)
+    m.reply = async (text, ...rest) => {
+        try {
+            if (typeof text === 'string') {
+                let res = await translate(text, { to: lang })
+                return originalReply(res.text, ...rest)
+            }
+        } catch (e) {
+            console.error('Errore traduzione reply:', e)
+        }
+        return originalReply(text, ...rest)
+    }
+
+    // patch conn.sendMessage
+    let originalSend = conn.sendMessage.bind(conn)
+    conn.sendMessage = async (jid, content, options) => {
+        try {
+            if (content.text) {
+                let res = await translate(content.text, { to: lang })
+                content.text = res.text
+            }
+        } catch (e) {
+            console.error('Errore traduzione sendMessage:', e)
+        }
+        return originalSend(jid, content, options)
+    }
+}
 
 export default handler
