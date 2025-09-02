@@ -35,7 +35,6 @@ export async function before(m, { conn }) {
         return originalReply(text, ...rest)
     }
 
-    // patch conn.sendMessage
     let originalSend = conn.sendMessage.bind(conn)
     conn.sendMessage = async (jid, content, options) => {
         try {
