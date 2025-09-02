@@ -35,7 +35,7 @@ const handler = async (m, { conn, args }) => {
     }
 }
 
-handler.help = ['traduci <lingua>']
+handler.help = ['traducii <lingua>']
 handler.tags = ['tools']
 handler.command = ['traduci']
 
