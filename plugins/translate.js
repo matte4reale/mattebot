@@ -12,7 +12,6 @@ const handler = async (m, { conn, args }) => {
 
     m.reply(`🌍 Traduzione attivata in: *${lang.toUpperCase()}* per i tuoi comandi!`)
 
-    // traduci subito le help e tags dei plugin
     for (let name in global.plugins) {
         let plugin = global.plugins[name]
 
