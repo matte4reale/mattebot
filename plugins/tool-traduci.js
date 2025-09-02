@@ -3,80 +3,76 @@ import translate from '@vitalets/google-translate-api'
 let chatLang = {}
 let patched = false
 
-async function translateText(text, to) {
-  if (!text || typeof text !== 'string') return text
+async function traduciTesto(testo, lingua) {
+  if (!testo || typeof testo !== 'string') return testo
   try {
-    const res = await translate(text, { to })
+    const res = await translate(testo, { to: lingua })
     return res.text
-  } catch (e) {
-    return text
+  } catch {
+    return testo
   }
 }
 
-function ensurePatched(conn) {
-  if (!conn || patched) return
-  const origSend = conn.sendMessage?.bind(conn)
-  if (origSend) {
-    conn.sendMessage = async (jid, content, options = {}) => {
-      try {
-        const lang = chatLang[jid]
-        if (!lang) return origSend(jid, content, options)
-        if (typeof content === 'string') {
-          const t = await translateText(content, lang)
-          return origSend(jid, t, options)
+function patch(conn) {
+  if (patched) return
+  const origSend = conn.sendMessage.bind(conn)
+
+  conn.sendMessage = async (jid, contenuto, opzioni = {}) => {
+    try {
+      const lingua = chatLang[jid]
+      if (!lingua) return origSend(jid, contenuto, opzioni)
+
+      if (typeof contenuto === 'string') {
+        contenuto = await traduciTesto(contenuto, lingua)
+      } else if (typeof contenuto === 'object') {
+        for (let k of Object.keys(contenuto)) {
+          if (typeof contenuto[k] === 'string') {
+            contenuto[k] = await traduciTesto(contenuto[k], lingua)
+          }
+          if (contenuto[k] && typeof contenuto[k] === 'object') {
+            for (let kk of Object.keys(contenuto[k])) {
+              if (typeof contenuto[k][kk] === 'string') {
+                contenuto[k][kk] = await traduciTesto(contenuto[k][kk], lingua)
+              }
+            }
+          }
         }
-        const newContent = { ...content }
-        if (newContent.text) newContent.text = await translateText(newContent.text, lang)
-        if (newContent.caption) newContent.caption = await translateText(newContent.caption, lang)
-        if (newContent.footer) newContent.footer = await translateText(newContent.footer, lang)
-        if (newContent.title) newContent.title = await translateText(newContent.title, lang)
-        if (newContent.description) newContent.description = await translateText(newContent.description, lang)
-        if (newContent.contentText) newContent.contentText = await translateText(newContent.contentText, lang)
-        if (newContent.image && newContent.image.caption) newContent.image = { ...newContent.image, caption: await translateText(newContent.image.caption, lang) }
-        if (newContent.video && newContent.video.caption) newContent.video = { ...newContent.video, caption: await translateText(newContent.video.caption, lang) }
-        if (newContent.document && newContent.document.caption) newContent.document = { ...newContent.document, caption: await translateText(newContent.document.caption, lang) }
-        if (newContent.buttonsMessage && newContent.buttonsMessage.contentText) newContent.buttonsMessage = { ...newContent.buttonsMessage, contentText: await translateText(newContent.buttonsMessage.contentText, lang) }
-        if (newContent.templateMessage) {
-          const tm = { ...newContent.templateMessage }
-          if (tm.hydratedTemplate && tm.hydratedTemplate.hydratedContentText) tm.hydratedTemplate = { ...tm.hydratedTemplate, hydratedContentText: await translateText(tm.hydratedTemplate.hydratedContentText, lang) }
-          newContent.templateMessage = tm
-        }
-        return origSend(jid, newContent, options)
-      } catch (e) {
-        return origSend(jid, content, options)
       }
+    } catch (e) {
+      console.error('Errore traduzione:', e)
     }
+    return origSend(jid, contenuto, opzioni)
   }
-  if (conn.reply && typeof conn.reply === 'function') {
-    const origReply = conn.reply.bind(conn)
-    conn.reply = async (jid, text, quoted, options = {}) => {
-      try {
-        const lang = chatLang[jid || quoted?.key?.remoteJid]
-        if (!lang) return origReply(jid, text, quoted, options)
-        if (typeof text === 'string') {
-          const t = await translateText(text, lang)
-          return origReply(jid, t, quoted, options)
-        }
-      } catch (e) {
-        return origReply(jid, text, quoted, options)
+
+  const origReply = conn.reply.bind(conn)
+  conn.reply = async (jid, testo, quoted, opzioni = {}) => {
+    try {
+      const lingua = chatLang[jid || quoted?.key?.remoteJid]
+      if (lingua && typeof testo === 'string') {
+        testo = await traduciTesto(testo, lingua)
       }
+    } catch (e) {
+      console.error('Errore traduzione reply:', e)
     }
+    return origReply(jid, testo, quoted, opzioni)
   }
+
   patched = true
 }
 
-const handler = async (m, { conn, args, usedPrefix, command }) => {
-  ensurePatched(conn || global.conn)
-  if (!args || !args[0]) {
-    return m.reply(`🌍 Dimmi la lingua!\nEsempio: ${usedPrefix + command} es oppure ${usedPrefix + command} off`)
-  }
-  const arg = args[0].toLowerCase()
-  if (arg === 'off' || arg === 'reset') {
+const handler = async (m, { conn, args }) => {
+  patch(conn)
+
+  if (!args[0]) return m.reply('🌍 Scrivi una lingua, es: `.traducii es` o `.traducii off`')
+
+  const lingua = args[0].toLowerCase()
+  if (lingua === 'off' || lingua === 'reset') {
     delete chatLang[m.chat]
-    return m.reply(`✅ Traduzione disattivata per questa chat`)
+    return m.reply('✅ Traduzione disattivata in questa chat')
+  } else {
+    chatLang[m.chat] = lingua
+    return m.reply(`✅ Da ora tutti i messaggi del bot in questa chat saranno tradotti in *${lingua.toUpperCase()}*`)
   }
-  chatLang[m.chat] = arg
-  return m.reply(`✅ Tutti i messaggi del bot per questa chat saranno tradotti in *${arg.toUpperCase()}*`)
 }
 
 handler.help = ['traducii <lingua|off>']
