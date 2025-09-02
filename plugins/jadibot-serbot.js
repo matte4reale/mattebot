@@ -63,7 +63,6 @@ const handler = async (m, { conn }) => {
                 if (!global.conns) global.conns = []
                 global.conns.push(newBot)
 
-                // 🔥 Handler universale per i plugin
                 newBot.ev.on('messages.upsert', async (chatUpdate) => {
                     try {
                         if (!chatUpdate.messages) return
