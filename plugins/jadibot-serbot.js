@@ -1,171 +1,97 @@
-import { existsSync, mkdirSync } from 'fs'
-import { join } from 'path'
-import qrcode from 'qrcode'
+import { makeWASocket, useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore } from '@whiskeysockets/baileys'
+import fs from 'fs'
+import path from 'path'
 import pino from 'pino'
-import { 
-    makeWASocket, 
-    DisconnectReason, 
-    useMultiFileAuthState, 
-    fetchLatestBaileysVersion, 
-    makeCacheableSignalKeyStore
-} from '@whiskeysockets/baileys'
 
-const activeBots = new Map()
+if (!global.conns) global.conns = []
+if (!global.plugins) global.plugins = {}
 
-const handler = async (m, { conn, args, usedPrefix, command }) => {
+const pluginsFolder = path.join(process.cwd(), 'plugins')
+fs.readdirSync(pluginsFolder).forEach(file => {
+  if (file.endsWith('.js')) {
+    let pluginPath = path.join(pluginsFolder, file)
     try {
-        const sender = m.sender.split('@')[0]
-        const botSessionPath = join(process.cwd(), 'bot_sessions', sender)
-        
-        if (!existsSync(join(process.cwd(), 'bot_sessions'))) {
-            mkdirSync(join(process.cwd(), 'bot_sessions'), { recursive: true })
-        }
-        
-        if (!existsSync(botSessionPath)) {
-            mkdirSync(botSessionPath, { recursive: true })
-        }
-
-        const { version } = await fetchLatestBaileysVersion()
-        const { state, saveCreds } = await useMultiFileAuthState(botSessionPath)
-        
-        const newBot = makeWASocket({
-            version,
-            logger: pino({ level: 'silent' }),
-            printQRInTerminal: false,
-            auth: {
-                creds: state.creds,
-                keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
-            },
-            browser: ['Bot Secondario', 'Chrome', '1.0.0'],
-            generateHighQualityLinkPreview: true,
-            syncFullHistory: false,
-            getMessage: async (key) => {
-                if (global.store) {
-                    const msg = await global.store.loadMessage(key.remoteJid, key.id)
-                    return msg?.message || undefined
-                }
-                return { conversation: 'Hello' }
-            }
-        })
-
-        let qrSent = false
-
-        newBot.ev.on('connection.update', async (update) => {
-            const { connection, lastDisconnect, qr } = update
-
-            if (qr && !qrSent) {
-                qrSent = true
-                const qrImage = await qrcode.toDataURL(qr, { scale: 8 })
-                await conn.sendMessage(m.chat, { 
-                    image: Buffer.from(qrImage.split(',')[1], 'base64'),
-                    caption: `Scansiona per attivare il tuo bot personale\nSessione: ${sender}`
-                }, { quoted: m })
-            }
-
-            if (connection === 'open') {
-                activeBots.set(sender, newBot)
-                await conn.sendMessage(m.chat, { 
-                    text: `✅ Bot attivo per ${sender}\nIl tuo bot è ora online con tutti i plugin!`
-                }, { quoted: m })
-
-                if (global.plugins) {
-                    newBot.plugin = {}
-                    for (let name in global.plugins) {
-                        let plugin = global.plugins[name]
-                        if (plugin && plugin.command) {
-                            newBot.plugin[name] = plugin
-                        }
-                    }
-                }
-
-                newBot.ev.on('messages.upsert', async (chatUpdate) => {
-                    try {
-                        const msg = chatUpdate.messages[0]
-                        if (!msg.message) return
-                        const text = msg.message.conversation || msg.message.extendedTextMessage?.text
-                        if (!text) return
-
-                        const prefix = text[0]
-                        const [cmd, ...args] = text.slice(1).trim().split(/\s+/)
-                        
-                        for (let name in newBot.plugin) {
-                            let plugin = newBot.plugin[name]
-                            let commands = Array.isArray(plugin.command) ? plugin.command : [plugin.command]
-                            if (commands.includes(cmd)) {
-                                await plugin(msg, { conn: newBot, args, usedPrefix: prefix, command: cmd, text: args.join(' ') })
-                            }
-                        }
-                    } catch (e) {
-                        console.error('Errore subbot handler:', e)
-                    }
-                })
-            }
-
-            if (connection === 'close') {
-                const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
-                if (shouldReconnect) {
-                    setTimeout(() => {
-                        handler(m, { conn, args, usedPrefix, command })
-                    }, 5000)
-                } else {
-                    activeBots.delete(sender)
-                    const index = global.conns?.indexOf(newBot)
-                    if (index !== -1) global.conns.splice(index, 1)
-                    await conn.sendMessage(m.chat, { 
-                        text: `❌ Bot disconnesso per ${sender}`
-                    }, { quoted: m })
-                }
-            }
-        })
-
-        newBot.ev.on('creds.update', saveCreds)
-
-        setTimeout(() => {
-            if (!qrSent && !newBot.user) {
-                conn.sendMessage(m.chat, {
-                    text: '⏰ Timeout: Riprova il comando se non hai ricevuto il QR'
-                }, { quoted: m })
-            }
-        }, 60000)
-
-    } catch (error) {
-        console.error('Errore creazione bot:', error)
-        await conn.sendMessage(m.chat, { 
-            text: '❌ Errore: ' + error.message
-        }, { quoted: m })
+      let plugin = require(pluginPath)
+      global.plugins[file] = plugin.default || plugin
+    } catch (e) {
+      console.error(`Errore caricamento plugin ${file}:`, e)
     }
-}
+  }
+})
 
-handler.before = async function (m) {
-    const sender = m.sender.split('@')[0]
-    if (activeBots.has(sender)) {
-        const bot = activeBots.get(sender)
-        if (!bot.user) {
-            activeBots.delete(sender)
+let handler = async (m, { command, conn }) => {
+  if (command === 'serbot') {
+    let { state, saveCreds } = await useMultiFileAuthState(`./jadibot/${m.sender}`)
+    let sock = makeWASocket({
+      auth: {
+        creds: state.creds,
+        keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
+      },
+      printQRInTerminal: true,
+      logger: pino({ level: 'silent' }),
+      browser: ['SubBot', 'Chrome', '1.0.0']
+    })
+
+    sock.ev.on('creds.update', saveCreds)
+
+    sock.ev.on('connection.update', (update) => {
+      const { connection, lastDisconnect } = update
+      if (connection === 'close') {
+        let reason = lastDisconnect?.error?.output?.statusCode
+        if (reason === DisconnectReason.loggedOut) {
+          fs.rmSync(`./jadibot/${m.sender}`, { recursive: true, force: true })
+          let i = global.conns.indexOf(sock)
+          if (i !== -1) global.conns.splice(i, 1)
+          m.reply(`❌ Bot disconnesso per *${m.sender}*`)
         }
-    }
-}
+      } else if (connection === 'open') {
+        m.reply(`✅ Bot avviato per *${m.sender}*`)
+      }
+    })
 
-export const stopbot = async (m, { conn }) => {
-    const sender = m.sender.split('@')[0]
-    if (activeBots.has(sender)) {
-        const bot = activeBots.get(sender)
-        await bot.logout()
-        activeBots.delete(sender)
-        const index = global.conns?.indexOf(bot)
-        if (index !== -1) global.conns.splice(index, 1)
-        await conn.sendMessage(m.chat, {
-            text: '✅ Bot secondario disconnesso'
-        }, { quoted: m })
+    sock.ev.on('messages.upsert', async ({ messages }) => {
+      let msg = messages[0]
+      if (!msg.message) return
+
+      for (let name in global.plugins) {
+        let plugin = global.plugins[name]
+        try {
+          if (plugin.command) {
+            let body = msg.message.conversation || msg.message.extendedTextMessage?.text || ''
+            let prefix = body[0]
+            let args = body.slice(1).trim().split(/ +/)
+            let cmd = args.shift().toLowerCase()
+
+            if (plugin.command.includes(cmd)) {
+              await plugin(sock, { m: msg, conn: sock, args, command: cmd })
+            }
+          }
+        } catch (e) {
+          console.error(`Errore plugin ${name}:`, e)
+        }
+      }
+    })
+
+    global.conns.push(sock)
+  }
+
+  if (command === 'stopbot') {
+    let connUser = global.conns.find(c => c?.user?.id?.split(':')[0] === m.sender.split('@')[0])
+    if (connUser) {
+      try {
+        connUser.ws.close()
+        let i = global.conns.indexOf(connUser)
+        if (i !== -1) global.conns.splice(i, 1)
+        fs.rmSync(`./jadibot/${m.sender}`, { recursive: true, force: true })
+        m.reply(`🛑 Bot fermato e sessione eliminata per *${m.sender}*`)
+      } catch (e) {
+        m.reply(`⚠️ Errore nello stop: ${e.message}`)
+      }
     } else {
-        await conn.sendMessage(m.chat, {
-            text: '❌ Non hai nessun bot attivo'
-        }, { quoted: m })
+      m.reply(`❌ Nessun bot trovato per *${m.sender}*`)
     }
+  }
 }
 
-stopbot.command = ['stopbot', 'logout']
-handler.command = ['newbot', 'serbot']
-handler.help = ['Crea un nuovo bot separato']
-handler.tags = ['tools']
+handler.command = ['serbot', 'stopbot']
 export default handler
