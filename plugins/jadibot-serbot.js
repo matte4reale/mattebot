@@ -1,32 +1,33 @@
-import { existsSync, mkdirSync, readdirSync } from 'fs'
+import { existsSync, mkdirSync } from 'fs'
 import { join } from 'path'
 import qrcode from 'qrcode'
 import pino from 'pino'
-import {
-    makeWASocket,
-    DisconnectReason,
-    useMultiFileAuthState,
-    fetchLatestBaileysVersion,
+import { 
+    makeWASocket, 
+    DisconnectReason, 
+    useMultiFileAuthState, 
+    fetchLatestBaileysVersion, 
     makeCacheableSignalKeyStore
 } from '@whiskeysockets/baileys'
 
 const activeBots = new Map()
 
-const handler = async (m, { conn }) => {
+const handler = async (m, { conn, args, usedPrefix, command }) => {
     try {
         const sender = m.sender.split('@')[0]
         const botSessionPath = join(process.cwd(), 'bot_sessions', sender)
-
+        
         if (!existsSync(join(process.cwd(), 'bot_sessions'))) {
             mkdirSync(join(process.cwd(), 'bot_sessions'), { recursive: true })
         }
+        
         if (!existsSync(botSessionPath)) {
             mkdirSync(botSessionPath, { recursive: true })
         }
 
         const { version } = await fetchLatestBaileysVersion()
         const { state, saveCreds } = await useMultiFileAuthState(botSessionPath)
-
+        
         const newBot = makeWASocket({
             version,
             logger: pino({ level: 'silent' }),
@@ -35,9 +36,16 @@ const handler = async (m, { conn }) => {
                 creds: state.creds,
                 keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
             },
-            browser: ['SubBot', 'Chrome', '1.0.0'],
+            browser: ['Bot Secondario', 'Chrome', '1.0.0'],
             generateHighQualityLinkPreview: true,
-            syncFullHistory: false
+            syncFullHistory: false,
+            getMessage: async (key) => {
+                if (global.store) {
+                    const msg = await global.store.loadMessage(key.remoteJid, key.id)
+                    return msg?.message || undefined
+                }
+                return { conversation: 'Hello' }
+            }
         })
 
         let qrSent = false
@@ -48,65 +56,63 @@ const handler = async (m, { conn }) => {
             if (qr && !qrSent) {
                 qrSent = true
                 const qrImage = await qrcode.toDataURL(qr, { scale: 8 })
-                await conn.sendMessage(m.chat, {
+                await conn.sendMessage(m.chat, { 
                     image: Buffer.from(qrImage.split(',')[1], 'base64'),
-                    caption: `🔑 Scansiona il QR per avviare il tuo bot personale\n👤 Sessione: ${sender}`
+                    caption: `Scansiona per attivare il tuo bot personale\nSessione: ${sender}`
                 }, { quoted: m })
             }
 
             if (connection === 'open') {
                 activeBots.set(sender, newBot)
-                await conn.sendMessage(m.chat, {
-                    text: `✅ SubBot attivo per ${sender}\nCaricamento plugin in corso...`
+                await conn.sendMessage(m.chat, { 
+                    text: `✅ Bot attivo per ${sender}\nIl tuo bot è ora online con tutti i plugin!`
                 }, { quoted: m })
 
-                const pluginsDir = join(process.cwd(), 'plugins')
-                const pluginFiles = readdirSync(pluginsDir).filter(file => file.endsWith('.js'))
-
-                for (let file of pluginFiles) {
-                    try {
-                        const pluginPath = join(pluginsDir, file)
-                        const plugin = (await import(`file://${pluginPath}`)).default
-                        
-                        if (plugin && typeof plugin === 'function') {
-                            newBot.ev.on('messages.upsert', async (chatUpdate) => {
-                                try {
-                                    await plugin.call(newBot, chatUpdate)
-                                } catch (e) {
-                                    console.error(`Errore nel plugin ${file}:`, e)
-                                }
-                            })
-                        } else if (plugin && typeof plugin.handler === 'function') {
-                            newBot.ev.on('messages.upsert', async (chatUpdate) => {
-                                try {
-                                    await plugin.handler.call(newBot, chatUpdate)
-                                } catch (e) {
-                                    console.error(`Errore nel plugin ${file}:`, e)
-                                }
-                            })
+                if (global.plugins) {
+                    newBot.plugin = {}
+                    for (let name in global.plugins) {
+                        let plugin = global.plugins[name]
+                        if (plugin && plugin.command) {
+                            newBot.plugin[name] = plugin
                         }
-
-                        console.log(`✅ Plugin caricato: ${file}`)
-                    } catch (e) {
-                        console.error(`❌ Errore caricando plugin ${file}:`, e)
                     }
                 }
 
-                if (!global.conns) global.conns = []
-                global.conns.push(newBot)
+                newBot.ev.on('messages.upsert', async (chatUpdate) => {
+                    try {
+                        const msg = chatUpdate.messages[0]
+                        if (!msg.message) return
+                        const text = msg.message.conversation || msg.message.extendedTextMessage?.text
+                        if (!text) return
+
+                        const prefix = text[0]
+                        const [cmd, ...args] = text.slice(1).trim().split(/\s+/)
+                        
+                        for (let name in newBot.plugin) {
+                            let plugin = newBot.plugin[name]
+                            let commands = Array.isArray(plugin.command) ? plugin.command : [plugin.command]
+                            if (commands.includes(cmd)) {
+                                await plugin(msg, { conn: newBot, args, usedPrefix: prefix, command: cmd, text: args.join(' ') })
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Errore subbot handler:', e)
+                    }
+                })
             }
 
             if (connection === 'close') {
                 const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
                 if (shouldReconnect) {
-                    console.log('🔄 Riconnessione subbot...')
-                    setTimeout(() => handler(m, { conn }), 5000)
+                    setTimeout(() => {
+                        handler(m, { conn, args, usedPrefix, command })
+                    }, 5000)
                 } else {
                     activeBots.delete(sender)
                     const index = global.conns?.indexOf(newBot)
                     if (index !== -1) global.conns.splice(index, 1)
-                    await conn.sendMessage(m.chat, {
-                        text: `❌ SubBot disconnesso per ${sender}`
+                    await conn.sendMessage(m.chat, { 
+                        text: `❌ Bot disconnesso per ${sender}`
                     }, { quoted: m })
                 }
             }
@@ -117,15 +123,15 @@ const handler = async (m, { conn }) => {
         setTimeout(() => {
             if (!qrSent && !newBot.user) {
                 conn.sendMessage(m.chat, {
-                    text: '⏰ Timeout: riprova se non hai ricevuto il QR'
+                    text: '⏰ Timeout: Riprova il comando se non hai ricevuto il QR'
                 }, { quoted: m })
             }
         }, 60000)
 
-    } catch (e) {
-        console.error('Errore creazione SubBot:', e)
-        await conn.sendMessage(m.chat, {
-            text: '❌ Errore: ' + e.message
+    } catch (error) {
+        console.error('Errore creazione bot:', error)
+        await conn.sendMessage(m.chat, { 
+            text: '❌ Errore: ' + error.message
         }, { quoted: m })
     }
 }
@@ -149,11 +155,11 @@ export const stopbot = async (m, { conn }) => {
         const index = global.conns?.indexOf(bot)
         if (index !== -1) global.conns.splice(index, 1)
         await conn.sendMessage(m.chat, {
-            text: '✅ SubBot disconnesso'
+            text: '✅ Bot secondario disconnesso'
         }, { quoted: m })
     } else {
         await conn.sendMessage(m.chat, {
-            text: '❌ Nessun SubBot attivo'
+            text: '❌ Non hai nessun bot attivo'
         }, { quoted: m })
     }
 }
@@ -162,5 +168,4 @@ stopbot.command = ['stopbot', 'logout']
 handler.command = ['newbot', 'serbot']
 handler.help = ['Crea un nuovo bot separato']
 handler.tags = ['tools']
-
 export default handler
