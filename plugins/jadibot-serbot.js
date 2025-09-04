@@ -1,73 +1,73 @@
 import { makeWASocket, useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore } from '@whiskeysockets/baileys'
+import pino from 'pino'
 import fs from 'fs'
 import path from 'path'
-import pino from 'pino'
 
 if (!global.conns) global.conns = []
 if (!global.plugins) global.plugins = {}
 
+// Carica plugin da cartella plugins
 const pluginsFolder = path.join(process.cwd(), 'plugins')
-fs.readdirSync(pluginsFolder).forEach(file => {
+for (let file of fs.readdirSync(pluginsFolder)) {
   if (file.endsWith('.js')) {
-    let pluginPath = path.join(pluginsFolder, file)
+    let filepath = path.join(pluginsFolder, file)
     try {
-      let plugin = require(pluginPath)
+      delete require.cache[require.resolve(filepath)]
+      let plugin = require(filepath)
       global.plugins[file] = plugin.default || plugin
     } catch (e) {
-      console.error(`Errore caricamento plugin ${file}:`, e)
+      console.error('Errore caricando plugin', file, e)
     }
   }
-})
+}
 
-let handler = async (m, { command, conn }) => {
+let handler = async (m, { command }) => {
   if (command === 'serbot') {
-    let { state, saveCreds } = await useMultiFileAuthState(`./jadibot/${m.sender}`)
+    let sessionPath = `./jadibot/${m.sender.split('@')[0]}`
+    let { state, saveCreds } = await useMultiFileAuthState(sessionPath)
+
     let sock = makeWASocket({
+      logger: pino({ level: 'silent' }),
+      printQRInTerminal: true,
       auth: {
         creds: state.creds,
         keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
       },
-      printQRInTerminal: true,
-      logger: pino({ level: 'silent' }),
       browser: ['SubBot', 'Chrome', '1.0.0']
     })
 
     sock.ev.on('creds.update', saveCreds)
 
-    sock.ev.on('connection.update', (update) => {
-      const { connection, lastDisconnect } = update
-      if (connection === 'close') {
+    sock.ev.on('connection.update', ({ connection, lastDisconnect }) => {
+      if (connection === 'open') {
+        m.reply(`✅ SubBot avviato per ${m.sender}`)
+      } else if (connection === 'close') {
         let reason = lastDisconnect?.error?.output?.statusCode
         if (reason === DisconnectReason.loggedOut) {
-          fs.rmSync(`./jadibot/${m.sender}`, { recursive: true, force: true })
-          let i = global.conns.indexOf(sock)
-          if (i !== -1) global.conns.splice(i, 1)
-          m.reply(`❌ Bot disconnesso per *${m.sender}*`)
+          fs.rmSync(sessionPath, { recursive: true, force: true })
+          global.conns = global.conns.filter(c => c !== sock)
+          m.reply(`❌ SubBot disconnesso per ${m.sender}`)
         }
-      } else if (connection === 'open') {
-        m.reply(`✅ Bot avviato per *${m.sender}*`)
       }
     })
 
     sock.ev.on('messages.upsert', async ({ messages }) => {
       let msg = messages[0]
       if (!msg.message) return
+      let body = msg.message.conversation || msg.message.extendedTextMessage?.text || ''
+      if (!body.startsWith('.')) return
+
+      let args = body.slice(1).trim().split(/ +/)
+      let cmd = args.shift().toLowerCase()
 
       for (let name in global.plugins) {
         let plugin = global.plugins[name]
         try {
-          if (plugin.command) {
-            let body = msg.message.conversation || msg.message.extendedTextMessage?.text || ''
-            let prefix = body[0]
-            let args = body.slice(1).trim().split(/ +/)
-            let cmd = args.shift().toLowerCase()
-
-            if (plugin.command.includes(cmd)) {
-              await plugin(sock, { m: msg, conn: sock, args, command: cmd })
-            }
+          if (plugin.command && plugin.command.includes(cmd)) {
+            await plugin.handler(msg, { conn: sock, args, command: cmd })
           }
         } catch (e) {
-          console.error(`Errore plugin ${name}:`, e)
+          console.error(`Errore nel plugin ${name}:`, e)
         }
       }
     })
@@ -76,19 +76,19 @@ let handler = async (m, { command, conn }) => {
   }
 
   if (command === 'stopbot') {
-    let connUser = global.conns.find(c => c?.user?.id?.split(':')[0] === m.sender.split('@')[0])
-    if (connUser) {
+    let user = m.sender.split('@')[0]
+    let bot = global.conns.find(c => c?.user?.id?.startsWith(user))
+    if (bot) {
       try {
-        connUser.ws.close()
-        let i = global.conns.indexOf(connUser)
-        if (i !== -1) global.conns.splice(i, 1)
-        fs.rmSync(`./jadibot/${m.sender}`, { recursive: true, force: true })
-        m.reply(`🛑 Bot fermato e sessione eliminata per *${m.sender}*`)
+        bot.ws.close()
+        fs.rmSync(`./jadibot/${user}`, { recursive: true, force: true })
+        global.conns = global.conns.filter(c => c !== bot)
+        m.reply(`🛑 SubBot fermato per ${m.sender}`)
       } catch (e) {
-        m.reply(`⚠️ Errore nello stop: ${e.message}`)
+        m.reply(`⚠️ Errore: ${e.message}`)
       }
     } else {
-      m.reply(`❌ Nessun bot trovato per *${m.sender}*`)
+      m.reply(`❌ Nessun SubBot attivo per ${m.sender}`)
     }
   }
 }
