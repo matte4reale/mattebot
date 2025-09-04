@@ -2,6 +2,7 @@ import { makeWASocket, useMultiFileAuthState, DisconnectReason, makeCacheableSig
 import pino from 'pino'
 import fs from 'fs'
 import path from 'path'
+import qrcode from 'qrcode'
 
 if (!global.conns) global.conns = []
 if (!global.plugins) global.plugins = {}
@@ -21,14 +22,16 @@ for (let file of fs.readdirSync(pluginsFolder)) {
   }
 }
 
-let handler = async (m, { command }) => {
+let handler = async (m, { command, conn }) => {
   if (command === 'serbot') {
-    let sessionPath = `./jadibot/${m.sender.split('@')[0]}`
+    let user = m.sender.split('@')[0]
+    let sessionPath = `./jadibot/${user}`
+
     let { state, saveCreds } = await useMultiFileAuthState(sessionPath)
 
     let sock = makeWASocket({
       logger: pino({ level: 'silent' }),
-      printQRInTerminal: true,
+      printQRInTerminal: false, // disabilito console
       auth: {
         creds: state.creds,
         keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
@@ -38,7 +41,19 @@ let handler = async (m, { command }) => {
 
     sock.ev.on('creds.update', saveCreds)
 
-    sock.ev.on('connection.update', ({ connection, lastDisconnect }) => {
+    sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
+      if (qr) {
+        try {
+          let qrImage = await qrcode.toBuffer(qr, { scale: 8 })
+          await conn.sendMessage(m.chat, {
+            image: qrImage,
+            caption: `📲 Scansiona questo QR per collegare il tuo SubBot`
+          }, { quoted: m })
+        } catch (e) {
+          console.error('Errore QR:', e)
+        }
+      }
+
       if (connection === 'open') {
         m.reply(`✅ SubBot avviato per ${m.sender}`)
       } else if (connection === 'close') {
