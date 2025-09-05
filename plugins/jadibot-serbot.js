@@ -6,32 +6,20 @@ import path from 'path'
 
 const subBots = new Map()
 
-const loadPlugins = async (bot) => {
-  const pluginsDir = path.join(process.cwd(), 'plugins')
-  if (!fs.existsSync(pluginsDir)) return
-
-  const files = fs.readdirSync(pluginsDir).filter(f => f.endsWith('.js'))
-  for (const file of files) {
-    try {
-      const plugin = await import(path.join(pluginsDir, file))
-      if (plugin.default && plugin.default.command) {
-        bot.plugin = bot.plugin || {}
-        bot.plugin[file] = plugin.default
-      }
-    } catch (e) {
-      console.error(`Errore nel caricamento plugin ${file}:`, e)
-    }
-  }
-}
-
-const handler = async (m, { conn }) => {
+const handler = async (m, { conn, args }) => {
   try {
     const sender = m.sender.split('@')[0]
-    if (subBots.has(sender)) {
-      return conn.sendMessage(m.chat, { text: '❌ Hai già un subbot attivo.' }, { quoted: m })
+    const targetNumber = (args[0] || '').replace(/[^0-9]/g, '') // pulisce il numero
+
+    if (!targetNumber) {
+      return conn.sendMessage(m.chat, { text: '❌ Devi scrivere un numero. Esempio:\n.conectar +393123456789' }, { quoted: m })
     }
 
-    const sessionPath = path.join(process.cwd(), 'subsessions', sender)
+    if (subBots.has(targetNumber)) {
+      return conn.sendMessage(m.chat, { text: `⚠️ C\'è già un subbot attivo per *${targetNumber}*` }, { quoted: m })
+    }
+
+    const sessionPath = path.join(process.cwd(), 'subsessions', targetNumber)
     if (!fs.existsSync(sessionPath)) fs.mkdirSync(sessionPath, { recursive: true })
 
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath)
@@ -50,47 +38,37 @@ const handler = async (m, { conn }) => {
 
     bot.ev.on('creds.update', saveCreds)
 
-    let qrSent = false
     bot.ev.on('connection.update', async (update) => {
-      const { connection, qr, pairingCode } = update
+      const { connection, pairingCode } = update
 
-      if (qr && !qrSent) {
-        qrSent = true
-        const qrImg = await qrcode.toBuffer(qr, { scale: 8 })
+      if (pairingCode) {
         await conn.sendMessage(m.chat, {
-          image: qrImg,
-          caption: `📲 Scansiona questo QR per collegare il tuo subbot`
-        }, { quoted: m })
-      }
-
-      if (pairingCode && !qrSent) {
-        qrSent = true
-        await conn.sendMessage(m.chat, {
-          text: `🔑 Usa questo codice per collegare il tuo subbot:\n\n*${pairingCode}*`
+          text: `🔑 Codice di connessione per *${targetNumber}*:\n\n*${pairingCode}*`
         }, { quoted: m })
       }
 
       if (connection === 'open') {
-        subBots.set(sender, bot)
-        await loadPlugins(bot)
+        subBots.set(targetNumber, bot)
         await conn.sendMessage(m.chat, {
-          text: `✅ Subbot attivato per ${sender}`
+          text: `✅ Subbot collegato con *${targetNumber}*`
         }, { quoted: m })
       }
 
       if (connection === 'close') {
-        subBots.delete(sender)
-        await conn.sendMessage(m.chat, { text: `❌ Subbot disconnesso per ${sender}` }, { quoted: m })
+        subBots.delete(targetNumber)
+        await conn.sendMessage(m.chat, {
+          text: `❌ Subbot disconnesso per *${targetNumber}*`
+        }, { quoted: m })
       }
     })
   } catch (e) {
-    console.error('Errore serbot:', e)
+    console.error('Errore conectar:', e)
     await conn.sendMessage(m.chat, { text: `Errore: ${e.message}` }, { quoted: m })
   }
 }
 
-handler.command = ['serbot', 'conectar']
-handler.help = ['serbot']
+handler.command = ['conectar']
+handler.help = ['conectar <numero>']
 handler.tags = ['tools']
 
 export default handler
