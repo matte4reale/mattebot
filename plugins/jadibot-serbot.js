@@ -1,37 +1,46 @@
-import { makeWASocket, useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore } from '@whiskeysockets/baileys'
+import { makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } from '@whiskeysockets/baileys'
+import qrcode from 'qrcode'
 import pino from 'pino'
 import fs from 'fs'
 import path from 'path'
-import qrcode from 'qrcode'
 
-if (!global.conns) global.conns = []
-if (!global.plugins) global.plugins = {}
+const subBots = new Map()
 
-// Carica plugin da cartella plugins
-const pluginsFolder = path.join(process.cwd(), 'plugins')
-for (let file of fs.readdirSync(pluginsFolder)) {
-  if (file.endsWith('.js')) {
-    let filepath = path.join(pluginsFolder, file)
+const loadPlugins = async (bot) => {
+  const pluginsDir = path.join(process.cwd(), 'plugins')
+  if (!fs.existsSync(pluginsDir)) return
+
+  const files = fs.readdirSync(pluginsDir).filter(f => f.endsWith('.js'))
+  for (const file of files) {
     try {
-      delete require.cache[require.resolve(filepath)]
-      let plugin = require(filepath)
-      global.plugins[file] = plugin.default || plugin
+      const plugin = await import(path.join(pluginsDir, file))
+      if (plugin.default && plugin.default.command) {
+        bot.plugin = bot.plugin || {}
+        bot.plugin[file] = plugin.default
+      }
     } catch (e) {
-      console.error('Errore caricando plugin', file, e)
+      console.error(`Errore nel caricamento plugin ${file}:`, e)
     }
   }
 }
 
-let handler = async (m, { command, conn }) => {
-  if (command === 'serbot') {
-    let user = m.sender.split('@')[0]
-    let sessionPath = `./jadibot/${user}`
+const handler = async (m, { conn }) => {
+  try {
+    const sender = m.sender.split('@')[0]
+    if (subBots.has(sender)) {
+      return conn.sendMessage(m.chat, { text: '❌ Hai già un subbot attivo.' }, { quoted: m })
+    }
 
-    let { state, saveCreds } = await useMultiFileAuthState(sessionPath)
+    const sessionPath = path.join(process.cwd(), 'subsessions', sender)
+    if (!fs.existsSync(sessionPath)) fs.mkdirSync(sessionPath, { recursive: true })
 
-    let sock = makeWASocket({
+    const { state, saveCreds } = await useMultiFileAuthState(sessionPath)
+    const { version } = await fetchLatestBaileysVersion()
+
+    const bot = makeWASocket({
+      version,
       logger: pino({ level: 'silent' }),
-      printQRInTerminal: false, // disabilito console
+      printQRInTerminal: false,
       auth: {
         creds: state.creds,
         keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
@@ -39,74 +48,49 @@ let handler = async (m, { command, conn }) => {
       browser: ['SubBot', 'Chrome', '1.0.0']
     })
 
-    sock.ev.on('creds.update', saveCreds)
+    bot.ev.on('creds.update', saveCreds)
 
-    sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
-      if (qr) {
-        try {
-          let qrImage = await qrcode.toBuffer(qr, { scale: 8 })
-          await conn.sendMessage(m.chat, {
-            image: qrImage,
-            caption: `📲 Scansiona questo QR per collegare il tuo SubBot`
-          }, { quoted: m })
-        } catch (e) {
-          console.error('Errore QR:', e)
-        }
+    let qrSent = false
+    bot.ev.on('connection.update', async (update) => {
+      const { connection, qr, pairingCode } = update
+
+      if (qr && !qrSent) {
+        qrSent = true
+        const qrImg = await qrcode.toBuffer(qr, { scale: 8 })
+        await conn.sendMessage(m.chat, {
+          image: qrImg,
+          caption: `📲 Scansiona questo QR per collegare il tuo subbot`
+        }, { quoted: m })
+      }
+
+      if (pairingCode && !qrSent) {
+        qrSent = true
+        await conn.sendMessage(m.chat, {
+          text: `🔑 Usa questo codice per collegare il tuo subbot:\n\n*${pairingCode}*`
+        }, { quoted: m })
       }
 
       if (connection === 'open') {
-        m.reply(`✅ SubBot avviato per ${m.sender}`)
-      } else if (connection === 'close') {
-        let reason = lastDisconnect?.error?.output?.statusCode
-        if (reason === DisconnectReason.loggedOut) {
-          fs.rmSync(sessionPath, { recursive: true, force: true })
-          global.conns = global.conns.filter(c => c !== sock)
-          m.reply(`❌ SubBot disconnesso per ${m.sender}`)
-        }
+        subBots.set(sender, bot)
+        await loadPlugins(bot)
+        await conn.sendMessage(m.chat, {
+          text: `✅ Subbot attivato per ${sender}`
+        }, { quoted: m })
+      }
+
+      if (connection === 'close') {
+        subBots.delete(sender)
+        await conn.sendMessage(m.chat, { text: `❌ Subbot disconnesso per ${sender}` }, { quoted: m })
       }
     })
-
-    sock.ev.on('messages.upsert', async ({ messages }) => {
-      let msg = messages[0]
-      if (!msg.message) return
-      let body = msg.message.conversation || msg.message.extendedTextMessage?.text || ''
-      if (!body.startsWith('.')) return
-
-      let args = body.slice(1).trim().split(/ +/)
-      let cmd = args.shift().toLowerCase()
-
-      for (let name in global.plugins) {
-        let plugin = global.plugins[name]
-        try {
-          if (plugin.command && plugin.command.includes(cmd)) {
-            await plugin.handler(msg, { conn: sock, args, command: cmd })
-          }
-        } catch (e) {
-          console.error(`Errore nel plugin ${name}:`, e)
-        }
-      }
-    })
-
-    global.conns.push(sock)
-  }
-
-  if (command === 'stopbot') {
-    let user = m.sender.split('@')[0]
-    let bot = global.conns.find(c => c?.user?.id?.startsWith(user))
-    if (bot) {
-      try {
-        bot.ws.close()
-        fs.rmSync(`./jadibot/${user}`, { recursive: true, force: true })
-        global.conns = global.conns.filter(c => c !== bot)
-        m.reply(`🛑 SubBot fermato per ${m.sender}`)
-      } catch (e) {
-        m.reply(`⚠️ Errore: ${e.message}`)
-      }
-    } else {
-      m.reply(`❌ Nessun SubBot attivo per ${m.sender}`)
-    }
+  } catch (e) {
+    console.error('Errore serbot:', e)
+    await conn.sendMessage(m.chat, { text: `Errore: ${e.message}` }, { quoted: m })
   }
 }
 
-handler.command = ['serbot', 'stopbot']
+handler.command = ['serbot', 'conectar']
+handler.help = ['serbot']
+handler.tags = ['tools']
+
 export default handler
