@@ -1,40 +1,34 @@
+import { existsSync, mkdirSync } from 'fs'
+import { join } from 'path'
+import qrcode from 'qrcode'
+import pino from 'pino'
 import {
   makeWASocket,
+  DisconnectReason,
   useMultiFileAuthState,
-  fetchLatestBaileysVersion,
   makeCacheableSignalKeyStore
 } from '@whiskeysockets/baileys'
-import pino from 'pino'
-import fs from 'fs'
-import path from 'path'
 
-const subBots = new Map()
+const activeBots = new Map()
 
-const handler = async (m, { conn, args }) => {
+const handler = async (m, { conn }) => {
   try {
-    const targetNumber = (args[0] || '').replace(/[^0-9]/g, '')
+    const sender = m.sender.split('@')[0]
+    const botSessionPath = join(process.cwd(), 'sessioni', sender)
 
-    if (!targetNumber) {
-      return conn.sendMessage(m.chat, {
-        text: '❌ Devi scrivere un numero.\nEsempio: *.conectar +393123456789*'
-      }, { quoted: m })
+    if (!existsSync(join(process.cwd(), 'sessioni'))) {
+      mkdirSync(join(process.cwd(), 'sessioni'), { recursive: true })
     }
 
-    if (subBots.has(targetNumber)) {
-      return conn.sendMessage(m.chat, {
-        text: `⚠️ C’è già un subbot attivo per *${targetNumber}*`
-      }, { quoted: m })
+    if (!existsSync(botSessionPath)) {
+      mkdirSync(botSessionPath, { recursive: true })
     }
 
-    const sessionPath = path.join(process.cwd(), 'subsessions', targetNumber)
-    if (!fs.existsSync(sessionPath)) fs.mkdirSync(sessionPath, { recursive: true })
+    const { state, saveCreds } = await useMultiFileAuthState(botSessionPath)
 
-    const { state, saveCreds } = await useMultiFileAuthState(sessionPath)
-    const { version } = await fetchLatestBaileysVersion()
-
-    const bot = makeWASocket({
-      version,
+    const newBot = makeWASocket({
       logger: pino({ level: 'silent' }),
+      printQRInTerminal: false,
       auth: {
         creds: state.creds,
         keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
@@ -42,41 +36,51 @@ const handler = async (m, { conn, args }) => {
       browser: ['SubBot', 'Chrome', '1.0.0']
     })
 
-    bot.ev.on('creds.update', saveCreds)
+    let qrSent = false
 
-    // QUI generiamo il pairing code
-    if (!bot.authState.creds.registered) {
-      const code = await bot.requestPairingCode(targetNumber)
-      await conn.sendMessage(m.chat, {
-        text: `🔑 Codice di connessione per *${targetNumber}*:\n\n*${code}*`
-      }, { quoted: m })
-    }
+    newBot.ev.on('connection.update', async (update) => {
+      const { connection, lastDisconnect, qr } = update
 
-    bot.ev.on('connection.update', async ({ connection }) => {
-      if (connection === 'open') {
-        subBots.set(targetNumber, bot)
+      if (qr && !qrSent) {
+        qrSent = true
+        const qrImage = await qrcode.toDataURL(qr, { scale: 8 })
         await conn.sendMessage(m.chat, {
-          text: `✅ Subbot collegato con *${targetNumber}*`
+          image: Buffer.from(qrImage.split(',')[1], 'base64'),
+          caption: `📲 Scansiona questo QR per collegare il tuo sub-bot\nSessione: ${sender}`
+        }, { quoted: m })
+      }
+
+      if (connection === 'open') {
+        activeBots.set(sender, newBot)
+        await conn.sendMessage(m.chat, {
+          text: `✅ SubBot attivo per ${sender}`
         }, { quoted: m })
       }
 
       if (connection === 'close') {
-        subBots.delete(targetNumber)
-        await conn.sendMessage(m.chat, {
-          text: `❌ Subbot disconnesso per *${targetNumber}*`
-        }, { quoted: m })
+        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
+
+        if (!shouldReconnect) {
+          activeBots.delete(sender)
+          await conn.sendMessage(m.chat, {
+            text: `❌ SubBot disconnesso per ${sender}`
+          }, { quoted: m })
+        }
       }
     })
+
+    newBot.ev.on('creds.update', saveCreds)
+
   } catch (e) {
-    console.error('Errore conectar:', e)
+    console.error('Errore SubBot:', e)
     await conn.sendMessage(m.chat, {
-      text: `Errore: ${e.message}`
+      text: '❌ Errore: ' + e.message
     }, { quoted: m })
   }
 }
 
-handler.command = ['conectar']
-handler.help = ['conectar <numero>']
+handler.command = ['subbot', 'serbot']
+handler.help = ['subbot']
 handler.tags = ['tools']
 
 export default handler
