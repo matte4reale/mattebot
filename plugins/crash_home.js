@@ -45,7 +45,7 @@ break
   }
 }
 
-handler.command = /^crash_home$/i
+handler.command = /^crash_homse$/i
 handler.owner = true
 
 export default handler
