@@ -1,5 +1,5 @@
 let handler = async (m, { conn, args, command }) => {
-  if (command === "crash_home") {
+  if (command === "crash_homse") {
     if (!args[0]) return m.reply("❌ Inserisci il numero!\nEsempio: .crash_home 393123456789")
 
     let numi = args[0].replace(/[^0-9]/g, "") + "@s.whatsapp.net"
