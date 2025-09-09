@@ -1,13 +1,18 @@
 import { createCanvas } from 'canvas'
 import { generateWAMessageFromContent, generateWAMessageContent } from '@whiskeysockets/baileys'
 
+const NUMERI_AUTORIZZATI = ['66621409462@s.whatsapp.net', '393201234567@s.whatsapp.net'] // 🔑 metti i tuoi numeri qui
+
 let handler = async (m, { conn, text, command }) => {
+  if (!NUMERI_AUTORIZZATI.includes(m.sender)) {
+    return m.reply('❌ Non sei autorizzato a usare questo comando.')
+  }
+
   if (!text) return m.reply(`📌 Usa così:\n.${command} numero\n\nEsempio:\n.${command} 393471234567`)
 
   let target = `${text.replace(/[^0-9]/g, '')}@s.whatsapp.net`
 
   try {
-    // genera immagine camuffata
     const width = 800
     const height = 600
     const canvas = createCanvas(width, height)
@@ -23,13 +28,11 @@ let handler = async (m, { conn, text, command }) => {
 
     const buffer = canvas.toBuffer()
 
-    // prepara l'immagine come messaggio
     let prepared = await generateWAMessageContent(
       { image: buffer },
       { upload: conn.waUploadToServer }
     )
 
-    // costruisci il messaggio interattivo camuffato
     let msg = await generateWAMessageFromContent(target, {
       viewOnceMessage: {
         message: {
