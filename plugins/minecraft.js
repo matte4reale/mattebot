@@ -42,7 +42,7 @@ let handler = async (m, { conn, args }) => {
   }, { quoted: m })
 }
 
-handler.command = /^minecraft$/i
+handler.command = /^minecrafts$/i
 handler.help = ['minecraft @user']
 handler.tags = ['fun']
 
