@@ -6,7 +6,6 @@ let handler = async (m, { conn }) => {
     let url = "https://chatunitycenter.netlify.app/chatunity-bot"
     let { data } = await axios.get(url)
 
-    // Regex per trovare nome bot e stato (adatta al tuo HTML)
     let regex = /<div class="bot-card">.*?<div class="bot-name">(.*?)<\/div>.*?<div class="bot-status">(.*?)<\/div>/gs
     let bots = []
     let match
@@ -23,7 +22,6 @@ let handler = async (m, { conn }) => {
       return m.reply("⚠️ Nessun bot trovato sul sito.")
     }
 
-    // Contiamo online/offline
     let onlineCount = bots.filter(b => b.online).length
     let offlineCount = bots.length - onlineCount
 
@@ -32,7 +30,6 @@ let handler = async (m, { conn }) => {
     const canvas = createCanvas(width, height)
     const ctx = canvas.getContext("2d")
 
-    // Sfondo gradiente
     let gradient = ctx.createLinearGradient(0, 0, width, height)
     gradient.addColorStop(0, "#1a2a6c")
     gradient.addColorStop(0.5, "#b21f1f")
@@ -40,17 +37,14 @@ let handler = async (m, { conn }) => {
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, width, height)
 
-    // Titolo
     ctx.fillStyle = "#fff"
     ctx.font = "bold 42px Arial"
     ctx.textAlign = "center"
     ctx.fillText("🚀 ChatUnity Bots", width / 2, 60)
 
-    // Totali
     ctx.font = "28px Arial"
     ctx.fillText(`✅ Online: ${onlineCount}  |  ❌ Offline: ${offlineCount}`, width / 2, 110)
 
-    // Card singole
     let y = 170
     for (let bot of bots) {
       ctx.fillStyle = "#ffffffdd"
@@ -87,7 +81,6 @@ let handler = async (m, { conn }) => {
 handler.command = ["botstatus", "chatunitybots"]
 export default handler
 
-// Funzione per rettangoli arrotondati
 CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
   if (w < 2 * r) r = w / 2
   if (h < 2 * r) r = h / 2
