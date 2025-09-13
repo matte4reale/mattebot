@@ -1,29 +1,42 @@
-import puppeteer from 'puppeteer'
+import puppeteer from "puppeteer"
+import fs from "fs"
 
 let handler = async (m, { conn }) => {
   try {
+    await conn.reply(m.chat, "⏳ Sto generando lo screenshot, attendi...", m)
+
     const browser = await puppeteer.launch({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"]
     })
     const page = await browser.newPage()
     await page.goto("https://chatunitycenter.netlify.app/chatunity-bot", {
-      waitUntil: "networkidle2",
+      waitUntil: "networkidle2"
     })
-    
-    const screenshot = await page.screenshot({ type: "jpeg", quality: 80 })
+
+    // Screenshot dell'intera pagina
+    const filePath = "/tmp/chatunity-bots.jpeg"
+    await page.screenshot({ path: filePath, type: "jpeg", fullPage: true })
+
     await browser.close()
 
-    await conn.sendMessage(m.chat, { 
-      image: screenshot, 
-      caption: "📊 Stato dei bot ChatUnity" 
-    }, { quoted: m })
+    await conn.sendFile(
+      m.chat,
+      filePath,
+      "bots.jpeg",
+      "📊 Stato attuale dei bot ChatUnity:",
+      m
+    )
+
+    fs.unlinkSync(filePath)
 
   } catch (err) {
-    console.error("Errore Puppeteer:", err)
-    await conn.reply(m.chat, "❌ Errore nel generare lo screenshot.", m)
+    await conn.reply(m.chat, `❌ Errore: ${err.message}`, m)
   }
 }
 
-handler.command = ["botstatus"]
+handler.command = ["chatunitybots"]
+handler.help = ["chatunitybots"]
+handler.tags = ["tools"]
+
 export default handler
