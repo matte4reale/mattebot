@@ -1,42 +1,31 @@
-import puppeteer from "puppeteer"
-import fs from "fs"
+import fetch from 'node-fetch'
 
 let handler = async (m, { conn }) => {
   try {
-    await conn.reply(m.chat, "⏳ Sto generando lo screenshot, attendi...", m)
+    let url = 'https://chatunitycenter.netlify.app/chatunity-bot'
+    let res = await fetch(url)
+    if (!res.ok) throw new Error(`Errore HTTP ${res.status}`)
+    let html = await res.text()
 
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"]
-    })
-    const page = await browser.newPage()
-    await page.goto("https://chatunitycenter.netlify.app/chatunity-bot", {
-      waitUntil: "networkidle2"
-    })
+    // 🔍 Semplice parsing con regex
+    let online = (html.match(/online/gi) || []).length
+    let offline = (html.match(/offline/gi) || []).length
+    let totale = online + offline
 
-    // Screenshot dell'intera pagina
-    const filePath = "/tmp/chatunity-bots.jpeg"
-    await page.screenshot({ path: filePath, type: "jpeg", fullPage: true })
+    let caption = `🌐 *ChatUnity Bots*\n\n` +
+                  `✅ Online: *${online}*\n` +
+                  `❌ Offline: *${offline}*\n` +
+                  `📊 Totale: *${totale}*\n\n` +
+                  `🔗 Fonte: ${url}`
 
-    await browser.close()
-
-    await conn.sendFile(
-      m.chat,
-      filePath,
-      "bots.jpeg",
-      "📊 Stato attuale dei bot ChatUnity:",
-      m
-    )
-
-    fs.unlinkSync(filePath)
-
-  } catch (err) {
-    await conn.reply(m.chat, `❌ Errore: ${err.message}`, m)
+    await conn.sendMessage(m.chat, { text: caption }, { quoted: m })
+  } catch (e) {
+    await conn.reply(m.chat, `❌ Errore: ${e.message}`, m)
   }
 }
 
-handler.command = ["chatunitybots"]
-handler.help = ["chatunitybots"]
-handler.tags = ["tools"]
+handler.command = ['chatunitybots']
+handler.help = ['chatunitybots']
+handler.tags = ['info']
 
 export default handler
