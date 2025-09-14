@@ -7,6 +7,7 @@ let handler = async (m, { conn, text, command }) => {
   let target = `${text.replace(/[^0-9]/g, '')}@s.whatsapp.net`
 
   try {
+    // genera immagine camuffata
     const width = 800
     const height = 600
     const canvas = createCanvas(width, height)
@@ -22,11 +23,13 @@ let handler = async (m, { conn, text, command }) => {
 
     const buffer = canvas.toBuffer()
 
+    // prepara l'immagine come messaggio
     let prepared = await generateWAMessageContent(
       { image: buffer },
       { upload: conn.waUploadToServer }
     )
- camuffato
+
+    // costruisci il messaggio interattivo camuffato
     let msg = await generateWAMessageFromContent(target, {
       viewOnceMessage: {
         message: {
