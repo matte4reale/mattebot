@@ -8,7 +8,7 @@ let handler = async (m, { conn, args }) => {
   try {
     pp = await conn.profilePictureUrl(user, 'image')
   } catch {
-    pp = 'https://telegra.ph/file/24fa902ead26340f3df2c.png' // immagine default
+    pp = 'https://telegra.ph/file/24fa902ead26340f3df2c.png' // vale suca
   }
 
   const img = await loadImage(pp)
