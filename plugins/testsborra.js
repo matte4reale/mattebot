@@ -7,16 +7,16 @@ let handler = async (m, { conn }) => {
     if (!res.ok) throw new Error(`Errore HTTP ${res.status}`)
     let html = await res.text()
 
-    // 🔍 Semplice parsing con regex
-    let online = (html.match(/online/gi) || []).length
-    let offline = (html.match(/offline/gi) || []).length
-    let totale = online + offline
+    // Conta "attivo" e "ban"
+    let attivi = (html.match(/attivo/gi) || []).length
+    let bannati = (html.match(/ban/gi) || []).length
+    let totale = attivi + bannati
 
-    let caption = `🌐 *ChatUnity Bots*\n\n` +
-                  `✅ Online: *${online}*\n` +
-                  `❌ Offline: *${offline}*\n` +
+    let caption = `🤖 *ChatUnity - Stato Bot*\n\n` +
+                  `🟢 Attivi: *${attivi}*\n` +
+                  `⛔ Bannati: *${bannati}*\n` +
                   `📊 Totale: *${totale}*\n\n` +
-                  `🔗 Fonte: ${url}`
+                  `🌐 Fonte: ${url}`
 
     await conn.sendMessage(m.chat, { text: caption }, { quoted: m })
   } catch (e) {
