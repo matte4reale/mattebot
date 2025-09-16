@@ -12,11 +12,9 @@ let handler = async (m, { conn }) => {
       timeout: 60000
     });
 
-    // Cattura tutta la sezione con titolo + griglia
     const elementHandle = await page.$(".section-title"); 
     if (!elementHandle) throw new Error("❌ Sezione 'Bot Ufficiali' non trovata.");
 
-    // Salgo al contenitore principale della sezione
     const sectionHandle = await page.$eval("h2.section-title", el => el.parentElement);
     const sectionElement = await page.$("section"); // puoi adattare se cambia struttura
 
