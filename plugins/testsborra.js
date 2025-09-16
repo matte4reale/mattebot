@@ -6,31 +6,38 @@ let handler = async (m, { conn }) => {
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"]
     });
-
     const page = await browser.newPage();
     await page.goto("https://chatunitycenter.netlify.app/chatunity-bot", {
       waitUntil: "networkidle2",
       timeout: 60000
     });
 
-    // Cerca il container che contiene "Bot Ufficiali"
-    const element = await page.$x("//h2[contains(text(), 'Bot Ufficiali')]/ancestor::section");
+    // Trova il blocco che segue l'h2.section-title con scritto "Bot Ufficiali"
+    const elementHandle = await page.$("h2.section-title");
 
-    if (!element || element.length === 0) {
-      throw new Error("Sezione 'Bot Ufficiali' non trovata");
+    if (!elementHandle) {
+      throw new Error("❌ Non ho trovato la sezione Bot Ufficiali.");
     }
 
-    // Screenshot solo di quella sezione
-    const buffer = await element[0].screenshot({ type: "jpeg", quality: 90 });
+    // Risali al contenitore genitore che racchiude l'intera sezione
+    const parentHandle = await page.evaluateHandle(el => el.parentElement, elementHandle);
 
+    const buffer = await parentHandle.screenshot({ type: "jpeg", quality: 90 });
     await browser.close();
 
-    await conn.sendFile(m.chat, buffer, "bot-ufficiali.jpeg", "📊 Ecco i Bot Ufficiali ChatUnity:", m);
+    await conn.sendFile(
+      m.chat,
+      buffer,
+      "bot-ufficiali.jpeg",
+      "📊 Ecco la sezione *Bot Ufficiali*",
+      m
+    );
   } catch (e) {
     await conn.reply(m.chat, "❌ Errore nel generare lo screenshot della sezione Bot Ufficiali.", m);
-    console.error("Errore Puppeteer:", e);
+    console.error(e);
   }
 };
 
 handler.command = ["sito"];
+handler.tags = ["tools"];
 export default handler;
