@@ -12,24 +12,22 @@ let handler = async (m, { conn }) => {
       timeout: 60000
     });
 
-    // Trova il blocco che segue l'h2.section-title con scritto "Bot Ufficiali"
-    const elementHandle = await page.$("h2.section-title");
+    // Cattura tutta la sezione con titolo + griglia
+    const elementHandle = await page.$(".section-title"); 
+    if (!elementHandle) throw new Error("❌ Sezione 'Bot Ufficiali' non trovata.");
 
-    if (!elementHandle) {
-      throw new Error("❌ Non ho trovato la sezione Bot Ufficiali.");
-    }
+    // Salgo al contenitore principale della sezione
+    const sectionHandle = await page.$eval("h2.section-title", el => el.parentElement);
+    const sectionElement = await page.$("section"); // puoi adattare se cambia struttura
 
-    // Risali al contenitore genitore che racchiude l'intera sezione
-    const parentHandle = await page.evaluateHandle(el => el.parentElement, elementHandle);
-
-    const buffer = await parentHandle.screenshot({ type: "jpeg", quality: 90 });
+    const buffer = await sectionElement.screenshot({ type: "jpeg", quality: 90 });
     await browser.close();
 
     await conn.sendFile(
       m.chat,
       buffer,
       "bot-ufficiali.jpeg",
-      "📊 Ecco la sezione *Bot Ufficiali*",
+      "🤖 Ecco la sezione *Bot Ufficiali* con la griglia.",
       m
     );
   } catch (e) {
