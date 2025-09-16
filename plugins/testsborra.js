@@ -13,21 +13,21 @@ let handler = async (m, { conn }) => {
       timeout: 60000
     });
 
-    // Trova la sezione "Bot Ufficiali" (primo container)
-    const element = await page.$("section"); // prende il primo <section>
+    // Cerca il container che contiene "Bot Ufficiali"
+    const element = await page.$x("//h2[contains(text(), 'Bot Ufficiali')]/ancestor::section");
 
-    if (!element) {
+    if (!element || element.length === 0) {
       throw new Error("Sezione 'Bot Ufficiali' non trovata");
     }
 
-    // Screenshot solo di quell'elemento
-    const buffer = await element.screenshot({ type: "jpeg", quality: 90 });
+    // Screenshot solo di quella sezione
+    const buffer = await element[0].screenshot({ type: "jpeg", quality: 90 });
 
     await browser.close();
 
-    await conn.sendFile(m.chat, buffer, "bot-ufficiali.jpeg", "🤖 Bot Ufficiali Online", m);
+    await conn.sendFile(m.chat, buffer, "bot-ufficiali.jpeg", "📊 Ecco i Bot Ufficiali ChatUnity:", m);
   } catch (e) {
-    await conn.reply(m.chat, "❌ Errore nel generare lo screenshot.", m);
+    await conn.reply(m.chat, "❌ Errore nel generare lo screenshot della sezione Bot Ufficiali.", m);
     console.error("Errore Puppeteer:", e);
   }
 };
