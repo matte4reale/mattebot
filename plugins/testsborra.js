@@ -16,7 +16,7 @@ let handler = async (m, { conn }) => {
     if (!elementHandle) throw new Error("❌ Sezione 'Bot Ufficiali' non trovata.");
 
     const sectionHandle = await page.$eval("h2.section-title", el => el.parentElement);
-    const sectionElement = await page.$("section"); // puoi adattare se cambia struttura
+    const sectionElement = await page.$("section");
 
     const buffer = await sectionElement.screenshot({ type: "jpeg", quality: 90 });
     await browser.close();
