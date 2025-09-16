@@ -12,13 +12,13 @@ let handler = async (m, { conn }) => {
       timeout: 60000
     });
 
-    const elementHandle = await page.$(".section-title"); 
-    if (!elementHandle) throw new Error("❌ Sezione 'Bot Ufficiali' non trovata.");
+    // Seleziona l'intera sezione che contiene titolo + griglia
+    const section = await page.$("section:has(h2.section-title)");
+    if (!section) throw new Error("❌ Sezione 'Bot Ufficiali' non trovata.");
 
-    const sectionHandle = await page.$eval("h2.section-title", el => el.parentElement);
-    const sectionElement = await page.$("section");
+    // Screenshot solo della sezione selezionata
+    const buffer = await section.screenshot({ type: "jpeg", quality: 90 });
 
-    const buffer = await sectionElement.screenshot({ type: "jpeg", quality: 90 });
     await browser.close();
 
     await conn.sendFile(
@@ -29,7 +29,7 @@ let handler = async (m, { conn }) => {
       m
     );
   } catch (e) {
-    await conn.reply(m.chat, "❌ Errore nel generare lo screenshot della sezione Bot Ufficiali.", m);
+    await conn.reply(m.chat, "❌ Errore: impossibile catturare la sezione Bot Ufficiali.", m);
     console.error(e);
   }
 };
