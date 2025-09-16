@@ -32,26 +32,27 @@ let handler = async (m, { conn }) => {
           text-shadow: 2px 2px 6px rgba(0,0,0,0.8);
         }
         section:has(h2.section-title) .bot-card {
-          background: #7CFC00 !important; /* verde chiaro */
+          background: #228B22 !important; /* verde scuro */
           border: 3px solid white !important;
           border-radius: 12px !important;
           padding: 18px !important;
           margin: 12px !important;
-          color: black !important;
-          font-size: 18px !important;
+          color: #ffffff !important;
+          font-size: 20px !important;
           font-weight: bold !important;
           box-shadow: 0 6px 14px rgba(0,0,0,0.7) !important;
           text-align: center;
+          text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
         }
         section:has(h2.section-title) .bot-card:hover {
           transform: scale(1.05);
-          background: #32CD32 !important; /* verde più scuro al passaggio */
+          background: #006400 !important; /* verde ancora più scuro */
         }
         /* rimuove cerchietto verde */
         section:has(h2.section-title) .status-indicator {
           display: none !important;
         }
-        /* rimuove emoji da titoli e contenuti */
+        /* scritte pulite, no emoji */
         section:has(h2.section-title) * {
           font-family: Arial, sans-serif !important;
         }
