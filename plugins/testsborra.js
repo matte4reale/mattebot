@@ -14,53 +14,54 @@ let handler = async (m, { conn }) => {
       timeout: 60000,
     });
 
-    // Applichiamo uno stile pulito e leggibile
     await page.addStyleTag({
       content: `
         section:has(h2.section-title) {
-          background: #0f172a !important; /* blu notte */
+          background: #0a0a0a !important;
           color: white !important;
           padding: 20px;
-          border-radius: 12px;
+          border-radius: 15px;
         }
         section:has(h2.section-title) h2.section-title {
-          color: #facc15 !important; /* giallo brillante */
-          font-size: 28px !important;
+          color: #ffcc00 !important;
+          font-size: 30px !important;
           font-weight: bold !important;
-          margin-bottom: 15px !important;
+          margin-bottom: 20px !important;
           text-align: center;
+          text-shadow: 2px 2px 6px rgba(0,0,0,0.8);
         }
         section:has(h2.section-title) .bot-card {
-          background: #1e293b !important; /* grigio scuro */
-          border-radius: 10px !important;
-          padding: 15px !important;
-          margin: 8px !important;
+          background: linear-gradient(135deg, #ff3b3b, #ff7b00) !important;
+          border: 3px solid white !important;
+          border-radius: 12px !important;
+          padding: 18px !important;
+          margin: 12px !important;
           color: white !important;
-          font-size: 16px !important;
-          box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
-          transition: background 0.3s;
+          font-size: 18px !important;
+          font-weight: bold !important;
+          box-shadow: 0 6px 14px rgba(0,0,0,0.7) !important;
+          text-align: center;
+          transition: transform 0.2s, background 0.3s;
         }
         section:has(h2.section-title) .bot-card:hover {
-          background: #3b82f6 !important; /* blu acceso hover */
+          transform: scale(1.05);
+          background: linear-gradient(135deg, #007bff, #00e6e6) !important;
         }
       `
     });
 
-    // Trova la sezione Bot Ufficiali
     const section = await page.$("section:has(h2.section-title)");
     if (!section) throw new Error("Sezione Bot Ufficiali non trovata");
 
-    // Screenshot in JPEG
     const buffer = await section.screenshot({ type: "jpeg", quality: 90 });
 
     await browser.close();
 
-    // Invia l'immagine al gruppo/chat
     await conn.sendFile(
       m.chat,
       buffer,
       "bot-ufficiali.jpeg",
-      "Sezione Bot Ufficiali aggiornata",
+      "✅ Sezione Bot Ufficiali aggiornata",
       m
     );
   } catch (e) {
