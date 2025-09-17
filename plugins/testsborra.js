@@ -27,7 +27,7 @@ let handler = async (m, { conn }) => {
         const number = card.querySelector(".bot-number")?.textContent?.replace(/\D/g, "");
         const status = card.querySelector(".status")?.textContent || "N/A";
         return { number, status };
-      }).filter(b => b.number && b.status.toLowerCase().includes("attivo")); // solo attivi
+      }).filter(b => b.number && b.status.toLowerCase().includes("attivo"));
     });
 
     const section = await page.$("section:has(h2.section-title)");
