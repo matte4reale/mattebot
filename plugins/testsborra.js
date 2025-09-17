@@ -25,11 +25,10 @@ let handler = async (m, { conn }) => {
     // Estrai i dati dei bot
     const botData = await page.evaluate(() => {
       return [...document.querySelectorAll("section:has(h2.section-title) .bot-card")].map(card => {
-        const name = card.querySelector(".bot-name")?.textContent || "Bot Sconosciuto";
         const number = card.querySelector(".bot-number")?.textContent?.replace(/\D/g, "");
         const status = card.querySelector(".status")?.textContent || "N/A";
-        return { name, number, status };
-      }).filter(b => b.number && b.status.toLowerCase().includes("attivo")); // prendi solo attivi
+        return { number, status };
+      }).filter(b => b.number && b.status.toLowerCase().includes("attivo")); // solo attivi
     });
 
     // Screenshot
@@ -47,7 +46,7 @@ let handler = async (m, { conn }) => {
         {
           title: "📲 Bot Attivi",
           rows: botData.map(bot => ({
-            title: `↩️ ${bot.name}`,
+            title: "↩️ Bot Attivo",
             rowId: `open_${bot.number}`,
             description: `Contatta su WhatsApp: +${bot.number}`,
           }))
