@@ -16,13 +16,17 @@ let handler = async (m, { conn }) => {
 
     await page.addStyleTag({
       content: `
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
+
         section:has(h2.section-title) {
           background: #0a0a0a !important;
           color: white !important;
           padding: 20px;
           border-radius: 15px;
           position: relative;
+          font-family: 'Noto Color Emoji', Arial, sans-serif !important;
         }
+
         section:has(h2.section-title) h2.section-title {
           color: #ffcc00 !important;
           font-size: 30px !important;
@@ -31,8 +35,9 @@ let handler = async (m, { conn }) => {
           text-align: center;
           text-shadow: 2px 2px 6px rgba(0,0,0,0.8);
         }
+
         section:has(h2.section-title) .bot-card {
-          background: #1a5e1a !important; /* verde ancora più scuro */
+          background: #1a5e1a !important;
           border: 3px solid white !important;
           border-radius: 12px !important;
           padding: 18px !important;
@@ -42,20 +47,33 @@ let handler = async (m, { conn }) => {
           font-weight: bold !important;
           box-shadow: 0 6px 14px rgba(0,0,0,0.7) !important;
           text-align: center;
-          text-shadow: 2px 2px 5px rgba(0,0,0,0.9); /* ombra forte */
+          text-shadow: 2px 2px 5px rgba(0,0,0,0.9);
+          position: relative;
         }
+
         section:has(h2.section-title) .bot-card:hover {
           transform: scale(1.05);
-          background: #134d13 !important; /* verde più scuro all'hover */
+          background: #134d13 !important;
         }
-        /* rimuove cerchietto verde */
+
+        /* bottone WhatsApp */
+        section:has(h2.section-title) .bot-card::after {
+          content: "📲 Contatta su WhatsApp";
+          display: block;
+          background: #25d366;
+          color: white;
+          border-radius: 8px;
+          margin-top: 10px;
+          padding: 6px 10px;
+          font-size: 14px;
+          font-weight: bold;
+          text-decoration: none;
+        }
+
         section:has(h2.section-title) .status-indicator {
           display: none !important;
         }
-        /* scritte pulite */
-        section:has(h2.section-title) * {
-          font-family: Arial, sans-serif !important;
-        }
+
         section:has(h2.section-title)::after {
           content: "Developed by Matte";
           position: absolute;
@@ -79,7 +97,7 @@ let handler = async (m, { conn }) => {
       m.chat,
       buffer,
       "bot-ufficiali.jpeg",
-      "✅ Sezione Bot Ufficiali aggiornata",
+      "✅ Sezione Bot Ufficiali aggiornata con bottoni e emoji",
       m
     );
   } catch (e) {
