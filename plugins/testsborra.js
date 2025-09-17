@@ -12,7 +12,6 @@ let handler = async (m, { conn }) => {
       timeout: 60000,
     });
 
-    // Styling personalizzato
     await page.addStyleTag({
       content: `
         section:has(h2.section-title) { background:#0a0a0a!important; color:white!important; padding:20px; border-radius:15px; position:relative; }
@@ -31,16 +30,13 @@ let handler = async (m, { conn }) => {
       }).filter(b => b.number && b.status.toLowerCase().includes("attivo")); // solo attivi
     });
 
-    // Screenshot
     const section = await page.$("section:has(h2.section-title)");
     if (!section) throw new Error("Sezione Bot Ufficiali non trovata");
     const buffer = await section.screenshot({ type: "jpeg", quality: 90 });
     await browser.close();
 
-    // Manda immagine
     await conn.sendFile(m.chat, buffer, "bot-ufficiali.jpeg", "🤖 Bot Ufficiali Aggiornati", m);
 
-    // Menu interattivo con bot attivi
     if (botData.length > 0) {
       const sections = [
         {
