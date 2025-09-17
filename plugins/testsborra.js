@@ -21,7 +21,6 @@ let handler = async (m, { conn }) => {
       `
     });
 
-    // Estrai i dati dei bot
     const botData = await page.evaluate(() => {
       return [...document.querySelectorAll("section:has(h2.section-title) .bot-card")].map(card => {
         const number = card.querySelector(".bot-number")?.textContent?.replace(/\D/g, "");
