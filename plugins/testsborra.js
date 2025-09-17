@@ -32,7 +32,7 @@ let handler = async (m, { conn }) => {
           text-shadow: 2px 2px 6px rgba(0,0,0,0.8);
         }
         section:has(h2.section-title) .bot-card {
-          background: #228B22 !important; /* verde scuro */
+          background: #1a5e1a !important; /* verde ancora più scuro */
           border: 3px solid white !important;
           border-radius: 12px !important;
           padding: 18px !important;
@@ -42,17 +42,17 @@ let handler = async (m, { conn }) => {
           font-weight: bold !important;
           box-shadow: 0 6px 14px rgba(0,0,0,0.7) !important;
           text-align: center;
-          text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+          text-shadow: 2px 2px 5px rgba(0,0,0,0.9); /* ombra forte */
         }
         section:has(h2.section-title) .bot-card:hover {
           transform: scale(1.05);
-          background: #006400 !important; /* verde ancora più scuro */
+          background: #134d13 !important; /* verde più scuro all'hover */
         }
         /* rimuove cerchietto verde */
         section:has(h2.section-title) .status-indicator {
           display: none !important;
         }
-        /* scritte pulite, no emoji */
+        /* scritte pulite */
         section:has(h2.section-title) * {
           font-family: Arial, sans-serif !important;
         }
