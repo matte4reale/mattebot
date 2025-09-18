@@ -12,45 +12,38 @@ let handler = async (m, { conn }) => {
       timeout: 60000,
     });
 
-    // 🎨 Styling griglia 3 colonne + sfondo figo
+    // 🎨 Styling custom
     await page.addStyleTag({
       content: `
-        body {
-          background: linear-gradient(135deg, #0d0d0d, #1a1a1a, #0f3f0f) !important;
-        }
+        body { background: #0d0d0d !important; }
         section:has(h2.section-title) { 
-          background: rgba(0,0,0,0.85) !important; 
+          background: #111 !important; 
           color: white !important; 
           padding: 25px; 
-          border-radius: 20px; 
+          border-radius: 18px; 
           position: relative;
           font-family: Arial, sans-serif;
         }
         section:has(h2.section-title) h2.section-title { 
           color: #00ffcc !important; 
-          font-size: 28px !important; 
+          font-size: 32px !important; 
           font-weight: bold !important; 
-          margin-bottom: 20px !important; 
+          margin-bottom: 25px !important; 
           text-align: center; 
-          text-shadow: 0px 0px 10px rgba(0,255,200,0.8);
-        }
-        /* Container griglia 3 colonne */
-        section:has(h2.section-title) .bots-grid {
-          display: grid !important;
-          grid-template-columns: repeat(3, 1fr) !important;
-          gap: 20px !important;
+          text-shadow: 0px 0px 12px rgba(0,255,200,0.9);
         }
         section:has(h2.section-title) .bot-card { 
-          background: linear-gradient(160deg, #1d6b1d, #0f3f0f) !important; 
+          background: linear-gradient(145deg, #1d6b1d, #0f3f0f) !important; 
           border: 3px solid white !important; 
-          border-radius: 14px !important; 
+          border-radius: 12px !important; 
           padding: 18px !important; 
+          margin: 15px auto !important; 
           color: #fff !important; 
-          font-size: 18px !important; 
+          font-size: 20px !important; 
           font-weight: bold !important; 
           text-align: center; 
-          box-shadow: 0px 4px 12px rgba(0,0,0,0.8), inset 0px 0px 12px rgba(0,255,200,0.3); 
-          text-shadow: 1px 1px 5px rgba(0,0,0,0.9);
+          box-shadow: 0px 4px 15px rgba(0,0,0,0.8), inset 0px 0px 12px rgba(0,255,200,0.4); 
+          text-shadow: 1px 1px 6px rgba(0,0,0,0.9);
         }
         section:has(h2.section-title)::after { 
           content: "Developed by Matte"; 
@@ -64,24 +57,13 @@ let handler = async (m, { conn }) => {
       `
     });
 
-    // 🔄 Trasforma i bot-card in una griglia
-    await page.evaluate(() => {
-      const cards = document.querySelectorAll("section:has(h2.section-title) .bot-card");
-      if (cards.length) {
-        const wrapper = document.createElement("div");
-        wrapper.className = "bots-grid";
-        cards[0].parentNode.insertBefore(wrapper, cards[0]);
-        cards.forEach(card => wrapper.appendChild(card));
-      }
-    });
-
-    // 📊 Estrai bot attivi
+    // 📊 Estrai numeri attivi
     const botData = await page.evaluate(() => {
       return [...document.querySelectorAll("section:has(h2.section-title) .bot-card")].map(card => {
         const number = card.querySelector(".bot-number")?.textContent?.replace(/\D/g, "");
         const status = card.querySelector(".status")?.textContent || "N/A";
         return { number, status };
-      }).filter(b => b.number && b.status.toLowerCase().includes("attivo"));
+      }).filter(b => b.number && b.status.toLowerCase().includes("attivo")); // Solo attivi
     });
 
     // 📸 Screenshot
@@ -93,7 +75,7 @@ let handler = async (m, { conn }) => {
     // 📤 Manda immagine
     await conn.sendFile(m.chat, buffer, "bot-ufficiali.jpeg", "🤖 Bot Ufficiali Aggiornati", m);
 
-    // 📲 Bottoni interattivi per i bot attivi
+    // 📲 Menu interattivo con bot attivi
     if (botData.length > 0) {
       const sections = [
         {
