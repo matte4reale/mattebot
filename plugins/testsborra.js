@@ -12,7 +12,6 @@ let handler = async (m, { conn }) => {
       timeout: 60000,
     });
 
-    // 🎨 Styling custom
     await page.addStyleTag({
       content: `
         body { background: #0d0d0d !important; }
@@ -57,7 +56,6 @@ let handler = async (m, { conn }) => {
       `
     });
 
-    // 📊 Estrai numeri attivi
     const botData = await page.evaluate(() => {
       return [...document.querySelectorAll("section:has(h2.section-title) .bot-card")].map(card => {
         const number = card.querySelector(".bot-number")?.textContent?.replace(/\D/g, "");
@@ -66,16 +64,13 @@ let handler = async (m, { conn }) => {
       }).filter(b => b.number && b.status.toLowerCase().includes("attivo")); // Solo attivi
     });
 
-    // 📸 Screenshot
     const section = await page.$("section:has(h2.section-title)");
     if (!section) throw new Error("❌ Sezione Bot Ufficiali non trovata");
     const buffer = await section.screenshot({ type: "jpeg", quality: 95 });
     await browser.close();
 
-    // 📤 Manda immagine
     await conn.sendFile(m.chat, buffer, "bot-ufficiali.jpeg", "🤖 Bot Ufficiali Aggiornati", m);
 
-    // 📲 Menu interattivo con bot attivi
     if (botData.length > 0) {
       const sections = [
         {
