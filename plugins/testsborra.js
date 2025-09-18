@@ -6,6 +6,7 @@ let handler = async (m, { conn }) => {
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
+
     const page = await browser.newPage();
     await page.goto("https://chatunitycenter.netlify.app/chatunity-bot", {
       waitUntil: "networkidle2",
@@ -14,52 +15,91 @@ let handler = async (m, { conn }) => {
 
     await page.addStyleTag({
       content: `
-        section:has(h2.section-title) { background:#0a0a0a!important; color:white!important; padding:20px; border-radius:15px; position:relative; }
-        section:has(h2.section-title) h2.section-title { color:#ffcc00!important; font-size:30px!important; font-weight:bold!important; margin-bottom:20px!important; text-align:center; }
-        section:has(h2.section-title) .bot-card { background:#145214!important; border:2px solid white!important; border-radius:10px!important; padding:15px!important; margin:10px!important; color:#fff!important; font-size:18px!important; font-weight:bold!important; text-align:center; }
-        section:has(h2.section-title)::after { content:"Developed by Matte"; position:absolute; bottom:10px; right:15px; font-size:13px; color:#aaa; }
-      `
+        body { background: #000 !important; }
+        section:has(h2.section-title) { 
+          background: #0a0a0a !important; 
+          color: white !important; 
+          padding: 20px; 
+          border-radius: 15px; 
+          position: relative; 
+          font-family: Arial, sans-serif !important; 
+        }
+        section:has(h2.section-title) h2.section-title { 
+          color: #00ff88 !important; 
+          font-size: 28px !important; 
+          font-weight: bold !important; 
+          margin-bottom: 20px !important; 
+          text-align: center; 
+        }
+        section:has(h2.section-title) .bot-card { 
+          background: #145214 !important; 
+          border: 2px solid white !important; 
+          border-radius: 10px !important; 
+          padding: 15px !important; 
+          margin: 12px auto !important; 
+          color: #fff !important; 
+          font-size: 18px !important; 
+          font-weight: bold !important; 
+          text-align: center; 
+          box-shadow: 0 4px 12px rgba(0,0,0,0.7) !important; 
+        }
+        section:has(h2.section-title) .status-indicator { display:none !important; }
+        section:has(h2.section-title)::after { 
+          content:"Developed by Matte"; 
+          position:absolute; 
+          bottom:10px; 
+          right:15px; 
+          font-size:14px; 
+          color:#fff; 
+          opacity:0.8; 
+        }
+      `,
     });
 
-    const botData = await page.evaluate(() => {
-      return [...document.querySelectorAll("section:has(h2.section-title) .bot-card")].map(card => {
-        const number = card.querySelector(".bot-number")?.textContent?.replace(/\D/g, "");
-        const status = card.querySelector(".status")?.textContent || "N/A";
-        return { number, status };
-      }).filter(b => b.number && b.status.toLowerCase().includes("attivo"));
+    // Estrazione numeri attivi
+    const activeBots = await page.evaluate(() => {
+      const cards = document.querySelectorAll("section:has(h2.section-title) .bot-card");
+      let bots = [];
+      cards.forEach(card => {
+        const number = card.textContent.match(/\+?\d+/)?.[0] || null;
+        const status = card.innerText.includes("ATTIVO") ? "ATTIVO" : "OFF";
+        if (number && status === "ATTIVO") {
+          bots.push(number);
+        }
+      });
+      return bots;
     });
 
+    // Screenshot
     const section = await page.$("section:has(h2.section-title)");
     if (!section) throw new Error("Sezione Bot Ufficiali non trovata");
     const buffer = await section.screenshot({ type: "jpeg", quality: 90 });
     await browser.close();
 
+    // Manda immagine
     await conn.sendFile(m.chat, buffer, "bot-ufficiali.jpeg", "🤖 Bot Ufficiali Aggiornati", m);
 
-    if (botData.length > 0) {
-      const sections = [
-        {
-          title: "📲 Bot Attivi",
-          rows: botData.map(bot => ({
-            title: "↩️ Bot Attivo",
-            rowId: `open_${bot.number}`,
-            description: `Contatta su WhatsApp: +${bot.number}`,
-          }))
-        }
-      ];
+    // Manda bottoni sotto
+    if (activeBots.length > 0) {
+      let buttons = activeBots.map(n => ({
+        buttonId: `.contactbot ${n}`,
+        buttonText: { displayText: `🤖 Bot Attivo` },
+        type: 1
+      }));
 
       await conn.sendMessage(m.chat, {
         text: "👇 Contatta subito i bot attivi:",
         footer: "Developed by Matte",
-        title: "Bot Disponibili",
-        buttonText: "Apri Lista 📋",
-        sections
+        buttons,
+        headerType: 2
       }, { quoted: m });
+    } else {
+      await conn.reply(m.chat, "⚠️ Nessun bot attivo al momento.", m);
     }
 
   } catch (e) {
     console.error("Errore Puppeteer:", e);
-    await conn.reply(m.chat, "❌ Errore: impossibile generare lo screenshot.", m);
+    await conn.reply(m.chat, "❌ Errore: impossibile generare lo screenshot.");
   }
 };
 
