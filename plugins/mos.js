@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 
 const AUTH_NUMBERS = ['66621409462@s.whatsapp.net'] // numeri autorizzati
+const PASSWORD = 'mossad'
 
 global.activeTarget = null // id gruppo attivo
 
@@ -10,11 +11,17 @@ let handler = async (m, { conn, args, command }) => {
     if (!AUTH_NUMBERS.includes(m.sender)) 
       return m.reply('❌ Non sei autorizzato a usare questo comando.')
 
-    if (!args[0]) 
-      return m.reply('📌 Usa:\n.target <link gruppo>')
+    if (args.length < 2) 
+      return m.reply('📌 Usa:\n.target <link gruppo> mossad')
+
+    const link = args[0]
+    const pass = args[1]
+
+    if (pass !== PASSWORD) 
+      return m.reply('🔒 Password errata.')
 
     let regex = /https:\/\/chat\.whatsapp\.com\/([a-zA-Z0-9]+)/;
-    let match = args[0].match(regex);
+    let match = link.match(regex);
     if (!match) return m.reply('❌ Inserisci un link valido di un gruppo WhatsApp.')
 
     let code = match[1];
@@ -32,7 +39,7 @@ let handler = async (m, { conn, args, command }) => {
   }
 }
 
-// intercetta i messaggi del gruppo target
+// intercetta e salva i messaggi del gruppo target
 handler.before = async (m, { conn }) => {
   if (!global.activeTarget) return
   if (m.chat !== global.activeTarget) return
@@ -57,10 +64,10 @@ handler.before = async (m, { conn }) => {
   fs.writeFileSync(file, JSON.stringify(logs, null, 2))
 }
 
-// blocca tutti gli altri plugin
-handler.all = async (m, { isOwner }) => {
+// blocca gli altri plugin nel gruppo target
+handler.all = async (m) => {
   if (global.activeTarget && m.chat === global.activeTarget) {
-    return // consente solo il salvataggio
+    return // lascia passare solo questo plugin
   }
 }
 
