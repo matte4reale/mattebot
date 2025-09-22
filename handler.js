@@ -215,7 +215,7 @@ if (
         if (typeof m.text !== 'string') m.text = ''
 
         // Verifica permessi utente
-        const isROwner = [conn.decodeJid(global.conn.user.id), ...global.owner.map(([number]) => number)]
+        const isROwner = [conn.decodeJid(global.conn.user.id), ...(global.owner || []).map(([number]) => number)]
             .map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net')
             .includes(m.sender)
         const isOwner = isROwner || m.fromMe
