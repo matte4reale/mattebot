@@ -1,86 +1,122 @@
-import { existsSync, mkdirSync } from 'fs'
-import { join } from 'path'
-import qrcode from 'qrcode'
-import pino from 'pino'
-import {
-  makeWASocket,
-  DisconnectReason,
-  useMultiFileAuthState,
-  makeCacheableSignalKeyStore
-} from '@whiskeysockets/baileys'
+import { spawn } from 'child_process'
+import fs from 'fs'
+import path from 'path'
 
-const activeBots = new Map()
+let subProcess = null
 
-const handler = async (m, { conn }) => {
-  try {
-    const sender = m.sender.split('@')[0]
-    const botSessionPath = join(process.cwd(), 'sessioni', sender)
+let handler = async (m, { command }) => {
+  if (command === 'subbot') {
+    if (subProcess) return m.reply('⚠️ Sub-bot già attivo!')
 
-    if (!existsSync(join(process.cwd(), 'sessioni'))) {
-      mkdirSync(join(process.cwd(), 'sessioni'), { recursive: true })
-    }
+    const subCode = `
+      import makeWASocket, { useMultiFileAuthState } from '@whiskeysockets/baileys'
+      import Pino from 'pino'
+      import fs from 'fs'
+      import path from 'path'
+      import syntaxerror from 'syntax-error'
+      import { fileURLToPath } from 'url'
 
-    if (!existsSync(botSessionPath)) {
-      mkdirSync(botSessionPath, { recursive: true })
-    }
+      const __filename = fileURLToPath(import.meta.url)
+      const __dirname = path.dirname(__filename)
+      const SESSION_DIR = './subbot_session'
+      let plugins = {}
 
-    const { state, saveCreds } = await useMultiFileAuthState(botSessionPath)
+      async function loadPlugin(file) {
+        const filepath = path.join(__dirname, 'plugins', file)
+        if (!fs.existsSync(filepath)) return delete plugins[file]
+        const src = fs.readFileSync(filepath)
+        const err = syntaxerror(src, filepath)
+        if (err) return console.error('❌ Errore in ' + file + ':\\n' + err)
 
-    const newBot = makeWASocket({
-      logger: pino({ level: 'silent' }),
-      printQRInTerminal: false,
-      auth: {
-        creds: state.creds,
-        keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
-      },
-      browser: ['SubBot', 'Chrome', '1.0.0']
-    })
-
-    let qrSent = false
-
-    newBot.ev.on('connection.update', async (update) => {
-      const { connection, lastDisconnect, qr } = update
-
-      if (qr && !qrSent) {
-        qrSent = true
-        const qrImage = await qrcode.toDataURL(qr, { scale: 8 })
-        await conn.sendMessage(m.chat, {
-          image: Buffer.from(qrImage.split(',')[1], 'base64'),
-          caption: `📲 Scansiona questo QR per collegare il tuo sub-bot\nSessione: ${sender}`
-        }, { quoted: m })
-      }
-
-      if (connection === 'open') {
-        activeBots.set(sender, newBot)
-        await conn.sendMessage(m.chat, {
-          text: `✅ SubBot attivo per ${sender}`
-        }, { quoted: m })
-      }
-
-      if (connection === 'close') {
-        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
-
-        if (!shouldReconnect) {
-          activeBots.delete(sender)
-          await conn.sendMessage(m.chat, {
-            text: `❌ SubBot disconnesso per ${sender}`
-          }, { quoted: m })
+        try {
+          delete import.cache?.[import.resolve(filepath)]
+          const plugin = await import(filepath + '?update=' + Date.now())
+          plugins[file] = plugin.default || plugin
+          console.log('✅ Plugin caricato:', file)
+        } catch (e) {
+          console.error('❌ Errore importando ' + file, e)
         }
       }
-    })
 
-    newBot.ev.on('creds.update', saveCreds)
+      async function loadPlugins() {
+        const dir = path.join(__dirname, 'plugins')
+        const files = fs.readdirSync(dir).filter(f => f.endsWith('.js'))
+        for (let f of files) await loadPlugin(f)
 
-  } catch (e) {
-    console.error('Errore SubBot:', e)
-    await conn.sendMessage(m.chat, {
-      text: '❌ Errore: ' + e.message
-    }, { quoted: m })
+        fs.watch(dir, (event, filename) => {
+          if (filename && filename.endsWith('.js')) {
+            console.log('♻️ Ricarico plugin:', filename)
+            loadPlugin(filename)
+          }
+        })
+      }
+
+      async function startSubBot() {
+        const { state, saveCreds } = await useMultiFileAuthState(SESSION_DIR)
+        const sock = makeWASocket({
+          logger: Pino({ level: 'silent' }),
+          printQRInTerminal: true,
+          auth: state
+        })
+
+        sock.ev.on('creds.update', saveCreds)
+        await loadPlugins()
+
+        sock.ev.on('messages.upsert', async ({ messages }) => {
+          let msg = messages[0]
+          if (!msg.message) return
+
+          const text =
+            msg.message.conversation ||
+            msg.message.extendedTextMessage?.text ||
+            msg.message.imageMessage?.caption ||
+            msg.message.videoMessage?.caption ||
+            ''
+
+          if (!text) return
+          let prefix = /^[.!?#]/.test(text) ? text[0] : '.'
+          let [command, ...args] = text.trim().slice(prefix.length).split(/\\s+/)
+          command = (command || '').toLowerCase()
+
+          for (let name in plugins) {
+            let plugin = plugins[name]
+            try {
+              if (plugin.command && plugin.command.test(command)) {
+                await plugin(msg, {
+                  conn: sock,
+                  args,
+                  command,
+                  text: args.join(' ')
+                })
+              }
+            } catch (e) {
+              console.error('❌ Errore in ' + name, e)
+            }
+          }
+        })
+
+        console.log('✅ Sub-bot avviato con hot-reload!')
+      }
+
+      startSubBot()
+    `
+
+    const tempFile = path.join(process.cwd(), 'subbot-runner.mjs')
+    fs.writeFileSync(tempFile, subCode)
+
+    subProcess = spawn('node', [tempFile], { stdio: 'inherit', shell: true })
+    m.reply('✅ Sub-bot avviato! Scannerizza il QR in console.')
+  }
+
+  if (command === 'substop') {
+    if (!subProcess) return m.reply('⚠️ Nessun sub-bot attivo.')
+    subProcess.kill('SIGTERM')
+    subProcess = null
+    m.reply('🛑 Sub-bot fermato.')
   }
 }
 
-handler.command = ['subbot', 'serbot']
-handler.help = ['subbot']
-handler.tags = ['tools']
+handler.command = /^(subbot|substop)$/i
+handler.owner = true
 
 export default handler
