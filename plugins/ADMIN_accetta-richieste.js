@@ -1,4 +1,4 @@
-// Codice di ADMIN_accetta-richieste.js
+//da rifare
 
 let handler = async (m, { conn, isAdmin, isBotAdmin, participants, groupMetadata }) => {
   if (!m.isGroup) return m.reply("Questo comando si usa solo nei gruppi.")
