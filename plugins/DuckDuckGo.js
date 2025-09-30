@@ -1,3 +1,4 @@
+//da rifare @vale
 let handler = async (m, { conn, text }) => {
   if (!text) return m.reply('❗ Scrivi cosa cercare\nEsempio: *.apiimg ferrari*');
 
