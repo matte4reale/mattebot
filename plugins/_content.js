@@ -2,7 +2,7 @@ import fetch from 'node-fetch'
 import moment from 'moment-timezone'
 import axios from 'axios'
 import fs from 'fs'
-import { generateWAMessageFromContent, prepareWAMessageMedia, proto } from '@whiskeysockets/baileys'
+import { generateWAMessageFromContent, prepareWAMessageMedia, proto } from '@realvare/based'
 import '../config.js'
 
 //let handler = m => m

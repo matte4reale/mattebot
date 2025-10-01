@@ -9,7 +9,7 @@ let handler = async (m, { command }) => {
     if (subProcess) return m.reply('⚠️ Sub-bot già attivo!')
 
     const subCode = `
-      import makeWASocket, { useMultiFileAuthState } from '@whiskeysockets/baileys'
+      import makeWASocket, { useMultiFileAuthState } from '@realvare/based'
       import Pino from 'pino'
       import fs from 'fs'
       import path from 'path'

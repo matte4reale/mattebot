@@ -1,5 +1,5 @@
 //welcome creato da samakavare github.com/realvare
-import { WAMessageStubType } from '@whiskeysockets/baileys';
+import { WAMessageStubType } from '@realvare/based';
 import puppeteer from 'puppeteer';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';

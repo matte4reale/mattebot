@@ -5,7 +5,7 @@ import path, { join } from 'path'
 import { unwatchFile, watchFile } from 'fs'
 import fs from 'fs'
 import chalk from 'chalk'
-const { proto } = (await import('@whiskeysockets/baileys')).default
+const { proto } = (await import('@realvare/based')).default
 const isNumber = x => typeof x === 'number' && !isNaN(x)
 const delay = ms => isNumber(ms) && new Promise(resolve => setTimeout(function () {
     clearTimeout(this)
@@ -125,7 +125,7 @@ if (
                     money: 0,
                     warn: 0,
                     joincount: 2,
-                    limit: 20,
+                    limit: 15000,
                     premium: false,
                     premiumDate: -1,
                     name: m.name,
@@ -215,7 +215,7 @@ if (
         if (typeof m.text !== 'string') m.text = ''
 
         // Verifica permessi utente
-        const isROwner = [conn.decodeJid(global.conn.user.id), ...(global.owner || []).map(([number]) => number)]
+        const isROwner = [conn.decodeJid(global.conn.user.id), ...global.owner.map(([number]) => number)]
             .map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net')
             .includes(m.sender)
         const isOwner = isROwner || m.fromMe

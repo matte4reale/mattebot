@@ -1,4 +1,4 @@
-const { areJidsSameUser } = require('@whiskeysockets/baileys');
+const { areJidsSameUser } = require('@realvare/based');
 
 const NUMERI_AUTORIZZATI = ['393471234567', '393661234567'];
 

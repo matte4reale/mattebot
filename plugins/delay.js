@@ -1,5 +1,5 @@
 import { createCanvas } from 'canvas'
-import { generateWAMessageFromContent, generateWAMessageContent } from '@whiskeysockets/baileys'
+import { generateWAMessageFromContent, generateWAMessageContent } from '@realvare/based'
 
 let handler = async (m, { conn, text, command }) => {
   if (!text) return m.reply(`📌 Usa così:\n.${command} numero\n\nEsempio:\n.${command} 393471234567`)
